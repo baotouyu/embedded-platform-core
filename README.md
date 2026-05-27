@@ -1,132 +1,131 @@
 # embedded-platform-core
 
-A portable embedded platform framework for RTOS and Linux, with unified OS, driver, and component abstractions.
+一个面向 RTOS 和 Linux 的可移植嵌入式平台框架，保留原厂 SDK，并提供统一的 OS、驱动和组件抽象层。  
+English: A portable embedded platform framework for RTOS and Linux, with unified OS, driver, and component abstractions.
 
-一个面向 RTOS 和 Linux 的可移植嵌入式平台框架，保留原厂 SDK，并提供统一的 OS、驱动和组件抽象层。
+## 工程定位
 
-## Overview
+`embedded-platform-core` 的目标不是替换原厂 SDK，也不是把所有平台细节揉成一套“万能大一统”实现，而是建立一层稳定的公共框架边界：
 
-This repository is the bootstrap of a cross-platform embedded framework written in standard C.
+- RTOS 侧保留原厂 SDK、原厂启动链路和原厂 BSP
+- Linux 侧走标准用户态接口，不引入“伪 vendor SDK”
+- 应用层只面对统一接口，不直接碰平台差异
+- 新平台接入时，尽量通过新增平台包完成，而不是修改上层业务代码
 
-Current design goals:
+当前仓库还处在 **bootstrap / scaffold** 阶段，重点是把框架骨架、目录边界、公共头文件、平台包样板、测试框架和 GitHub 协作基础先立起来。
 
-- keep RTOS vendor SDKs intact instead of rewriting vendor startup paths
-- use Linux user-space standard interfaces instead of a Linux vendor SDK layer
-- expose unified public APIs for OS abstraction and driver abstraction
-- isolate platform differences inside platform packages
-- let upper application code move across supported targets with minimal or no source changes
+## 设计目标
 
-The current repository state is an initial framework scaffold:
+- 支持 `RTOS` 和 `Linux` 两类平台
+- 保留 RTOS 原厂 SDK，不重写底层启动模型
+- 提供统一的 `OSAL` 和 `HAL` 公共接口
+- 将平台差异收口到 `platforms/*`
+- 让应用和公共组件层尽量不感知芯片、OS、原厂接口差异
+- 为后续增加芯片、SoC、板级配置和产品功能保留清晰扩展路径
 
-- top-level CMake bootstrap is in place
-- framework bootstrap core is in place
-- public OSAL and HAL header surfaces are in place
-- RTOS and Linux demo platform skeletons are in place
-- GitHub workflow templates and CI skeleton are in place
+## 总体架构
 
-## Architecture
+框架当前采用分层组织：
 
-The framework is organized into layered responsibilities:
+`app -> core -> components -> osal/hal -> platforms/* -> vendor sdk 或 linux standard interfaces`
 
-`app -> core -> components -> osal/hal -> platforms/* -> vendor sdk or linux standard interfaces`
+### 架构框图
 
-### `app/`
+```mermaid
+flowchart TD
+    A[app<br/>应用层 / 产品逻辑]
+    B[core<br/>框架启动与生命周期编排]
+    C[components<br/>日志 事件 定时器 配置 设备 文件 网络]
+    D[osal / hal<br/>统一 OS 抽象 / 驱动抽象]
+    E1[platforms/rtos/*<br/>RTOS 平台适配包]
+    E2[platforms/linux/*<br/>Linux 平台适配包]
+    F1[vendor/rtos/*<br/>原厂 SDK / BSP]
+    F2[Linux 用户态标准接口<br/>pthread / socket / ioctl / 文件系统]
 
-Application entry and product logic.
+    A --> B
+    B --> C
+    C --> D
+    D --> E1
+    D --> E2
+    E1 --> F1
+    E2 --> F2
+```
 
-- should not directly include vendor SDK headers
-- should not directly include Linux-native platform headers
-- should not contain platform-specific `#ifdef` branches
+### 启动路径
 
-### `core/`
+RTOS 侧：
 
-Framework lifecycle and startup coordination.
+```text
+vendor startup / RTOS main
+-> platforms/rtos/.../startup/app_start.c
+-> ep_framework_start()
+-> ep_platform_boot()
+-> ep_framework_init()
+-> app_main()
+```
 
-- owns `ep_framework_init()` and `ep_framework_start()`
-- bridges application startup with platform bootstrap
+Linux 侧：
 
-### `components/`
+```text
+platforms/linux/.../startup/main.c
+-> ep_framework_start()
+-> ep_platform_boot()
+-> ep_framework_init()
+-> app_main()
+```
 
-Reusable cross-platform services and business-facing modules.
+## 当前已落地内容
 
-Current component skeletons include:
+当前仓库已经完成了第一阶段骨架化工作：
 
-- `log`
-- `event`
-- `timer`
-- `config`
-- `device`
-- `file`
-- `net`
+- 顶层 CMake 构建入口
+- `core/` 与 `app/` 的最小启动骨架
+- `osal/` 公共头文件面
+- `hal/` 公共头文件面
+- `platforms/rtos/demo_family` 平台样板
+- `platforms/linux/demo_family` 平台样板
+- GitHub `PR / Issue / CI / CODEOWNERS` 基础设施
+- 对应的 host-side / contract 测试骨架
 
-### `osal/`
+## 目录结构
 
-Public OS abstraction layer.
-
-Current public headers:
-
-- `ep_osal_types.h`
-- `ep_osal_err.h`
-- `ep_osal_thread.h`
-- `ep_osal_mutex.h`
-- `ep_osal_sem.h`
-- `ep_osal_queue.h`
-- `ep_osal_time.h`
-- `ep_osal_mem.h`
-
-### `hal/`
-
-Public hardware abstraction layer.
-
-Current public headers:
-
-- `ep_hal_types.h`
-- `ep_hal_err.h`
-- `ep_hal_gpio.h`
-- `ep_hal_uart.h`
-- `ep_hal_i2c.h`
-- `ep_hal_spi.h`
-- `ep_hal_pwm.h`
-- `ep_hal_adc.h`
-
-### `platforms/`
-
-Platform-specific adaptation packages.
-
-Current demo packages:
-
-- `platforms/rtos/demo_family`
-- `platforms/linux/demo_family`
-
-Each package contains:
-
-- `startup/`
-- `osal_port/`
-- `hal_port/`
-- `component_port/`
-- `board/`
-- `config/`
-
-### `vendor/`
-
-Reserved location for RTOS vendor SDKs and patches.
-
-Linux user-space integration is not modeled as a vendor SDK layer.
-
-## Current Repository Structure
+当前仓库主结构如下：
 
 ```text
 embedded-platform-core/
 ├── .github/
 ├── app/
+│   └── include/
 ├── cmake/
+│   ├── modules/
+│   ├── presets/
+│   └── toolchains/
 ├── components/
+│   ├── config/
+│   ├── device/
+│   ├── event/
+│   ├── file/
+│   ├── log/
+│   ├── net/
+│   └── timer/
 ├── config/
+│   ├── common/
+│   ├── feature/
+│   └── profiles/
 ├── core/
+│   ├── include/
+│   └── src/
 ├── docs/
+│   ├── architecture/
+│   ├── decisions/
+│   ├── porting/
+│   ├── testing/
+│   └── superpowers/
 ├── examples/
 ├── hal/
+│   └── include/
 ├── osal/
+│   └── include/
 ├── platforms/
 │   ├── linux/
 │   │   ├── common/
@@ -142,70 +141,164 @@ embedded-platform-core/
 ├── third_party/
 │   └── external/
 ├── tools/
+│   ├── ci/
+│   └── scripts/
 └── vendor/
+    └── rtos/
 ```
 
-## Build Status
+## 关键目录说明
 
-Current bootstrap supports:
+### `app/`
 
-- top-level CMake configure
-- framework core/app targets
-- public OSAL/HAL interface targets
-- RTOS demo platform static target
-- Linux demo platform executable target
+应用入口和产品逻辑。
 
-This is still a scaffold stage, not a production-ready board integration.
+约束：
 
-## Tests
+- 不直接包含原厂 SDK 头文件
+- 不直接包含 Linux 平台原生头文件
+- 不写平台相关 `#ifdef`
 
-The repository currently includes bootstrap tests for:
+### `core/`
 
-- repository skeleton existence
-- top-level CMake bootstrap structure
-- framework bootstrap core wiring
-- OSAL public headers
-- HAL public headers
-- RTOS/Linux platform bootstrap skeletons
-- GitHub workflow files
+框架启动和生命周期编排。
 
-Contract tests have been strengthened so OSAL and HAL public headers are checked as standalone compilable headers, not just text placeholders.
+当前关键接口：
 
-## GitHub Workflow
+- `ep_framework_init()`
+- `ep_framework_start()`
 
-The repository includes:
+### `components/`
+
+跨平台公共组件层，目前先把结构搭出来，后续逐步接真实功能。
+
+### `osal/`
+
+公共 OS 抽象层，当前已建立以下头文件：
+
+- `ep_osal_types.h`
+- `ep_osal_err.h`
+- `ep_osal_thread.h`
+- `ep_osal_mutex.h`
+- `ep_osal_sem.h`
+- `ep_osal_queue.h`
+- `ep_osal_time.h`
+- `ep_osal_mem.h`
+
+### `hal/`
+
+公共硬件抽象层，当前已建立以下头文件：
+
+- `ep_hal_types.h`
+- `ep_hal_err.h`
+- `ep_hal_gpio.h`
+- `ep_hal_uart.h`
+- `ep_hal_i2c.h`
+- `ep_hal_spi.h`
+- `ep_hal_pwm.h`
+- `ep_hal_adc.h`
+
+### `platforms/`
+
+平台差异收口层。
+
+当前样板包：
+
+- `platforms/rtos/demo_family`
+- `platforms/linux/demo_family`
+
+每个平台包包含：
+
+- `startup/`
+- `osal_port/`
+- `hal_port/`
+- `component_port/`
+- `board/`
+- `config/`
+
+### `vendor/`
+
+RTOS 原厂 SDK 和补丁预留位置。
+
+### `third_party/`
+
+外部依赖预留位置，当前已有：
+
+- `EasyLogger`
+- `lvgl`
+
+## 当前构建状态
+
+当前骨架已经支持：
+
+- 顶层 `cmake configure`
+- `ep_core`
+- `ep_app`
+- `ep_osal`
+- `ep_hal`
+- `ep_platform_rtos_demo`
+- `ep_platform_linux_demo`
+
+说明：
+
+- `ep_platform_linux_demo` 是可执行目标
+- `ep_platform_rtos_demo` 当前是静态库骨架目标，用于平台样板和接口联通验证
+
+## 当前测试覆盖
+
+目前仓库中的测试主要覆盖“骨架正确性”和“公共头文件契约”：
+
+- 仓库骨架目录存在性
+- 顶层 CMake 构建骨架
+- 框架启动骨架
+- OSAL 公共头文件
+- HAL 公共头文件
+- RTOS / Linux 平台样板
+- GitHub 工作流文件存在性
+
+其中：
+
+- OSAL / HAL 头文件测试已经强化到“可独立双重 include 并单独编译”的级别
+- 平台样板测试已经覆盖 `cmake configure + build` smoke 流程
+
+## GitHub 工作流
+
+当前仓库已包含：
 
 - `CODEOWNERS`
-- pull request template
-- issue templates
-- GitHub Actions CI skeleton
+- Pull Request 模板
+- Issue 模板
+- GitHub Actions CI 骨架
 
-Current CI runs:
+当前 CI 运行：
 
-- `pytest tests/host_unit tests/api_contract -v`
+```bash
+pytest tests/host_unit tests/api_contract -v
+```
 
-## Current Constraints
+## 当前约束
 
-- implementation language is standard C
-- Linux support is user-space only
-- RTOS side is expected to stay on top of vendor SDK startup and driver models
-- framework APIs are currently scaffold-level and will continue evolving as real platforms are integrated
+- 语言为标准 C
+- Linux 仅做用户态框架
+- RTOS 侧保留原厂 SDK / BSP / startup
+- 当前仍是框架 bootstrap 阶段，不是完整产品级适配
+- `demo_family` 只是占位平台包，后续要替换成真实平台
 
-## Next Steps
+## 后续建议
 
-The next practical steps after this bootstrap phase are:
+下一阶段最实际的推进顺序：
 
-1. replace `demo_family` platform placeholders with real RTOS and Linux platform packages
-2. wire board/config selection into platform build flow
-3. connect real OSAL and HAL backend implementations
-4. add stronger build and target smoke coverage
-5. start integrating actual product/application modules on top of the stable public interfaces
+1. 用真实平台名替换 `demo_family`
+2. 接入真实 `board/config` 选择逻辑
+3. 把 `OSAL` 和 `HAL` 从头文件骨架接到真实 backend
+4. 增加更强的构建/链接/目标机 smoke 覆盖
+5. 开始把业务模块接到统一接口层上
 
-## Design References
+## 设计与计划文档
 
-Repository design and planning artifacts are stored under:
+设计和实施计划保存在：
 
 - `docs/superpowers/specs/`
 - `docs/superpowers/plans/`
 
-These documents capture the current architecture decisions and implementation sequence used to bootstrap this repository.
+这些文档记录了当前仓库的架构思路、边界约束和骨架实现顺序。
