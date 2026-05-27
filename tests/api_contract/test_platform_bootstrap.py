@@ -1,10 +1,43 @@
+import subprocess
 from pathlib import Path
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
 def test_both_platform_families_have_bootstrap_entries():
-    rtos = Path("platforms/rtos/demo_family/startup/app_start.c").read_text()
-    linux = Path("platforms/linux/demo_family/startup/main.c").read_text()
+    rtos = (REPO_ROOT / "platforms/rtos/demo_family/startup/app_start.c").read_text()
+    linux = (REPO_ROOT / "platforms/linux/demo_family/startup/main.c").read_text()
     assert "ep_platform_boot" in rtos
     assert "ep_framework_start" in rtos
     assert "ep_platform_boot" in linux
     assert "ep_framework_start" in linux
+
+
+def test_platform_demo_targets_configure_and_build(tmp_path):
+    build_dir = tmp_path / "platform-smoke"
+
+    configure = subprocess.run(
+        ["cmake", "-S", str(REPO_ROOT), "-B", str(build_dir)],
+        capture_output=True,
+        text=True,
+    )
+    assert configure.returncode == 0, (
+        f"configure failed\nstdout:\n{configure.stdout}\nstderr:\n{configure.stderr}"
+    )
+
+    build = subprocess.run(
+        [
+            "cmake",
+            "--build",
+            str(build_dir),
+            "--target",
+            "ep_platform_rtos_demo",
+            "ep_platform_linux_demo",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert build.returncode == 0, (
+        f"build failed\nstdout:\n{build.stdout}\nstderr:\n{build.stderr}"
+    )
