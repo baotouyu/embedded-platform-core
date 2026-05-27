@@ -12,3 +12,4 @@ include(ep_options)
 # EP_PLATFORM_FAMILY is configured via ep_options.cmake.
 add_subdirectory(core)
 add_subdirectory(app)
+add_subdirectory(hal)
