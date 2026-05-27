@@ -8,7 +8,6 @@ from types import SimpleNamespace
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HAL_INCLUDE = REPO_ROOT / "hal" / "include"
 OSAL_INCLUDE = REPO_ROOT / "osal" / "include"
-COMPILER = shutil.which("clang") or shutil.which("cc")
 
 HEADER_SNIPPETS = {
     "ep_hal_types.h": """
@@ -22,6 +21,9 @@ HEADER_SNIPPETS = {
     """,
     "ep_hal_err.h": """
         ep_err_e err = EP_OK;
+        err = EP_ERR_INVAL;
+        err = EP_ERR_TIMEOUT;
+        err = EP_ERR_BUSY;
         err = EP_ERR_UNSUPPORTED;
         return err == EP_ERR_UNSUPPORTED ? 0 : 1;
     """,
@@ -70,7 +72,14 @@ HEADER_SNIPPETS = {
 }
 
 
+def _require_compiler() -> str:
+    compiler = shutil.which("clang") or shutil.which("cc")
+    assert compiler, "Expected clang or cc to be available for compile smoke test"
+    return compiler
+
+
 def _compile_header_standalone(tmp_path: Path, header_name: str, body: str) -> subprocess.CompletedProcess[str]:
+    compiler = _require_compiler()
     source = tmp_path / f"{header_name}.c"
     obj = tmp_path / f"{header_name}.o"
     source.write_text(
@@ -89,7 +98,7 @@ def _compile_header_standalone(tmp_path: Path, header_name: str, body: str) -> s
 
     return subprocess.run(
         [
-            COMPILER,
+            compiler,
             "-std=c11",
             "-Wall",
             "-Wextra",
@@ -119,6 +128,25 @@ def test_hal_headers_exist():
         assert (HAL_INCLUDE / header_name).is_file(), f"Missing HAL public header: {header_name}"
 
 
+def test_require_compiler_prefers_clang_then_cc(monkeypatch):
+    def fake_which(name):
+        return {"clang": None, "cc": "/usr/bin/cc"}.get(name)
+
+    monkeypatch.setattr(shutil, "which", fake_which)
+
+    assert _require_compiler() == "/usr/bin/cc"
+
+
+def test_ep_hal_err_snippet_covers_full_public_error_surface():
+    snippet = HEADER_SNIPPETS["ep_hal_err.h"]
+
+    assert "EP_OK" in snippet
+    assert "EP_ERR_INVAL" in snippet
+    assert "EP_ERR_TIMEOUT" in snippet
+    assert "EP_ERR_BUSY" in snippet
+    assert "EP_ERR_UNSUPPORTED" in snippet
+
+
 def test_compile_header_standalone_uses_werror(monkeypatch, tmp_path):
     captured = {}
 
@@ -143,8 +171,6 @@ def test_format_compile_failure_reports_stdout_and_stderr():
 
 
 def test_hal_headers_compile_standalone(tmp_path):
-    assert COMPILER, "Expected clang or cc to be available for compile smoke test"
-
     failures = []
     for header_name, body in HEADER_SNIPPETS.items():
         result = _compile_header_standalone(tmp_path, header_name, body)
