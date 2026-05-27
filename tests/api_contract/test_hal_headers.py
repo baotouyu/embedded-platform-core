@@ -2,6 +2,7 @@ import shutil
 import subprocess
 import textwrap
 from pathlib import Path
+from types import SimpleNamespace
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -92,6 +93,7 @@ def _compile_header_standalone(tmp_path: Path, header_name: str, body: str) -> s
             "-std=c11",
             "-Wall",
             "-Wextra",
+            "-Werror",
             "-I",
             str(HAL_INCLUDE),
             "-I",
@@ -108,9 +110,36 @@ def _compile_header_standalone(tmp_path: Path, header_name: str, body: str) -> s
     )
 
 
+def _format_compile_failure(header_name: str, result: subprocess.CompletedProcess[str]) -> str:
+    return f"{header_name}: stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+
+
 def test_hal_headers_exist():
     for header_name in HEADER_SNIPPETS:
         assert (HAL_INCLUDE / header_name).is_file(), f"Missing HAL public header: {header_name}"
+
+
+def test_compile_header_standalone_uses_werror(monkeypatch, tmp_path):
+    captured = {}
+
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    _compile_header_standalone(tmp_path, "ep_hal_types.h", HEADER_SNIPPETS["ep_hal_types.h"])
+
+    assert "-Werror" in captured["cmd"]
+
+
+def test_format_compile_failure_reports_stdout_and_stderr():
+    result = SimpleNamespace(returncode=1, stdout="stdout text", stderr="stderr text")
+
+    failure = _format_compile_failure("ep_hal_types.h", result)
+
+    assert "stdout text" in failure
+    assert "stderr text" in failure
 
 
 def test_hal_headers_compile_standalone(tmp_path):
@@ -120,6 +149,6 @@ def test_hal_headers_compile_standalone(tmp_path):
     for header_name, body in HEADER_SNIPPETS.items():
         result = _compile_header_standalone(tmp_path, header_name, body)
         if result.returncode != 0:
-            failures.append(f"{header_name}: {result.stderr}")
+            failures.append(_format_compile_failure(header_name, result))
 
     assert not failures, "\n".join(failures)
