@@ -1,0 +1,9 @@
+.DS_Store
+.superpowers/
+.worktrees/
+build/
+out/
+*.o
+*.a
+*.so
+*.dSYM/
