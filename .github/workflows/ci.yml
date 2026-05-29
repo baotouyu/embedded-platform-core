@@ -14,3 +14,5 @@ jobs:
           python-version: "3.11"
       - run: pip install pytest
       - run: pytest tests/host_unit tests/api_contract -v
+      - run: cmake -S . -B build
+      - run: cmake --build build
