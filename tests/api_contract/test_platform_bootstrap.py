@@ -23,12 +23,10 @@ def test_platform_executables_link_framework_components():
     host_cmake = (REPO_ROOT / "platforms/host/posix/CMakeLists.txt").read_text()
     timer_cmake = (REPO_ROOT / "components/timer/CMakeLists.txt").read_text()
 
-    assert "ep_components_event" in linux_cmake
-    assert "ep_components_event" in host_cmake or (
-        "ep_components_timer" in host_cmake
-        and "ep_components_event" in timer_cmake
-        and "PUBLIC" in timer_cmake
-    )
+    assert "ep_components_timer" in host_cmake
+    assert "ep_components_timer" in linux_cmake
+    assert "ep_components_event" in timer_cmake
+    assert "PUBLIC" in timer_cmake
 
 
 def test_platform_demo_targets_configure_and_build(tmp_path):

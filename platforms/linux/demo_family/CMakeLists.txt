@@ -15,5 +15,5 @@ target_link_libraries(ep_platform_linux_demo
   PRIVATE
     ep_core
     ep_app
-    ep_components_event
+    ep_components_timer
 )
