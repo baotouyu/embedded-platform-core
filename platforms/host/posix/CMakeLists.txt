@@ -8,6 +8,7 @@ add_executable(ep_platform_host_posix
   osal_port/ep_host_osal_thread.c
   osal_port/ep_host_osal_mutex.c
   osal_port/ep_host_osal_sem.c
+  osal_port/ep_host_osal_queue.c
   hal_port/ep_host_hal_stub.c
   component_port/ep_host_component_stub.c
 )
