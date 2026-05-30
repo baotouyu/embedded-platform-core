@@ -92,6 +92,7 @@ int ep_timer_init(void)
 int ep_timer_start(ep_timer_id_t timer_id, unsigned int timeout_ms, ep_event_id_t event_id)
 {
     uint64_t deadline_ms;
+    size_t first_free = EP_TIMER_MAX_TIMERS;
     size_t i;
     int rc;
 
@@ -111,15 +112,27 @@ int ep_timer_start(ep_timer_id_t timer_id, unsigned int timeout_ms, ep_event_id_
     }
 
     for (i = 0u; i < EP_TIMER_MAX_TIMERS; ++i) {
-        if (!g_timers[i].active) {
-            g_timers[i].active = 1;
-            g_timers[i].timer_id = timer_id;
+        if (g_timers[i].active && g_timers[i].timer_id == timer_id) {
             g_timers[i].deadline_ms = deadline_ms;
             g_timers[i].event_id = event_id;
             (void)ep_mutex_unlock(g_timer_lock);
             return EP_OK;
         }
+
+        if (!g_timers[i].active && first_free == EP_TIMER_MAX_TIMERS) {
+            first_free = i;
+        }
     }
+
+    if (first_free == EP_TIMER_MAX_TIMERS) {
+        (void)ep_mutex_unlock(g_timer_lock);
+        return EP_ERR_BUSY;
+    }
+
+    g_timers[first_free].active = 1;
+    g_timers[first_free].timer_id = timer_id;
+    g_timers[first_free].event_id = event_id;
+    g_timers[first_free].deadline_ms = deadline_ms;
 
     (void)ep_mutex_unlock(g_timer_lock);
     return EP_OK;
@@ -127,6 +140,9 @@ int ep_timer_start(ep_timer_id_t timer_id, unsigned int timeout_ms, ep_event_id_
 
 int ep_timer_stop(ep_timer_id_t timer_id)
 {
+    size_t i;
+    int rc;
+
     if (!g_timer_started) {
         return EP_ERR_UNSUPPORTED;
     }
@@ -135,5 +151,19 @@ int ep_timer_stop(ep_timer_id_t timer_id)
         return EP_ERR_INVAL;
     }
 
+    rc = ep_mutex_lock(g_timer_lock);
+    if (rc != EP_OK) {
+        return rc;
+    }
+
+    for (i = 0u; i < EP_TIMER_MAX_TIMERS; ++i) {
+        if (g_timers[i].active && g_timers[i].timer_id == timer_id) {
+            g_timers[i].active = 0;
+            (void)ep_mutex_unlock(g_timer_lock);
+            return EP_OK;
+        }
+    }
+
+    (void)ep_mutex_unlock(g_timer_lock);
     return EP_ERR_INVAL;
 }
