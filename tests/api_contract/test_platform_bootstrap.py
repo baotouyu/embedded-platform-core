@@ -5,13 +5,17 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_both_platform_families_have_bootstrap_entries():
+def test_platform_families_have_bootstrap_entries():
     rtos = (REPO_ROOT / "platforms/rtos/demo_family/startup/app_start.c").read_text()
     linux = (REPO_ROOT / "platforms/linux/demo_family/startup/main.c").read_text()
+    host = (REPO_ROOT / "platforms/host/posix/startup/main.c").read_text()
+
     assert "ep_platform_boot" in rtos
     assert "ep_framework_start" in rtos
     assert "ep_platform_boot" in linux
     assert "ep_framework_start" in linux
+    assert "ep_platform_boot" in host
+    assert "ep_framework_start" in host
 
 
 def test_platform_demo_targets_configure_and_build(tmp_path):
@@ -34,6 +38,7 @@ def test_platform_demo_targets_configure_and_build(tmp_path):
             "--target",
             "ep_platform_rtos_demo",
             "ep_platform_linux_demo",
+            "ep_platform_host_posix",
         ],
         capture_output=True,
         text=True,

@@ -1,0 +1,17 @@
+add_executable(ep_platform_host_posix
+  startup/main.c
+  osal_port/ep_host_osal_stub.c
+  hal_port/ep_host_hal_stub.c
+  component_port/ep_host_component_stub.c
+)
+
+target_include_directories(ep_platform_host_posix
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/core/include
+)
+
+target_link_libraries(ep_platform_host_posix
+  PRIVATE
+    ep_core
+    ep_app
+)
