@@ -1,54 +1,51 @@
-# Host POSIX Bootstrap Design
+# Host POSIX 启动骨架设计
 
-## Overview
+## 概述
 
-This design adds a small host-side POSIX platform package so the framework can be
-developed and verified on macOS and Ubuntu before real RTOS board adaptation.
+本设计新增一个很小的 `Host POSIX` 平台包，让框架可以先在 macOS 和
+Ubuntu 电脑上开发、构建和验证，再去适配真实 RTOS 板子。
 
-The host platform is not a product target. It is a fast validation target for
-`app/`, `core/`, public OSAL/HAL contracts, and platform-neutral components.
-Real ArtInChip Luban-Lite support remains a later RTOS platform package under
-`platforms/rtos/`.
+这里的 host 平台不是产品目标平台，而是快速验证平台。它服务于 `app/`、
+`core/`、公共 OSAL/HAL 契约测试，以及后续平台无关组件的本机验证。
+真正的匠芯创 Luban-Lite 适配后面单独放到 `platforms/rtos/` 下面。
 
-## Goals
+## 目标
 
-- Provide a clear Mac/Ubuntu host validation target.
-- Keep `app/`, `core/`, and future `components/` free of platform-native headers.
-- Let developers run the framework bootstrap locally with CMake.
-- Create a safe place for POSIX-backed OSAL implementations and HAL stubs.
-- Preserve the later Luban-Lite adaptation path without mixing SDK details into
-  host code.
+- 提供一个清晰的 Mac/Ubuntu 本机验证目标。
+- 保持 `app/`、`core/` 和后续 `components/` 不包含平台原生头文件。
+- 让开发者可以用 CMake 在本机跑通框架启动链路。
+- 给 POSIX 版 OSAL 实现和 HAL stub/mock 留出明确位置。
+- 保留后续 Luban-Lite 适配路径，避免把 SDK 细节混进 host 代码。
 
-## Non-Goals
+## 非目标
 
-- Do not adapt ArtInChip Luban-Lite in this step.
-- Do not add RT-Thread, vendor SDK, or board-specific code.
-- Do not replace the existing RTOS/Linux demo packages yet.
-- Do not implement complete OSAL/HAL behavior in the first bootstrap step.
-- Do not treat macOS as a production embedded platform.
+- 本步骤不适配匠芯创 Luban-Lite。
+- 本步骤不加入 RT-Thread、原厂 SDK 或板级代码。
+- 本步骤不替换已有 RTOS/Linux demo 平台包。
+- 第一个 host bootstrap 不实现完整 OSAL/HAL 行为。
+- 不把 macOS 当成最终嵌入式产品平台。
 
-## Platform Roles
+## 平台角色
 
-The project should distinguish three environments:
+当前工程要区分三个环境：
 
 ```text
 macOS host
-  Local development, pytest, CMake bootstrap, component tests, POSIX validation.
+  本地开发、pytest、CMake bootstrap、组件测试、POSIX 验证。
 
 Ubuntu host
-  Local development plus ArtInChip SDK build host for later Luban-Lite work.
+  本地开发，以及后续编译匠芯创 Luban-Lite SDK 的开发机。
 
 ArtInChip Luban-Lite target
-  Real RTOS/RT-Thread firmware target, adapted later under platforms/rtos/.
+  真实 RTOS/RT-Thread 固件目标，后续放在 platforms/rtos/ 下适配。
 ```
 
-Ubuntu is a development machine in the current plan, not the board operating
-system. If a future product runs Linux on the target board, it should be modeled
-as a separate Linux target package.
+当前计划里，Ubuntu 是开发电脑，不是板子上的目标操作系统。如果以后产品真的运行
+目标 Linux 系统，应作为单独的 Linux 目标平台包处理。
 
-## Repository Shape
+## 仓库结构
 
-Add a host platform package:
+新增 host 平台包：
 
 ```text
 platforms/host/
@@ -67,26 +64,24 @@ platforms/host/
         └── host_posix.cmake
 ```
 
-The first implementation may keep the port files as stubs. Later PRs can replace
-or split them as real OSAL modules are implemented.
+第一步可以先保留 stub 文件。后续 PR 再按模块拆分并替换成真实 OSAL/HAL 实现。
 
-## Build Model
+## 构建模型
 
-The top-level CMake should include the host POSIX package as a normal build
-target. The first target can be named:
+顶层 CMake 把 host POSIX 包作为普通构建目标加入。第一个目标命名为：
 
 ```text
 ep_platform_host_posix
 ```
 
-The target links:
+该目标链接：
 
 ```text
 ep_core
 ep_app
 ```
 
-The host executable entry path is:
+host 可执行程序启动路径：
 
 ```text
 platforms/host/posix/startup/main.c
@@ -96,12 +91,11 @@ platforms/host/posix/startup/main.c
 -> app_main()
 ```
 
-`ep_platform_boot()` for the first host bootstrap should return success and
-avoid platform-specific side effects.
+第一个版本里的 `ep_platform_boot()` 只返回成功，不做平台副作用操作。
 
-## Layering Rules
+## 分层规则
 
-Host POSIX code may include system headers such as:
+Host POSIX 代码可以包含这些系统头文件：
 
 ```text
 pthread.h
@@ -111,10 +105,9 @@ stdlib.h
 stdio.h
 ```
 
-Those headers must stay inside `platforms/host/posix/` or host-only tests.
+这些头文件必须留在 `platforms/host/posix/` 或 host-only 测试里。
 
-The following layers must not include POSIX, Linux, RT-Thread, or vendor SDK
-headers:
+下面这些层不能包含 POSIX、Linux、RT-Thread 或原厂 SDK 头文件：
 
 ```text
 app/
@@ -124,32 +117,31 @@ osal/include/
 hal/include/
 ```
 
-## Incremental PR Sequence
+## 小 PR 推进顺序
 
-The host path should be built in small reviewable steps:
+host 路线按小块推进：
 
-1. Add `platforms/host/posix` bootstrap target.
-2. Add host OSAL time and memory implementations.
-3. Add host OSAL mutex, semaphore, thread, and queue implementations.
-4. Add a minimal logging component that works on host.
-5. Add event and timer components on top of OSAL.
-6. Add HAL mock or stub modules for host-side tests.
-7. Write the ArtInChip Luban-Lite adaptation design.
-8. Add `platforms/rtos/artinchip_luban_lite` skeleton.
+1. 新增 `platforms/host/posix` 启动骨架目标。
+2. 增加 host OSAL time 和 memory 实现。
+3. 增加 host OSAL mutex、semaphore、thread、queue 实现。
+4. 增加一个能在 host 上工作的最小日志组件。
+5. 基于 OSAL 增加事件和定时器组件。
+6. 增加 host 侧 HAL mock 或 stub，服务本机测试。
+7. 编写匠芯创 Luban-Lite 适配设计。
+8. 新增 `platforms/rtos/artinchip_luban_lite` 骨架。
 
-Each PR should keep a narrow boundary and include tests that can run on macOS
-and GitHub Actions.
+每个 PR 都要保持边界窄，并包含可以在 macOS 和 GitHub Actions 上运行的测试。
 
-## Testing Strategy
+## 测试策略
 
-The first host bootstrap PR should add or update tests to verify:
+第一个 host bootstrap PR 需要增加或更新测试，验证：
 
-- `platforms/host/posix` exists.
-- The host target is mentioned in the top-level CMake graph.
-- CMake configure/build succeeds on the development machine.
-- The generated host executable runs and exits with status `0`.
+- `platforms/host/posix` 存在。
+- 顶层 CMake 构建图包含 host 目标。
+- CMake configure/build 可以在开发机通过。
+- 生成的 host 可执行文件可以运行，并以状态码 `0` 退出。
 
-Existing validation remains required:
+已有验证仍然必须通过：
 
 ```bash
 pytest tests/host_unit tests/api_contract -v
@@ -157,40 +149,38 @@ cmake -S . -B build
 cmake --build build
 ```
 
-Later OSAL implementations should add API contract tests and host unit tests
-before implementation.
+后续 OSAL 实现要先补 API 契约测试和 host 单元测试，再写实现。
 
-## Luban-Lite Boundary
+## Luban-Lite 边界
 
-ArtInChip Luban-Lite should be adapted separately as an RTOS platform package:
+匠芯创 Luban-Lite 后续单独作为 RTOS 平台包适配：
 
 ```text
 platforms/rtos/artinchip_luban_lite/
 vendor/rtos/artinchip_luban_lite/
 ```
 
-Expected mappings for later work:
+后续预期映射关系：
 
 ```text
 ep_osal_thread -> rt_thread_*
 ep_osal_mutex  -> rt_mutex_*
 ep_osal_sem    -> rt_sem_*
-ep_osal_queue  -> rt_mq_* or rt_mb_*
+ep_osal_queue  -> rt_mq_* 或 rt_mb_*
 ep_osal_time   -> rt_tick / rt_timer
 ep_osal_mem    -> rt_malloc / rt_free
-ep_hal_gpio    -> RT-Thread PIN device or ArtInChip GPIO driver
+ep_hal_gpio    -> RT-Thread PIN 设备或匠芯创 GPIO driver
 ep_hal_uart    -> RT-Thread serial device
 ep_hal_i2c     -> RT-Thread I2C device
 ep_hal_spi     -> RT-Thread SPI device
 ```
 
-No Luban-Lite SDK headers should be included by host POSIX code.
+Host POSIX 代码不能包含 Luban-Lite SDK 头文件。
 
-## Success Criteria
+## 成功标准
 
-- Developers can build and run a named host POSIX executable on macOS.
-- The host package has a clear location separate from RTOS and target Linux
-  packages.
-- Public framework layers remain platform-neutral.
-- The next OSAL and component PRs have a stable host target for fast feedback.
-- The later Luban-Lite adaptation path remains explicit and isolated.
+- 开发者可以在 macOS 上构建并运行明确命名的 host POSIX 可执行文件。
+- host 包的位置和 RTOS、目标 Linux 包清楚分离。
+- 公共框架层保持平台无关。
+- 后续 OSAL 和组件 PR 有稳定的 host 目标用于快速反馈。
+- 后续 Luban-Lite 适配路径明确且隔离。
