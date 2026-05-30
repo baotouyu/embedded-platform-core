@@ -70,8 +70,8 @@ int ep_event_init(void)
 
 int ep_event_subscribe(ep_event_id_t event_id, ep_event_handler_t handler, void *user_data)
 {
-    (void)event_id;
-    (void)user_data;
+    size_t i;
+    int rc;
 
     if (handler == 0) {
         return EP_ERR_INVAL;
@@ -81,7 +81,24 @@ int ep_event_subscribe(ep_event_id_t event_id, ep_event_handler_t handler, void 
         return EP_ERR_UNSUPPORTED;
     }
 
-    return EP_ERR_UNSUPPORTED;
+    rc = ep_mutex_lock(g_event_lock);
+    if (rc != EP_OK) {
+        return rc;
+    }
+
+    for (i = 0u; i < EP_EVENT_MAX_HANDLERS; ++i) {
+        if (!g_subscriptions[i].used) {
+            g_subscriptions[i].used = 1;
+            g_subscriptions[i].event_id = event_id;
+            g_subscriptions[i].handler = handler;
+            g_subscriptions[i].user_data = user_data;
+            (void)ep_mutex_unlock(g_event_lock);
+            return EP_OK;
+        }
+    }
+
+    (void)ep_mutex_unlock(g_event_lock);
+    return EP_ERR_BUSY;
 }
 
 int ep_event_publish(ep_event_id_t event_id, const void *payload, size_t payload_size, unsigned int timeout_ms)

@@ -119,3 +119,85 @@ def test_host_event_bus_init_and_invalid_arguments(tmp_path):
     )
 
     assert run_result.returncode == 0, run_result.stderr
+
+
+def test_host_event_bus_subscription_capacity(tmp_path):
+    assert COMPILER, "Expected clang or cc to be available"
+
+    source = tmp_path / "host_event_capacity_smoke.c"
+    executable = tmp_path / "host_event_capacity_smoke"
+    source.write_text(
+        textwrap.dedent(
+            """
+            #include "ep_event.h"
+            #include "ep_osal_err.h"
+
+            static void handler(ep_event_id_t event_id, const void *payload, size_t payload_size, void *user_data)
+            {
+                (void)event_id;
+                (void)payload;
+                (void)payload_size;
+                (void)user_data;
+            }
+
+            int main(void)
+            {
+                int i;
+
+                if (ep_event_init() != EP_OK) {
+                    return 1;
+                }
+
+                for (i = 0; i < 16; ++i) {
+                    if (ep_event_subscribe(100 + i, handler, 0) != EP_OK) {
+                        return 2;
+                    }
+                }
+
+                if (ep_event_subscribe(200, handler, 0) != EP_ERR_BUSY) {
+                    return 3;
+                }
+
+                return 0;
+            }
+            """
+        ).strip()
+        + "\n"
+    )
+
+    compile_result = subprocess.run(
+        [
+            COMPILER,
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            str(REPO_ROOT / "components/event/include"),
+            "-I",
+            str(REPO_ROOT / "osal/include"),
+            str(source),
+            str(REPO_ROOT / "components/event/src/ep_event.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_queue.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_mutex.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_thread.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_mem.c"),
+            "-pthread",
+            "-o",
+            str(executable),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        check=False,
+    )
+
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [str(executable)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert run_result.returncode == 0, run_result.stderr
