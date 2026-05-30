@@ -1,11 +1,17 @@
 #include "ep_framework.h"
 #include "app_main.h"
+#include "ep_log.h"
 #include "ep_event.h"
 #include "ep_timer.h"
 
 int ep_framework_init(void)
 {
-    int rc = ep_event_init();
+    int rc = ep_log_init();
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ep_event_init();
     if (rc != 0) {
         return rc;
     }

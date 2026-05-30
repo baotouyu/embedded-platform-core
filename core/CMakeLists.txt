@@ -7,6 +7,7 @@ target_include_directories(ep_core
     ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE
     ${CMAKE_SOURCE_DIR}/app/include
+    ${CMAKE_SOURCE_DIR}/components/log/include
     ${CMAKE_SOURCE_DIR}/components/event/include
     ${CMAKE_SOURCE_DIR}/components/timer/include
 )
