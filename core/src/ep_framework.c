@@ -1,9 +1,10 @@
 #include "ep_framework.h"
 #include "app_main.h"
+#include "ep_event.h"
 
 int ep_framework_init(void)
 {
-    return 0;
+    return ep_event_init();
 }
 
 int ep_framework_start(void)

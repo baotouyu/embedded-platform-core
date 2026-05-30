@@ -8,10 +8,12 @@ add_executable(ep_platform_linux_demo
 target_include_directories(ep_platform_linux_demo
   PRIVATE
     ${CMAKE_SOURCE_DIR}/core/include
+    ${CMAKE_SOURCE_DIR}/osal/include
 )
 
 target_link_libraries(ep_platform_linux_demo
   PRIVATE
     ep_core
     ep_app
+    ep_components_event
 )

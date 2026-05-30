@@ -18,6 +18,14 @@ def test_platform_families_have_bootstrap_entries():
     assert "ep_framework_start" in host
 
 
+def test_platform_executables_link_framework_components():
+    linux_cmake = (REPO_ROOT / "platforms/linux/demo_family/CMakeLists.txt").read_text()
+    host_cmake = (REPO_ROOT / "platforms/host/posix/CMakeLists.txt").read_text()
+
+    assert "ep_components_event" in linux_cmake
+    assert "ep_components_event" in host_cmake
+
+
 def test_platform_demo_targets_configure_and_build(tmp_path):
     build_dir = tmp_path / "platform-smoke"
 
