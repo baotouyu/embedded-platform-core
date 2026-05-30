@@ -2,10 +2,21 @@
 #include "ep_osal_mutex.h"
 #include "ep_osal_queue.h"
 #include "ep_osal_thread.h"
+#include "ep_osal_time.h"
 
 int ep_linux_osal_stub(void)
 {
     return 0;
+}
+
+uint64_t ep_time_now_ms(void)
+{
+    return 0u;
+}
+
+void ep_sleep_ms(unsigned int timeout_ms)
+{
+    (void)timeout_ms;
 }
 
 int ep_thread_create(ep_thread_t **thread, const char *name, ep_thread_entry_t entry, void *arg)
