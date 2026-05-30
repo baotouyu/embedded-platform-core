@@ -8,4 +8,5 @@ def test_cmake_bootstrap_layout_matches_task_requirements():
     assert "project(embedded-platform-core" in top_level_cmake
     assert "add_subdirectory(core)" in top_level_cmake
     assert "add_subdirectory(app)" in top_level_cmake
+    assert "add_subdirectory(platforms/host/posix)" in top_level_cmake
     assert "EP_PLATFORM_FAMILY" in top_level_cmake
