@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 200809L
+
 #include "ep_osal_time.h"
 
 #include <errno.h>
