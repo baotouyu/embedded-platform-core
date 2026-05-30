@@ -12,6 +12,7 @@ include(ep_options)
 # EP_PLATFORM_FAMILY is configured via ep_options.cmake.
 add_subdirectory(core)
 add_subdirectory(app)
+add_subdirectory(components/event)
 add_subdirectory(platforms/rtos/demo_family)
 add_subdirectory(platforms/linux/demo_family)
 add_subdirectory(platforms/host/posix)
