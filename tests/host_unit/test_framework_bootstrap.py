@@ -17,12 +17,19 @@ def test_framework_bootstrap_symbols_exist():
     assert "PUBLIC\n    ${CMAKE_CURRENT_SOURCE_DIR}/include" in cmake
     assert "PRIVATE\n    ${CMAKE_SOURCE_DIR}/app/include" in cmake
     assert "PUBLIC\n    ${CMAKE_SOURCE_DIR}/app/include" not in cmake
+    assert '#include "ep_log.h"' in source
+    assert '#include "elog.h"' not in source
     assert '#include "ep_event.h"' in source
     assert '#include "ep_timer.h"' in source
-    assert "int rc = ep_event_init();" in source
+    assert "int rc = ep_log_init();" in source
+    assert "rc = ep_event_init();" in source
     assert "return ep_event_init();" not in source
     assert "return ep_timer_init();" in source
+    assert "EP_LOGI(" not in source
+    assert "EP_LOGE(" not in source
+    assert source.index("ep_log_init()") < source.index("ep_event_init()")
     assert source.index("ep_event_init()") < source.index("ep_timer_init()")
+    assert "${CMAKE_SOURCE_DIR}/components/log/include" in cmake
     assert "${CMAKE_SOURCE_DIR}/components/event/include" in cmake
     assert "${CMAKE_SOURCE_DIR}/components/timer/include" in cmake
 
