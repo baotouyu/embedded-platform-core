@@ -201,3 +201,178 @@ def test_host_event_bus_subscription_capacity(tmp_path):
     )
 
     assert run_result.returncode == 0, run_result.stderr
+
+
+def test_host_event_bus_dispatches_published_event(tmp_path):
+    assert COMPILER, "Expected clang or cc to be available"
+
+    source = tmp_path / "host_event_dispatch_smoke.c"
+    executable = tmp_path / "host_event_dispatch_smoke"
+    source.write_text(
+        textwrap.dedent(
+            """
+            #include "ep_event.h"
+            #include "ep_osal_err.h"
+            #include "ep_osal_time.h"
+
+            #include <string.h>
+
+            struct payload {
+                int value;
+                char label[8];
+            };
+
+            struct observed_state {
+                volatile int call_count;
+                volatile int second_call_count;
+                ep_event_id_t event_id;
+                size_t payload_size;
+                int value;
+                char label[8];
+                int user_value;
+            };
+
+            static void first_handler(ep_event_id_t event_id, const void *payload, size_t payload_size, void *user_data)
+            {
+                struct observed_state *state = (struct observed_state *)user_data;
+                const struct payload *body = (const struct payload *)payload;
+
+                state->event_id = event_id;
+                state->payload_size = payload_size;
+                state->value = body->value;
+                (void)memcpy(state->label, body->label, sizeof(state->label));
+                state->user_value = 1234;
+                state->call_count += 1;
+            }
+
+            static void second_handler(ep_event_id_t event_id, const void *payload, size_t payload_size, void *user_data)
+            {
+                struct observed_state *state = (struct observed_state *)user_data;
+
+                (void)event_id;
+                (void)payload;
+                (void)payload_size;
+
+                state->second_call_count += 1;
+            }
+
+            static int wait_for_count(volatile int *value, int expected)
+            {
+                int i;
+
+                for (i = 0; i < 100; ++i) {
+                    if (*value == expected) {
+                        return 0;
+                    }
+                    ep_sleep_ms(5);
+                }
+
+                return 1;
+            }
+
+            int main(void)
+            {
+                struct observed_state state;
+                struct payload body;
+
+                (void)memset(&state, 0, sizeof(state));
+                body.value = 77;
+                (void)memcpy(body.label, "kitchen", 8);
+
+                if (ep_event_init() != EP_OK) {
+                    return 1;
+                }
+
+                if (ep_event_subscribe(10, first_handler, &state) != EP_OK) {
+                    return 2;
+                }
+
+                if (ep_event_subscribe(10, second_handler, &state) != EP_OK) {
+                    return 3;
+                }
+
+                if (ep_event_publish(99, &body, sizeof(body), 0) != EP_OK) {
+                    return 4;
+                }
+
+                ep_sleep_ms(20);
+                if (state.call_count != 0 || state.second_call_count != 0) {
+                    return 5;
+                }
+
+                if (ep_event_publish(10, &body, sizeof(body), 100) != EP_OK) {
+                    return 6;
+                }
+
+                if (wait_for_count(&state.call_count, 1) != 0) {
+                    return 7;
+                }
+
+                if (wait_for_count(&state.second_call_count, 1) != 0) {
+                    return 8;
+                }
+
+                if (state.event_id != 10) {
+                    return 9;
+                }
+
+                if (state.payload_size != sizeof(body)) {
+                    return 10;
+                }
+
+                if (state.value != 77) {
+                    return 11;
+                }
+
+                if (memcmp(state.label, "kitchen", 8) != 0) {
+                    return 12;
+                }
+
+                if (state.user_value != 1234) {
+                    return 13;
+                }
+
+                return 0;
+            }
+            """
+        ).strip()
+        + "\n"
+    )
+
+    compile_result = subprocess.run(
+        [
+            COMPILER,
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            str(REPO_ROOT / "components/event/include"),
+            "-I",
+            str(REPO_ROOT / "osal/include"),
+            str(source),
+            str(REPO_ROOT / "components/event/src/ep_event.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_queue.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_mutex.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_thread.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_time.c"),
+            str(REPO_ROOT / "platforms/host/posix/osal_port/ep_host_osal_mem.c"),
+            "-pthread",
+            "-o",
+            str(executable),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        check=False,
+    )
+
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [str(executable)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert run_result.returncode == 0, run_result.stderr

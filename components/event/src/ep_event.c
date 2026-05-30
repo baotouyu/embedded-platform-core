@@ -23,6 +23,11 @@ struct ep_event_subscription {
     void *user_data;
 };
 
+struct ep_event_handler_snapshot {
+    ep_event_handler_t handler;
+    void *user_data;
+};
+
 static ep_queue_t *g_event_queue;
 static ep_thread_t *g_event_thread;
 static ep_mutex_t *g_event_lock;
@@ -35,7 +40,31 @@ static void *ep_event_dispatch_loop(void *arg)
 
     for (;;) {
         struct ep_event_message message;
-        (void)ep_queue_recv(g_event_queue, &message, 1000u);
+        struct ep_event_handler_snapshot snapshots[EP_EVENT_MAX_HANDLERS];
+        size_t snapshot_count = 0u;
+        size_t i;
+
+        if (ep_queue_recv(g_event_queue, &message, 1000u) != EP_OK) {
+            continue;
+        }
+
+        if (ep_mutex_lock(g_event_lock) != EP_OK) {
+            continue;
+        }
+
+        for (i = 0u; i < EP_EVENT_MAX_HANDLERS; ++i) {
+            if (g_subscriptions[i].used && g_subscriptions[i].event_id == message.event_id) {
+                snapshots[snapshot_count].handler = g_subscriptions[i].handler;
+                snapshots[snapshot_count].user_data = g_subscriptions[i].user_data;
+                snapshot_count += 1u;
+            }
+        }
+
+        (void)ep_mutex_unlock(g_event_lock);
+
+        for (i = 0u; i < snapshot_count; ++i) {
+            snapshots[i].handler(message.event_id, message.payload, message.payload_size, snapshots[i].user_data);
+        }
     }
 
     return 0;
