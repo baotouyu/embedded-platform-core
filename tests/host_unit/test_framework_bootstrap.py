@@ -17,6 +17,9 @@ def test_framework_bootstrap_symbols_exist():
     assert "PUBLIC\n    ${CMAKE_CURRENT_SOURCE_DIR}/include" in cmake
     assert "PRIVATE\n    ${CMAKE_SOURCE_DIR}/app/include" in cmake
     assert "PUBLIC\n    ${CMAKE_SOURCE_DIR}/app/include" not in cmake
+    assert '#include "ep_event.h"' in source
+    assert "return ep_event_init();" in source
+    assert "${CMAKE_SOURCE_DIR}/components/event/include" in cmake
 
 
 def test_framework_bootstrap_cmake_smoke(tmp_path):
