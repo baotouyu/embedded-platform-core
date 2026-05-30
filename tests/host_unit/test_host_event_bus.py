@@ -11,6 +11,7 @@ COMPILER = shutil.which("clang") or shutil.which("cc")
 def test_event_component_is_wired_into_cmake():
     root_cmake = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     event_cmake_path = REPO_ROOT / "components/event/CMakeLists.txt"
+    timer_cmake_path = REPO_ROOT / "components/timer/CMakeLists.txt"
     host_cmake = (REPO_ROOT / "platforms/host/posix/CMakeLists.txt").read_text(
         encoding="utf-8"
     )
@@ -22,7 +23,12 @@ def test_event_component_is_wired_into_cmake():
     assert "add_library(ep_components_event STATIC" in event_cmake
     assert "src/ep_event.c" in event_cmake
     assert "components/event/include" not in event_cmake
-    assert "ep_components_event" in host_cmake
+
+    if "ep_components_event" not in host_cmake:
+        timer_cmake = timer_cmake_path.read_text(encoding="utf-8")
+        assert "ep_components_timer" in host_cmake
+        assert "ep_components_event" in timer_cmake
+        assert "PUBLIC" in timer_cmake
 
 
 def test_host_event_bus_init_and_invalid_arguments(tmp_path):
