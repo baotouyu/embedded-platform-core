@@ -38,6 +38,9 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
   target_include_directories(ep_platform_host_posix
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/ui_port
+      ${CMAKE_SOURCE_DIR}/components/ui/include
+      ${CMAKE_SOURCE_DIR}/components/log/include
+      ${EP_LVGL_INCLUDE_DIR}
   )
 
   target_compile_definitions(ep_platform_host_posix
@@ -48,5 +51,6 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
   target_link_libraries(ep_platform_host_posix
     PRIVATE
       ep_components_ui
+      ep_thirdparty_lvgl
   )
 endif()

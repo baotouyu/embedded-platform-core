@@ -43,32 +43,43 @@ def test_host_cmake_wires_sdl2_ui_port_only_for_host_macos():
     assert "APPLE" in host_cmake
     assert "CMAKE_SYSTEM_PROCESSOR" in host_cmake
     assert "ui_port" in host_cmake
+    assert "ep_components_ui" in host_cmake
+    assert "ep_thirdparty_lvgl" in host_cmake
 
 
-def test_app_cmake_wires_host_sdl2_demo_dependencies():
+def test_app_cmake_stays_platform_neutral():
     app_cmake = (REPO_ROOT / "app/CMakeLists.txt").read_text(encoding="utf-8")
 
-    assert "EP_HAS_HOST_SDL2_UI" in app_cmake
-    assert "ep_components_ui" in app_cmake
-    assert "ep_thirdparty_lvgl" in app_cmake
+    assert "EP_HAS_HOST_SDL2_UI" not in app_cmake
+    assert "ep_host_ui_port" not in app_cmake
+    assert "ep_thirdparty_lvgl" not in app_cmake
 
 
-def test_app_runs_host_sdl2_demo_behind_compile_flag():
+def test_host_startup_runs_sdl2_demo_behind_compile_flag():
+    startup = (REPO_ROOT / "platforms/host/posix/startup/main.c").read_text(encoding="utf-8")
+
+    assert "#if defined(EP_HAS_HOST_SDL2_UI)" in startup
+    assert '#include "ep_ui.h"' in startup
+    assert '#include "ep_host_ui_port.h"' in startup
+    assert '#include "lvgl.h"' in startup
+    assert "ep_framework_start()" in startup
+    assert "ep_ui_init()" in startup
+    assert "ep_host_ui_port_init()" in startup
+    assert "lv_label_create(lv_screen_active())" in startup
+    assert 'lv_label_set_text(label, "embedded-platform-core host SDL2")' in startup
+    assert "ep_ui_process()" in startup
+    assert "#define EP_HOST_UI_FRAME_DELAY_MS 16u" in startup
+    assert "ep_sleep_ms(EP_HOST_UI_FRAME_DELAY_MS)" in startup
+    assert "ep_host_ui_port_deinit()" in startup
+    assert "ep_ui_deinit()" in startup
+
+
+def test_app_main_remains_platform_neutral():
     app_main = (REPO_ROOT / "app/main.c").read_text(encoding="utf-8")
 
-    assert "#if defined(EP_HAS_HOST_SDL2_UI)" in app_main
-    assert '#include "ep_ui.h"' in app_main
-    assert '#include "ep_host_ui_port.h"' in app_main
-    assert '#include "lvgl.h"' in app_main
-    assert "ep_ui_init()" in app_main
-    assert "ep_host_ui_port_init()" in app_main
-    assert "lv_label_create(lv_screen_active())" in app_main
-    assert 'lv_label_set_text(label, "embedded-platform-core host SDL2")' in app_main
-    assert "ep_ui_process()" in app_main
-    assert "#define APP_HOST_UI_FRAME_DELAY_MS 16u" in app_main
-    assert "ep_sleep_ms(APP_HOST_UI_FRAME_DELAY_MS)" in app_main
-    assert "ep_host_ui_port_deinit()" in app_main
-    assert "ep_ui_deinit()" in app_main
+    assert "EP_HAS_HOST_SDL2_UI" not in app_main
+    assert "ep_host_ui_port" not in app_main
+    assert "lvgl.h" not in app_main
 
 
 def test_host_macos_binary_builds_and_runs_sdl2_demo():
