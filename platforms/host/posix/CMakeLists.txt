@@ -2,6 +2,7 @@ find_package(Threads REQUIRED)
 
 add_executable(ep_platform_host_posix
   startup/main.c
+  capability/ep_host_platform_capability.c
   osal_port/ep_host_osal_stub.c
   osal_port/ep_host_osal_time.c
   osal_port/ep_host_osal_mem.c
@@ -26,6 +27,7 @@ target_link_libraries(ep_platform_host_posix
     ep_components_timer
     ep_components_log
     ep_components_config
+    ep_platform_api
     Threads::Threads
 )
 
