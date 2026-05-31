@@ -65,6 +65,27 @@ def test_repository_layout_document_explains_top_level_directories_in_chinese():
     assert "不要直接修改预编译包里的 lv_conf.h" in content
 
 
+def test_project_overview_and_roadmap_document_current_direction():
+    repo_root = Path(__file__).resolve().parents[2]
+    overview_doc = repo_root / "docs/architecture/project-overview.md"
+    roadmap_doc = repo_root / "docs/development/roadmap.md"
+
+    assert overview_doc.is_file()
+    assert roadmap_doc.is_file()
+
+    overview = overview_doc.read_text(encoding="utf-8")
+    assert "项目总览" in overview
+    assert "跨平台嵌入式应用框架" in overview
+    assert "host/macOS" in overview
+    assert "平台能力注册表" in overview
+
+    roadmap = roadmap_doc.read_text(encoding="utf-8")
+    assert "项目路线图" in roadmap
+    assert "阶段 1：host 框架跑通" in roadmap
+    assert "阶段 2：平台能力注册表" in roadmap
+    assert "阶段 5：真实平台适配" in roadmap
+
+
 def test_repository_does_not_keep_duplicate_legacy_third_party_roots():
     repo_root = Path(__file__).resolve().parents[2]
 
