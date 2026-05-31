@@ -1,0 +1,1 @@
+host font smoke resource
