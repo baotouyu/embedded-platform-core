@@ -7,4 +7,10 @@ target_include_directories(ep_components_config
     ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE
     ${CMAKE_SOURCE_DIR}/osal/include
+    ${CMAKE_SOURCE_DIR}/components/file/include
+)
+
+target_link_libraries(ep_components_config
+  PRIVATE
+    ep_components_file
 )

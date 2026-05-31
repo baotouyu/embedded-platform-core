@@ -13,6 +13,9 @@ def test_config_component_is_wired_into_cmake():
     config_cmake_path = REPO_ROOT / "components/config/CMakeLists.txt"
 
     assert "add_subdirectory(components/config)" in root_cmake
+    assert root_cmake.index("add_subdirectory(components/file)") < root_cmake.index(
+        "add_subdirectory(components/config)"
+    )
     assert config_cmake_path.exists()
 
     config_cmake = config_cmake_path.read_text(encoding="utf-8")
@@ -20,6 +23,9 @@ def test_config_component_is_wired_into_cmake():
     assert "src/ep_config.c" in config_cmake
     assert "${CMAKE_CURRENT_SOURCE_DIR}/include" in config_cmake
     assert "${CMAKE_SOURCE_DIR}/osal/include" in config_cmake
+    assert "${CMAKE_SOURCE_DIR}/components/file/include" in config_cmake
+    assert "target_link_libraries(ep_components_config" in config_cmake
+    assert "ep_components_file" in config_cmake
 
 
 def test_host_config_memory_store_validation_and_defaults(tmp_path):
