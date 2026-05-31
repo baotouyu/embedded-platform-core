@@ -80,11 +80,13 @@ def test_project_overview_and_roadmap_document_current_direction():
     assert "跨平台嵌入式应用框架" in overview
     assert "host/macOS" in overview
     assert "平台能力注册表" in overview
+    assert "设备管理组件" in overview
 
     roadmap = roadmap_doc.read_text(encoding="utf-8")
     assert "项目路线图" in roadmap
     assert "阶段 1：host 框架跑通" in roadmap
     assert "阶段 2：平台能力注册表" in roadmap
+    assert "阶段 3：设备管理组件" in roadmap
     assert "阶段 5：真实平台适配" in roadmap
 
 
