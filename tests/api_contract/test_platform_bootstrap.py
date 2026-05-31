@@ -27,6 +27,8 @@ def test_platform_executables_link_framework_components():
     assert "ep_components_timer" in linux_cmake
     assert "ep_components_log" in host_cmake
     assert "ep_components_log" in linux_cmake
+    assert "ep_components_config" in host_cmake
+    assert "ep_components_config" in linux_cmake
     assert "ep_components_event" in timer_cmake
     assert "PUBLIC" in timer_cmake
 
