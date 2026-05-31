@@ -44,6 +44,8 @@ def test_log_header_compiles_standalone(tmp_path):
             {
                 ep_log_level_e level = EP_LOG_LEVEL_INFO;
                 int (*init_fn)(void) = ep_log_init;
+                int (*set_level_fn)(ep_log_level_e) = ep_log_set_level;
+                ep_log_level_e (*get_level_fn)(void) = ep_log_get_level;
                 int (*write_fn)(ep_log_level_e, const char *, const char *, ...) = ep_log_write;
 
                 if (EP_LOG_LEVEL_ASSERT != 0) {
@@ -56,7 +58,11 @@ def test_log_header_compiles_standalone(tmp_path):
                 EP_LOGD("contract", "debug %d", 4);
                 EP_LOGV("contract", "verbose %d", 5);
 
-                return (level == EP_LOG_LEVEL_INFO && init_fn && write_fn) ? 0 : 2;
+                return (level == EP_LOG_LEVEL_INFO &&
+                        init_fn &&
+                        set_level_fn &&
+                        get_level_fn &&
+                        write_fn) ? 0 : 2;
             }
             """
         ).strip()
