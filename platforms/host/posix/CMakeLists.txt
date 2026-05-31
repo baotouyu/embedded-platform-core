@@ -3,6 +3,7 @@ find_package(Threads REQUIRED)
 add_executable(ep_platform_host_posix
   startup/main.c
   capability/ep_host_platform_capability.c
+  paths/ep_host_platform_paths.c
   osal_port/ep_host_osal_stub.c
   osal_port/ep_host_osal_time.c
   osal_port/ep_host_osal_mem.c

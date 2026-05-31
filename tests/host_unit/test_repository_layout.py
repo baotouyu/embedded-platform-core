@@ -25,6 +25,12 @@ REQUIRED_DIRECTORIES = [
     "config/common",
     "config/feature",
     "config/profiles",
+    "resources/common/images",
+    "resources/common/fonts",
+    "resources/common/themes",
+    "resources/host/images",
+    "resources/host/fonts",
+    "resources/host/themes",
     "tests/host_unit",
     "tests/api_contract",
     "tests/integration",
@@ -63,6 +69,8 @@ def test_repository_layout_document_explains_top_level_directories_in_chinese():
     assert "platforms/include/" in content
     assert "third_party/external/" in content
     assert "third_party/prebuilt/" in content
+    assert "resources/" in content
+    assert "平台资源路径接口" in content
     assert "vendor/" in content
     assert "不要直接修改预编译包里的 lv_conf.h" in content
 
@@ -81,12 +89,14 @@ def test_project_overview_and_roadmap_document_current_direction():
     assert "host/macOS" in overview
     assert "平台能力注册表" in overview
     assert "设备管理组件" in overview
+    assert "平台路径接口" in overview
 
     roadmap = roadmap_doc.read_text(encoding="utf-8")
     assert "项目路线图" in roadmap
     assert "阶段 1：host 框架跑通" in roadmap
     assert "阶段 2：平台能力注册表" in roadmap
     assert "阶段 3：设备管理组件" in roadmap
+    assert "阶段 4：平台配置和资源管理" in roadmap
     assert "阶段 5：真实平台适配" in roadmap
 
 

@@ -63,6 +63,7 @@ third_party / vendor
 - CMake 工程骨架。
 - `app/core/components/osal/hal/platforms` 分层。
 - 平台能力注册表第一版。
+- 平台路径接口第一版。
 - host/macOS 可运行入口。
 - Linux 和 RTOS 平台边界占位。
 
@@ -89,6 +90,7 @@ third_party / vendor
 - EasyLogger 作为日志后端。
 - LVGL 9.1 host/macOS 预编译包。
 - `lvgl-prebuilt-host-macos` 独立仓库负责 host LVGL 配置和产物。
+- host 资源目录约定为 `resources/host`，图片、字体、主题分别放在对应子目录。
 
 ## 文档分工
 
@@ -128,8 +130,35 @@ platforms/include/ep_platform_capability.h
 
 组件和应用可以通过 `ep_platform_has_capability()` 查询能力，避免后续到处写平台判断。
 
+## 平台路径接口
+
+第一版平台路径接口已经放在：
+
+```text
+platforms/include/ep_platform_paths.h
+```
+
+当前接口提供：
+
+- 当前平台配置文件路径。
+- 当前平台资源根目录。
+- 资源相对路径拼接。
+- 图片、字体、主题路径拼接。
+
+host/macOS 当前使用：
+
+| 类型 | 路径 |
+| --- | --- |
+| 配置文件 | `config/profiles/host.cfg` |
+| 资源根目录 | `resources/host` |
+| 图片目录 | `resources/host/images` |
+| 字体目录 | `resources/host/fonts` |
+| 主题目录 | `resources/host/themes` |
+
+这个接口只解决“当前平台资源在哪里”的问题，不直接负责加载图片、字体、主题，也不封装 LVGL API。
+
 ## 当前推荐方向
 
-当前最适合继续补的是平台配置和资源管理。
+当前最适合继续补的是平台资源使用示例和真实平台适配前的公共检查。
 
-原因是平台能力注册表已经能表达“平台支持什么”，设备管理组件已经能表达“系统里有哪些设备”。下一步需要把不同平台的配置、资源路径和本地资源管理规则整理清楚。
+原因是平台能力注册表已经能表达“平台支持什么”，设备管理组件已经能表达“系统里有哪些设备”，平台路径接口已经能表达“资源和配置在哪里”。下一步可以在 host/macOS 上做一个小的资源使用冒烟验证，或者继续补真实平台适配需要的公共清单。
