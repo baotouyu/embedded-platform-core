@@ -43,6 +43,29 @@ def test_lvgl_host_macos_package_declares_sdl2_backend():
     assert "#define LV_SDL_INCLUDE_PATH <SDL2/SDL.h>" in lv_conf
 
 
+def test_lvgl_host_macos_package_declares_local_asset_support():
+    package_root = REPO_ROOT / "third_party/prebuilt/lvgl/host_macos"
+    manifest_text = (package_root / "lvgl_package.txt").read_text(encoding="utf-8")
+    lv_conf = (package_root / "include/lv_conf.h").read_text(encoding="utf-8")
+
+    assert "local_assets=enabled" in manifest_text
+    assert "filesystem=stdio:A" in manifest_text
+    assert "image_decoders=lodepng,tjpgd,bmp" in manifest_text
+    assert "font_loader=tiny_ttf_file" in manifest_text
+    assert "#define LV_USE_FS_STDIO 1" in lv_conf
+    assert "#define LV_FS_STDIO_LETTER 'A'" in lv_conf
+    assert '#define LV_FS_STDIO_PATH ""' in lv_conf
+    assert "#define LV_FS_STDIO_CACHE_SIZE 0" in lv_conf
+    assert "#define LV_USE_LODEPNG 1" in lv_conf
+    assert "#define LV_USE_TJPGD 1" in lv_conf
+    assert "#define LV_USE_BMP 1" in lv_conf
+    assert "#define LV_USE_TINY_TTF 1" in lv_conf
+    assert "#define LV_TINY_TTF_FILE_SUPPORT 1" in lv_conf
+    assert "#define LV_USE_LIBPNG 0" in lv_conf
+    assert "#define LV_USE_LIBJPEG_TURBO 0" in lv_conf
+    assert "#define LV_USE_FREETYPE 0" in lv_conf
+
+
 def test_lvgl_host_macos_static_library_is_tracked_by_git():
     package_library = "third_party/prebuilt/lvgl/host_macos/lib/liblvgl.a"
 
@@ -158,6 +181,94 @@ def test_lvgl_prebuilt_cmake_smoke_links_lv_init(tmp_path):
 
     run = subprocess.run(
         [str(build_dir / "lvgl_smoke")],
+        capture_output=True,
+        text=True,
+    )
+    assert run.returncode == 0, (
+        f"run failed\nstdout:\n{run.stdout}\nstderr:\n{run.stderr}"
+    )
+
+
+def test_lvgl_prebuilt_cmake_smoke_links_local_asset_modules(tmp_path):
+    if platform.system() != "Darwin" or platform.machine() != "arm64":
+        pytest.skip("host_macos LVGL package can only be linked on macOS arm64")
+
+    project_dir = tmp_path / "lvgl-local-assets-smoke"
+    project_dir.mkdir()
+
+    (project_dir / "CMakeLists.txt").write_text(
+        textwrap.dedent(
+            f"""
+            cmake_minimum_required(VERSION 3.20)
+            project(lvgl_local_assets_smoke C)
+
+            list(APPEND CMAKE_MODULE_PATH "{REPO_ROOT / "cmake/modules"}")
+            set(EP_PROJECT_ROOT "{REPO_ROOT}")
+            include(ep_lvgl_prebuilt)
+
+            add_executable(lvgl_local_assets_smoke main.c)
+            target_link_libraries(lvgl_local_assets_smoke PRIVATE ep_thirdparty_lvgl)
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    (project_dir / "main.c").write_text(
+        textwrap.dedent(
+            """
+            #include "lvgl.h"
+            #include "src/libs/lodepng/lv_lodepng.h"
+            #include "src/libs/tjpgd/lv_tjpgd.h"
+            #include "src/libs/bmp/lv_bmp.h"
+            #include "src/libs/tiny_ttf/lv_tiny_ttf.h"
+
+            int main(void)
+            {
+                void (*png_decoder_init)(void) = lv_lodepng_init;
+                void (*jpg_decoder_init)(void) = lv_tjpgd_init;
+                void (*bmp_decoder_init)(void) = lv_bmp_init;
+                void (*tiny_ttf_init)(void) = lv_tiny_ttf_init;
+                lv_font_t * (*create_font_from_file)(const char *, int32_t) = lv_tiny_ttf_create_file;
+
+                lv_init();
+
+                (void)png_decoder_init;
+                (void)jpg_decoder_init;
+                (void)bmp_decoder_init;
+                (void)tiny_ttf_init;
+                (void)create_font_from_file;
+
+                lv_deinit();
+                return 0;
+            }
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    build_dir = project_dir / "build"
+    configure = subprocess.run(
+        ["cmake", "-S", str(project_dir), "-B", str(build_dir)],
+        capture_output=True,
+        text=True,
+    )
+    assert configure.returncode == 0, (
+        f"configure failed\nstdout:\n{configure.stdout}\nstderr:\n{configure.stderr}"
+    )
+
+    build = subprocess.run(
+        ["cmake", "--build", str(build_dir)],
+        capture_output=True,
+        text=True,
+    )
+    assert build.returncode == 0, (
+        f"build failed\nstdout:\n{build.stdout}\nstderr:\n{build.stderr}"
+    )
+
+    run = subprocess.run(
+        [str(build_dir / "lvgl_local_assets_smoke")],
         capture_output=True,
         text=True,
     )

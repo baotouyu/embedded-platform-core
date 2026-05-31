@@ -63,6 +63,21 @@
 #define LV_USE_STDIO 1
 #define LV_USE_STDLIB 1
 
+#define LV_USE_FS_STDIO 1
+#define LV_FS_STDIO_LETTER 'A'
+#define LV_FS_STDIO_PATH ""
+#define LV_FS_STDIO_CACHE_SIZE 0
+
+#define LV_USE_LODEPNG 1
+#define LV_USE_TJPGD 1
+#define LV_USE_BMP 1
+#define LV_USE_LIBPNG 0
+#define LV_USE_LIBJPEG_TURBO 0
+
+#define LV_USE_TINY_TTF 1
+#define LV_TINY_TTF_FILE_SUPPORT 1
+#define LV_USE_FREETYPE 0
+
 #define LV_USE_THEME_DEFAULT 1
 #define LV_USE_THEME_SIMPLE 1
 #define LV_USE_THEME_MONO 1
