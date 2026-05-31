@@ -32,6 +32,23 @@ target_link_libraries(ep_platform_host_posix
     Threads::Threads
 )
 
+add_executable(ep_host_resource_smoke
+  demos/resource_smoke_main.c
+  paths/ep_host_platform_paths.c
+)
+
+target_include_directories(ep_host_resource_smoke
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/components/file/include
+    ${CMAKE_SOURCE_DIR}/osal/include
+)
+
+target_link_libraries(ep_host_resource_smoke
+  PRIVATE
+    ep_components_file
+    ep_platform_api
+)
+
 if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
   target_sources(ep_platform_host_posix
     PRIVATE
