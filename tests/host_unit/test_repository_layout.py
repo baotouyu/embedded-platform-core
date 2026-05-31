@@ -46,3 +46,15 @@ def test_repository_layout_matches_task_requirements():
     assert not missing_directories, (
         "Missing required directories: " + ", ".join(missing_directories)
     )
+
+
+def test_default_host_config_profile_exists():
+    repo_root = Path(__file__).resolve().parents[2]
+    host_config = repo_root / "config/profiles/host.cfg"
+
+    assert host_config.is_file()
+
+    content = host_config.read_text(encoding="utf-8")
+    assert "int log.level=3" in content
+    assert "bool feature.enabled=true" in content
+    assert "string device.name=host" in content
