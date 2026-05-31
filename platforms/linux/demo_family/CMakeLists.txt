@@ -17,4 +17,5 @@ target_link_libraries(ep_platform_linux_demo
     ep_app
     ep_components_timer
     ep_components_log
+    ep_components_config
 )
