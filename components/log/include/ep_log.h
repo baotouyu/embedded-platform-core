@@ -11,6 +11,8 @@ typedef enum {
 } ep_log_level_e;
 
 int ep_log_init(void);
+int ep_log_set_level(ep_log_level_e level);
+ep_log_level_e ep_log_get_level(void);
 int ep_log_write(ep_log_level_e level, const char *tag, const char *fmt, ...);
 
 #define EP_LOGA(tag, fmt, ...) ep_log_write(EP_LOG_LEVEL_ASSERT, tag, fmt, ##__VA_ARGS__)

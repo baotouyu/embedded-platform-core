@@ -7,6 +7,7 @@
 #include "ep_osal_err.h"
 
 #define EP_FRAMEWORK_DEFAULT_CONFIG_PATH "config/profiles/host.cfg"
+#define EP_FRAMEWORK_LOG_LEVEL_KEY "log.level"
 
 static int ep_framework_load_default_config(void)
 {
@@ -17,6 +18,17 @@ static int ep_framework_load_default_config(void)
     }
 
     return rc;
+}
+
+static int ep_framework_apply_log_config(void)
+{
+    int level = ep_config_get_int(EP_FRAMEWORK_LOG_LEVEL_KEY, EP_LOG_LEVEL_INFO);
+
+    if (level < EP_LOG_LEVEL_ASSERT || level > EP_LOG_LEVEL_VERBOSE) {
+        return EP_ERR_INVAL;
+    }
+
+    return ep_log_set_level((ep_log_level_e)level);
 }
 
 int ep_framework_init(void)
@@ -32,6 +44,11 @@ int ep_framework_init(void)
     }
 
     rc = ep_framework_load_default_config();
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ep_framework_apply_log_config();
     if (rc != 0) {
         return rc;
     }

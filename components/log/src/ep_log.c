@@ -9,6 +9,12 @@
 #define EP_LOG_LINE_BUF_SIZE 256u
 
 static int g_ep_log_initialized;
+static ep_log_level_e g_ep_log_level = EP_LOG_LEVEL_INFO;
+
+static int ep_log_level_is_valid(ep_log_level_e level)
+{
+    return level >= EP_LOG_LEVEL_ASSERT && level <= EP_LOG_LEVEL_VERBOSE;
+}
 
 static int ep_log_to_easylogger_level(ep_log_level_e level, uint8_t *elog_level)
 {
@@ -65,6 +71,21 @@ int ep_log_init(void)
     return EP_OK;
 }
 
+int ep_log_set_level(ep_log_level_e level)
+{
+    if (!ep_log_level_is_valid(level)) {
+        return EP_ERR_INVAL;
+    }
+
+    g_ep_log_level = level;
+    return EP_OK;
+}
+
+ep_log_level_e ep_log_get_level(void)
+{
+    return g_ep_log_level;
+}
+
 int ep_log_write(ep_log_level_e level, const char *tag, const char *fmt, ...)
 {
     char line[EP_LOG_LINE_BUF_SIZE];
@@ -83,6 +104,10 @@ int ep_log_write(ep_log_level_e level, const char *tag, const char *fmt, ...)
     rc = ep_log_to_easylogger_level(level, &elog_level);
     if (rc != EP_OK) {
         return rc;
+    }
+
+    if (level > g_ep_log_level) {
+        return EP_OK;
     }
 
     va_start(args, fmt);
