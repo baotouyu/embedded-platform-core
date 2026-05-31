@@ -4,6 +4,20 @@
 #include "ep_config.h"
 #include "ep_event.h"
 #include "ep_timer.h"
+#include "ep_osal_err.h"
+
+#define EP_FRAMEWORK_DEFAULT_CONFIG_PATH "config/profiles/host.cfg"
+
+static int ep_framework_load_default_config(void)
+{
+    int rc = ep_config_load_file(EP_FRAMEWORK_DEFAULT_CONFIG_PATH);
+
+    if (rc == EP_ERR_UNSUPPORTED) {
+        return EP_OK;
+    }
+
+    return rc;
+}
 
 int ep_framework_init(void)
 {
@@ -13,6 +27,11 @@ int ep_framework_init(void)
     }
 
     rc = ep_config_init();
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ep_framework_load_default_config();
     if (rc != 0) {
         return rc;
     }
