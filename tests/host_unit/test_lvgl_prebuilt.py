@@ -81,6 +81,8 @@ def test_lvgl_prebuilt_cmake_wires_sdl2_from_manifest():
 
     assert "display_backend=sdl2" in module
     assert "input_backend=sdl2" in module
+    assert "EP_LVGL_ENABLE_SDL2_BACKEND" in module
+    assert "APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES" in module
     assert "find_program(EP_SDL2_CONFIG_EXECUTABLE sdl2-config REQUIRED)" in module
     assert "execute_process(COMMAND ${EP_SDL2_CONFIG_EXECUTABLE} --cflags" in module
     assert "execute_process(COMMAND ${EP_SDL2_CONFIG_EXECUTABLE} --prefix" in module
