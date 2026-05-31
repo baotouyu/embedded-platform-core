@@ -65,7 +65,8 @@ def test_app_runs_host_sdl2_demo_behind_compile_flag():
     assert "lv_label_create(lv_screen_active())" in app_main
     assert 'lv_label_set_text(label, "embedded-platform-core host SDL2")' in app_main
     assert "ep_ui_process()" in app_main
-    assert "ep_sleep_ms(16u)" in app_main
+    assert "#define APP_HOST_UI_FRAME_DELAY_MS 16u" in app_main
+    assert "ep_sleep_ms(APP_HOST_UI_FRAME_DELAY_MS)" in app_main
     assert "ep_host_ui_port_deinit()" in app_main
     assert "ep_ui_deinit()" in app_main
 
