@@ -7,5 +7,6 @@ build/
 out/
 *.o
 *.a
+!third_party/prebuilt/lvgl/host_macos/lib/liblvgl.a
 *.so
 *.dSYM/
