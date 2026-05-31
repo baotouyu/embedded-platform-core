@@ -37,13 +37,17 @@ def test_host_macos_sdl2_ui_port_files_and_api_are_present():
 
 def test_host_cmake_wires_sdl2_ui_port_only_for_host_macos():
     host_cmake = (REPO_ROOT / "platforms/host/posix/CMakeLists.txt").read_text(encoding="utf-8")
-    app_cmake = (REPO_ROOT / "app/CMakeLists.txt").read_text(encoding="utf-8")
 
     assert "ui_port/ep_host_ui_port.c" in host_cmake
     assert "EP_HAS_HOST_SDL2_UI=1" in host_cmake
     assert "APPLE" in host_cmake
     assert "CMAKE_SYSTEM_PROCESSOR" in host_cmake
     assert "ui_port" in host_cmake
+
+
+def test_app_cmake_wires_host_sdl2_demo_dependencies():
+    app_cmake = (REPO_ROOT / "app/CMakeLists.txt").read_text(encoding="utf-8")
+
     assert "EP_HAS_HOST_SDL2_UI" in app_cmake
     assert "ep_components_ui" in app_cmake
     assert "ep_thirdparty_lvgl" in app_cmake
