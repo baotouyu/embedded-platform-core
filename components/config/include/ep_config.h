@@ -2,6 +2,7 @@
 #define EP_CONFIG_H
 
 int ep_config_init(void);
+int ep_config_load_file(const char *path);
 
 int ep_config_set_int(const char *key, int value);
 int ep_config_get_int(const char *key, int default_value);

@@ -46,6 +46,7 @@ def test_config_header_compiles_standalone(tmp_path):
             int main(void)
             {
                 int (*init_fn)(void) = ep_config_init;
+                int (*load_file_fn)(const char *) = ep_config_load_file;
                 int (*set_int_fn)(const char *, int) = ep_config_set_int;
                 int (*get_int_fn)(const char *, int) = ep_config_get_int;
                 int (*set_bool_fn)(const char *, int) = ep_config_set_bool;
@@ -53,8 +54,8 @@ def test_config_header_compiles_standalone(tmp_path):
                 int (*set_string_fn)(const char *, const char *) = ep_config_set_string;
                 const char *(*get_string_fn)(const char *, const char *) = ep_config_get_string;
 
-                return (init_fn && set_int_fn && get_int_fn && set_bool_fn &&
-                        get_bool_fn && set_string_fn && get_string_fn) ? 0 : 1;
+                return (init_fn && load_file_fn && set_int_fn && get_int_fn &&
+                        set_bool_fn && get_bool_fn && set_string_fn && get_string_fn) ? 0 : 1;
             }
             """
         ).strip()
