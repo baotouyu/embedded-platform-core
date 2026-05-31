@@ -21,6 +21,22 @@ def test_lvgl_package_exports_widgets_demo_library_and_headers():
     assert "demo_lib_hash=" in manifest
 
 
+def test_lvgl_widgets_demo_static_library_is_tracked_by_git():
+    package_library = "third_party/prebuilt/lvgl/host_macos/lib/liblvgl_demos.a"
+
+    tracked = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", package_library],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+
+    assert tracked.returncode == 0, (
+        f"{package_library} must be tracked by git\n"
+        f"stdout:\n{tracked.stdout}\nstderr:\n{tracked.stderr}"
+    )
+
+
 def test_lvgl_prebuilt_cmake_registers_demo_library_target():
     cmake = (REPO_ROOT / "cmake/modules/ep_lvgl_prebuilt.cmake").read_text()
 
