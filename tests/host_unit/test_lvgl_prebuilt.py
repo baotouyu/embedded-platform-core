@@ -28,6 +28,21 @@ def test_lvgl_host_macos_prebuilt_package_shape():
     assert "lib_hash=" in manifest_text
 
 
+def test_lvgl_host_macos_package_declares_sdl2_backend():
+    package_root = REPO_ROOT / "third_party/prebuilt/lvgl/host_macos"
+    manifest_text = (package_root / "lvgl_package.txt").read_text(encoding="utf-8")
+    lv_conf = (package_root / "include/lv_conf.h").read_text(encoding="utf-8")
+
+    assert "display_backend=sdl2" in manifest_text
+    assert "input_backend=sdl2" in manifest_text
+    assert "sdl2.version=" in manifest_text
+    assert "sdl2.cflags=" in manifest_text
+    assert "sdl2.libs=" in manifest_text
+    assert "#define LV_USE_SDL 1" in lv_conf
+    assert "#define LV_USE_DRAW_SDL 0" in lv_conf
+    assert "#define LV_SDL_INCLUDE_PATH <SDL2/SDL.h>" in lv_conf
+
+
 def test_lvgl_host_macos_static_library_is_tracked_by_git():
     package_library = "third_party/prebuilt/lvgl/host_macos/lib/liblvgl.a"
 
@@ -59,6 +74,23 @@ def test_lvgl_prebuilt_cmake_target_is_registered():
     assert "INTERFACE_INCLUDE_DIRECTORIES" in module
     assert "lvgl_package.txt" in module
     assert "include(ep_lvgl_prebuilt)" in top_level_cmake
+
+
+def test_lvgl_prebuilt_cmake_wires_sdl2_from_manifest():
+    module = (REPO_ROOT / "cmake/modules/ep_lvgl_prebuilt.cmake").read_text(encoding="utf-8")
+
+    assert "display_backend=sdl2" in module
+    assert "input_backend=sdl2" in module
+    assert "find_program(EP_SDL2_CONFIG_EXECUTABLE sdl2-config REQUIRED)" in module
+    assert "execute_process(COMMAND ${EP_SDL2_CONFIG_EXECUTABLE} --cflags" in module
+    assert "execute_process(COMMAND ${EP_SDL2_CONFIG_EXECUTABLE} --prefix" in module
+    assert "execute_process(COMMAND ${EP_SDL2_CONFIG_EXECUTABLE} --libs" in module
+    assert "separate_arguments(EP_SDL2_CFLAGS_LIST NATIVE_COMMAND" in module
+    assert "separate_arguments(EP_SDL2_LIBS_LIST NATIVE_COMMAND" in module
+    assert 'set(EP_SDL2_INCLUDE_DIR "${EP_SDL2_PREFIX}/include")' in module
+    assert "INTERFACE_COMPILE_OPTIONS" in module
+    assert "INTERFACE_LINK_OPTIONS" in module
+    assert "INTERFACE_INCLUDE_DIRECTORIES" in module
 
 
 def test_lvgl_prebuilt_cmake_smoke_links_lv_init(tmp_path):

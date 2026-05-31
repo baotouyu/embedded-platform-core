@@ -52,6 +52,9 @@ def test_ui_component_calls_lvgl_lifecycle_apis_without_platform_headers():
         "signal.h",
         "rtthread.h",
         "windows.h",
+        "SDL2/SDL.h",
+        "lv_sdl_window.h",
+        "ep_host_ui_port.h",
     ]
     for forbidden in forbidden_headers:
         assert forbidden not in source
