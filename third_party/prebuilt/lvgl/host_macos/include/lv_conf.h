@@ -1,0 +1,104 @@
+/**
+ * @file lv_conf.h
+ * Host macOS configuration for LVGL v9.1.0.
+ */
+
+#ifndef LV_CONF_H
+#define LV_CONF_H
+
+#define LV_COLOR_DEPTH 32
+
+#define LV_USE_STDLIB_MALLOC LV_STDLIB_CLIB
+#define LV_USE_STDLIB_STRING LV_STDLIB_CLIB
+#define LV_USE_STDLIB_SPRINTF LV_STDLIB_CLIB
+
+#define LV_USE_OS LV_OS_NONE
+
+#define LV_DEF_REFR_PERIOD 33
+#define LV_DPI_DEF 130
+
+#define LV_DRAW_BUF_STRIDE_ALIGN 1
+#define LV_DRAW_BUF_ALIGN 4
+#define LV_DRAW_LAYER_SIMPLE_BUF_SIZE (24 * 1024)
+
+#define LV_USE_DRAW_SW 1
+#define LV_DRAW_SW_DRAW_UNIT_CNT 1
+#define LV_USE_DRAW_ARM2D_SYNC 0
+#define LV_USE_NATIVE_HELIUM_ASM 0
+#define LV_DRAW_SW_COMPLEX 1
+#define LV_DRAW_SW_SHADOW_CACHE_SIZE 0
+#define LV_DRAW_SW_CIRCLE_CACHE_SIZE 4
+#define LV_USE_DRAW_SW_ASM LV_DRAW_SW_ASM_NONE
+
+#define LV_USE_VGLITE 0
+#define LV_USE_PXP 0
+#define LV_USE_ROTATE_PXP 0
+#define LV_USE_DRAW_DAVE2D 0
+
+#define LV_USE_LOG 0
+#define LV_USE_ASSERT_NULL 1
+#define LV_USE_ASSERT_MALLOC 1
+#define LV_USE_ASSERT_STYLE 0
+#define LV_USE_ASSERT_MEM_INTEGRITY 0
+#define LV_USE_ASSERT_OBJ 0
+
+#define LV_USE_REFR_DEBUG 0
+#define LV_USE_LAYER_DEBUG 0
+#define LV_USE_PARALLEL_DRAW_DEBUG 0
+
+#define LV_USE_SYSMON 0
+#define LV_USE_PERF_MONITOR 0
+#define LV_USE_MEM_MONITOR 0
+
+#define LV_USE_STDIO 1
+#define LV_USE_STDLIB 1
+
+#define LV_USE_THEME_DEFAULT 1
+#define LV_USE_THEME_SIMPLE 1
+#define LV_USE_THEME_MONO 1
+
+#define LV_FONT_MONTSERRAT_14 1
+#define LV_FONT_DEFAULT &lv_font_montserrat_14
+
+#define LV_USE_ARC 1
+#define LV_USE_BAR 1
+#define LV_USE_BUTTON 1
+#define LV_USE_BUTTONMATRIX 1
+#define LV_USE_CANVAS 1
+#define LV_USE_CHECKBOX 1
+#define LV_USE_DROPDOWN 1
+#define LV_USE_IMAGE 1
+#define LV_USE_LABEL 1
+#define LV_USE_LINE 1
+#define LV_USE_ROLLER 1
+#define LV_USE_SCALE 1
+#define LV_USE_SLIDER 1
+#define LV_USE_SWITCH 1
+#define LV_USE_TEXTAREA 1
+#define LV_USE_TABLE 1
+
+#define LV_USE_ANIMIMG 1
+#define LV_USE_CALENDAR 1
+#define LV_USE_CHART 1
+#define LV_USE_COLORWHEEL 1
+#define LV_USE_IMGBTN 1
+#define LV_USE_KEYBOARD 1
+#define LV_USE_LED 1
+#define LV_USE_LIST 1
+#define LV_USE_MENU 1
+#define LV_USE_MSGBOX 1
+#define LV_USE_SPAN 1
+#define LV_USE_SPINBOX 1
+#define LV_USE_SPINNER 1
+#define LV_USE_TABVIEW 1
+#define LV_USE_TILEVIEW 1
+#define LV_USE_WIN 1
+
+#define LV_BUILD_EXAMPLES 0
+#define LV_USE_DEMO_WIDGETS 0
+#define LV_USE_DEMO_KEYPAD_AND_ENCODER 0
+#define LV_USE_DEMO_BENCHMARK 0
+#define LV_USE_DEMO_STRESS 0
+#define LV_USE_DEMO_MUSIC 0
+
+#endif

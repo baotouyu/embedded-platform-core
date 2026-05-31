@@ -8,6 +8,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
 
 include(ep_options)
+include(ep_lvgl_prebuilt)
 
 # EP_PLATFORM_FAMILY is configured via ep_options.cmake.
 add_subdirectory(core)
