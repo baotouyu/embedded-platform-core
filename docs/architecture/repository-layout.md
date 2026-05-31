@@ -11,7 +11,7 @@
 | `components/` | 可复用框架组件，例如日志、配置、文件、事件、定时器、UI。组件公共头文件必须保持平台无关。 |
 | `osal/` | OS 抽象层公共接口，例如时间、内存、线程、互斥锁、信号量、队列。 |
 | `hal/` | 硬件抽象层公共接口，例如 GPIO、I2C、SPI、UART、PWM、ADC。 |
-| `platforms/` | 平台适配代码。真实平台、host 调试平台、Linux 平台、RTOS 平台都在这里实现公共接口。 |
+| `platforms/` | 平台公共接口和平台适配代码。真实平台、host 调试平台、Linux 平台、RTOS 平台都在这里实现公共接口。 |
 | `config/` | 默认配置、功能开关配置和运行配置样例。 |
 | `cmake/` | CMake 模块、工具链文件和构建选项。 |
 | `tests/` | host 单元测试、API 契约测试、集成测试和目标板冒烟测试。 |
@@ -36,6 +36,8 @@ third_party/prebuilt/lvgl/host_macos
 不要直接修改预编译包里的 lv_conf.h。正式修改 LVGL 配置时，先去对应的 `lvgl-prebuilt-*` 仓库修改源头配置并重新产包，再同步回主工程。
 
 ## 平台目录
+
+`platforms/include/` 放平台公共接口，例如平台能力注册表。组件和应用需要了解平台能力时，优先包含这里的公共头文件，不直接包含具体平台目录里的头文件。
 
 `platforms/host/posix/` 是本机调试平台，目前负责 macOS host 程序和 SDL2/LVGL demo。
 

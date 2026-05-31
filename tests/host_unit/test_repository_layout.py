@@ -20,6 +20,7 @@ REQUIRED_DIRECTORIES = [
     "components/net",
     "platforms/rtos/common",
     "platforms/linux/common",
+    "platforms/include",
     "vendor/rtos",
     "config/common",
     "config/feature",
@@ -59,6 +60,7 @@ def test_repository_layout_document_explains_top_level_directories_in_chinese():
     assert "app/" in content
     assert "components/" in content
     assert "platforms/" in content
+    assert "platforms/include/" in content
     assert "third_party/external/" in content
     assert "third_party/prebuilt/" in content
     assert "vendor/" in content
