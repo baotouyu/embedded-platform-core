@@ -48,6 +48,45 @@ def test_repository_layout_matches_task_requirements():
     )
 
 
+def test_repository_layout_document_explains_top_level_directories_in_chinese():
+    repo_root = Path(__file__).resolve().parents[2]
+    layout_doc = repo_root / "docs/architecture/repository-layout.md"
+
+    assert layout_doc.is_file()
+
+    content = layout_doc.read_text(encoding="utf-8")
+    assert "仓库目录说明" in content
+    assert "app/" in content
+    assert "components/" in content
+    assert "platforms/" in content
+    assert "third_party/external/" in content
+    assert "third_party/prebuilt/" in content
+    assert "vendor/" in content
+    assert "不要直接修改预编译包里的 lv_conf.h" in content
+
+
+def test_repository_does_not_keep_duplicate_legacy_third_party_roots():
+    repo_root = Path(__file__).resolve().parents[2]
+
+    assert not (repo_root / "third_party/EasyLogger").exists()
+    assert not (repo_root / "third_party/lvgl").exists()
+
+
+def test_repository_ignores_local_generated_files_and_macos_metadata():
+    repo_root = Path(__file__).resolve().parents[2]
+    gitignore = (repo_root / ".gitignore").read_text(encoding="utf-8")
+
+    for ignored_path in [
+        ".DS_Store",
+        ".worktrees/",
+        "__pycache__/",
+        ".pytest_cache/",
+        "build/",
+        "out/",
+    ]:
+        assert ignored_path in gitignore
+
+
 def test_default_host_config_profile_exists():
     repo_root = Path(__file__).resolve().parents[2]
     host_config = repo_root / "config/profiles/host.cfg"
