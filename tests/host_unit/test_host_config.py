@@ -193,9 +193,12 @@ def test_host_config_memory_store_validation_and_defaults(tmp_path):
             "-I",
             str(REPO_ROOT / "components/config/include"),
             "-I",
+            str(REPO_ROOT / "components/file/include"),
+            "-I",
             str(REPO_ROOT / "osal/include"),
             str(source),
             str(REPO_ROOT / "components/config/src/ep_config.c"),
+            str(REPO_ROOT / "components/file/src/ep_file.c"),
             "-o",
             str(executable),
         ],
@@ -216,6 +219,147 @@ def test_host_config_memory_store_validation_and_defaults(tmp_path):
 
     assert run_result.returncode == 0, (
         f"config smoke failed with {run_result.returncode}\n"
+        f"stdout:\n{run_result.stdout}\n"
+        f"stderr:\n{run_result.stderr}"
+    )
+
+
+def test_host_config_load_file_success_and_overrides(tmp_path):
+    assert COMPILER, "Expected clang or cc to be available"
+
+    config_path = tmp_path / "default.cfg"
+    override_path = tmp_path / "override.cfg"
+    source = tmp_path / "host_config_file_success.c"
+    executable = tmp_path / "host_config_file_success"
+
+    config_path.write_text(
+        "\n".join(
+            [
+                "int log.level=3",
+                "bool feature.enabled=true",
+                "bool feature.disabled=false",
+                "string network.server=127.0.0.1",
+                "int duplicate.value=1",
+                "int duplicate.value=2",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    override_path.write_text(
+        "\n".join(
+            [
+                "int log.level=5",
+                "string device.name=demo_board",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    source.write_text(
+        textwrap.dedent(
+            """
+            #include "ep_config.h"
+            #include "ep_osal_err.h"
+
+            #include <string.h>
+
+            int main(int argc, char **argv)
+            {
+                const char *server;
+                const char *device_name;
+
+                if (argc != 3) {
+                    return 1;
+                }
+
+                if (ep_config_init() != EP_OK) {
+                    return 2;
+                }
+
+                if (ep_config_load_file(argv[1]) != EP_OK) {
+                    return 3;
+                }
+
+                if (ep_config_get_int("log.level", 0) != 3) {
+                    return 4;
+                }
+
+                if (ep_config_get_bool("feature.enabled", 0) != 1) {
+                    return 5;
+                }
+
+                if (ep_config_get_bool("feature.disabled", 1) != 0) {
+                    return 6;
+                }
+
+                server = ep_config_get_string("network.server", "missing");
+                if (server == 0 || strcmp(server, "127.0.0.1") != 0) {
+                    return 7;
+                }
+
+                if (ep_config_get_int("duplicate.value", 0) != 2) {
+                    return 8;
+                }
+
+                if (ep_config_load_file(argv[2]) != EP_OK) {
+                    return 9;
+                }
+
+                if (ep_config_get_int("log.level", 0) != 5) {
+                    return 10;
+                }
+
+                if (ep_config_get_bool("feature.enabled", 0) != 1) {
+                    return 11;
+                }
+
+                device_name = ep_config_get_string("device.name", "missing");
+                if (device_name == 0 || strcmp(device_name, "demo_board") != 0) {
+                    return 12;
+                }
+
+                return 0;
+            }
+            """
+        ).strip()
+        + "\n"
+    )
+
+    compile_result = subprocess.run(
+        [
+            COMPILER,
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            str(REPO_ROOT / "components/config/include"),
+            "-I",
+            str(REPO_ROOT / "components/file/include"),
+            "-I",
+            str(REPO_ROOT / "osal/include"),
+            str(source),
+            str(REPO_ROOT / "components/config/src/ep_config.c"),
+            str(REPO_ROOT / "components/file/src/ep_file.c"),
+            "-o",
+            str(executable),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        check=False,
+    )
+
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [str(executable), str(config_path), str(override_path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert run_result.returncode == 0, (
+        f"config file success smoke failed with {run_result.returncode}\n"
         f"stdout:\n{run_result.stdout}\n"
         f"stderr:\n{run_result.stderr}"
     )
