@@ -79,4 +79,32 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
       ep_components_log
       ep_thirdparty_lvgl
   )
+
+  if(TARGET ep_thirdparty_lvgl_demos)
+    add_executable(ep_host_lvgl_widgets_demo
+      demos/lvgl_widgets_demo_main.c
+      ui_port/ep_host_ui_port.c
+      osal_port/ep_host_osal_time.c
+    )
+
+    target_include_directories(ep_host_lvgl_widgets_demo
+      PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/ui_port
+        ${CMAKE_SOURCE_DIR}/components/ui/include
+        ${CMAKE_SOURCE_DIR}/osal/include
+        ${EP_LVGL_INCLUDE_DIR}
+    )
+
+    target_compile_definitions(ep_host_lvgl_widgets_demo
+      PRIVATE
+        EP_HAS_HOST_SDL2_UI=1
+    )
+
+    target_link_libraries(ep_host_lvgl_widgets_demo
+      PRIVATE
+        ep_components_ui
+        ep_components_log
+        ep_thirdparty_lvgl_demos
+    )
+  endif()
 endif()

@@ -9,6 +9,7 @@ get_filename_component(EP_PROJECT_ROOT "${EP_PROJECT_ROOT}" ABSOLUTE)
 set(EP_LVGL_ROOT "${EP_PROJECT_ROOT}/third_party/prebuilt/lvgl/${EP_LVGL_PACKAGE}")
 set(EP_LVGL_INCLUDE_DIR "${EP_LVGL_ROOT}/include")
 set(EP_LVGL_LIBRARY "${EP_LVGL_ROOT}/lib/liblvgl.a")
+set(EP_LVGL_DEMOS_LIBRARY "${EP_LVGL_ROOT}/lib/liblvgl_demos.a")
 set(EP_LVGL_MANIFEST "${EP_LVGL_ROOT}/lvgl_package.txt")
 
 if(NOT EXISTS "${EP_LVGL_MANIFEST}")
@@ -70,6 +71,11 @@ if(EP_LVGL_ENABLE_SDL2_BACKEND)
   list(APPEND EP_LVGL_INTERFACE_LINK_OPTIONS ${EP_SDL2_LIBS_LIST})
 endif()
 
+set(EP_LVGL_HAS_DEMOS OFF)
+if(EXISTS "${EP_LVGL_DEMOS_LIBRARY}" AND EP_LVGL_MANIFEST_TEXT MATCHES "demo_widgets=enabled")
+  set(EP_LVGL_HAS_DEMOS ON)
+endif()
+
 if(NOT TARGET ep_thirdparty_lvgl)
   add_library(ep_thirdparty_lvgl STATIC IMPORTED GLOBAL)
   set_target_properties(ep_thirdparty_lvgl PROPERTIES
@@ -77,5 +83,14 @@ if(NOT TARGET ep_thirdparty_lvgl)
     INTERFACE_INCLUDE_DIRECTORIES "${EP_LVGL_INTERFACE_INCLUDE_DIRS}"
     INTERFACE_COMPILE_OPTIONS "${EP_LVGL_INTERFACE_COMPILE_OPTIONS}"
     INTERFACE_LINK_OPTIONS "${EP_LVGL_INTERFACE_LINK_OPTIONS}"
+  )
+endif()
+
+if(EP_LVGL_HAS_DEMOS AND NOT TARGET ep_thirdparty_lvgl_demos)
+  add_library(ep_thirdparty_lvgl_demos STATIC IMPORTED GLOBAL)
+  set_target_properties(ep_thirdparty_lvgl_demos PROPERTIES
+    IMPORTED_LOCATION "${EP_LVGL_DEMOS_LIBRARY}"
+    INTERFACE_INCLUDE_DIRECTORIES "${EP_LVGL_INTERFACE_INCLUDE_DIRS}"
+    INTERFACE_LINK_LIBRARIES ep_thirdparty_lvgl
   )
 endif()
