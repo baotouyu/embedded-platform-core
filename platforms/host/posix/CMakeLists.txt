@@ -28,3 +28,10 @@ target_link_libraries(ep_platform_host_posix
     ep_components_config
     Threads::Threads
 )
+
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+  target_link_libraries(ep_platform_host_posix
+    PRIVATE
+      ep_components_ui
+  )
+endif()
