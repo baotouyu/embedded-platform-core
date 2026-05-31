@@ -138,6 +138,21 @@ static int ep_config_read_file(const char *path, char *buffer, size_t buffer_siz
         total += bytes_read;
     }
 
+    if (total == buffer_size - 1u) {
+        size_t extra = 0u;
+
+        rc = ep_file_read(file, buffer + total, 1u, &extra);
+        if (rc != EP_OK) {
+            (void)ep_file_close(file);
+            return rc;
+        }
+
+        if (extra != 0u) {
+            (void)ep_file_close(file);
+            return EP_ERR_BUSY;
+        }
+    }
+
     rc = ep_file_close(file);
     if (rc != EP_OK) {
         return rc;
@@ -239,6 +254,10 @@ static int ep_config_parse_content(char *content)
             --line_len;
         }
 
+        if (line_len >= EP_CONFIG_LINE_MAX_LEN) {
+            return EP_ERR_INVAL;
+        }
+
         rc = ep_config_parse_line(line);
         if (rc != EP_OK) {
             return rc;
@@ -282,6 +301,10 @@ int ep_config_load_file(const char *path)
     rc = ep_config_read_file(path, content, sizeof(content), &content_size);
     if (rc != EP_OK) {
         return rc;
+    }
+
+    if (content_size == 0u) {
+        return EP_ERR_INVAL;
     }
 
     return ep_config_parse_content(content);
