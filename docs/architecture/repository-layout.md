@@ -13,6 +13,7 @@
 | `hal/` | 硬件抽象层公共接口，例如 GPIO、I2C、SPI、UART、PWM、ADC。 |
 | `platforms/` | 平台公共接口和平台适配代码。真实平台、host 调试平台、Linux 平台、RTOS 平台都在这里实现公共接口。 |
 | `config/` | 默认配置、功能开关配置和运行配置样例。 |
+| `resources/` | 平台资源目录，例如图片、字体、主题。主工程只放公共资源和 host 调试资源，真实平台资源按平台目录隔离。 |
 | `cmake/` | CMake 模块、工具链文件和构建选项。 |
 | `tests/` | host 单元测试、API 契约测试、集成测试和目标板冒烟测试。 |
 | `docs/` | 中文设计、流程、移植和测试文档。 |
@@ -39,6 +40,14 @@ third_party/prebuilt/lvgl/host_macos
 
 `platforms/include/` 放平台公共接口，例如平台能力注册表。组件和应用需要了解平台能力时，优先包含这里的公共头文件，不直接包含具体平台目录里的头文件。
 
+平台资源路径接口放在：
+
+```text
+platforms/include/ep_platform_paths.h
+```
+
+这个接口负责告诉应用和组件当前平台的配置文件路径、资源根目录，以及图片、字体、主题这类资源的拼接路径。组件不应该自己硬编码 `resources/host` 或真实平台路径，而是通过平台资源路径接口获取。
+
 `platforms/host/posix/` 是本机调试平台，目前负责 macOS host 程序和 SDL2/LVGL demo。
 
 `platforms/linux/demo_family/` 和 `platforms/rtos/demo_family/` 是早期占位平台，用来验证 Linux/RTOS 平台边界和 CMake 接入方式。真实芯片适配时，应新增具体平台目录，例如：
@@ -59,6 +68,38 @@ components/<name>/CMakeLists.txt
 ```
 
 尚未实现的方向可以保留空目录和 `.gitkeep`，但不要在空目录里放临时文件。网络、菜谱解析、用户数据等后续功能可以按这个规则逐步补齐。
+
+## 资源目录
+
+资源目录先按“公共资源”和“平台资源”拆开：
+
+```text
+resources/common/images
+resources/common/fonts
+resources/common/themes
+resources/host/images
+resources/host/fonts
+resources/host/themes
+```
+
+`resources/common/` 放所有平台都可以复用的资源。`resources/host/` 放本机调试资源。后续接入真实平台时，可以新增类似下面的目录：
+
+```text
+resources/luban_lite/
+resources/tina/
+```
+
+当前 host/macOS 平台约定：
+
+| 类型 | 路径 |
+| --- | --- |
+| 配置文件 | `config/profiles/host.cfg` |
+| 资源根目录 | `resources/host` |
+| 图片 | `resources/host/images` |
+| 字体 | `resources/host/fonts` |
+| 主题 | `resources/host/themes` |
+
+平台资源路径接口只负责路径约定和路径拼接，不负责扫描目录、解码图片、加载字体或管理 LVGL 对象。这些能力后续应该放在具体组件或对应平台适配里。
 
 ## 本地生成文件
 
