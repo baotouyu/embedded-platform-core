@@ -193,3 +193,201 @@ def test_framework_init_loads_default_host_config(tmp_path):
         f"stdout:\n{run_result.stdout}\n"
         f"stderr:\n{run_result.stderr}"
     )
+
+
+def test_framework_init_ignores_missing_default_config(tmp_path):
+    assert COMPILER, "Expected clang or cc to be available"
+
+    repo_root = Path(__file__).resolve().parents[2]
+    source = tmp_path / "framework_missing_config_smoke.c"
+    executable = tmp_path / "framework_missing_config_smoke"
+
+    source.write_text(
+        """
+        #include "ep_framework.h"
+        #include "ep_osal_err.h"
+
+        int app_main(void)
+        {
+            return 0;
+        }
+
+        int ep_platform_boot(void)
+        {
+            return 0;
+        }
+
+        int main(void)
+        {
+            return ep_framework_init() == EP_OK ? 0 : 1;
+        }
+        """.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    compile_result = subprocess.run(
+        [
+            COMPILER,
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            str(repo_root / "core/include"),
+            "-I",
+            str(repo_root / "app/include"),
+            "-I",
+            str(repo_root / "osal/include"),
+            "-I",
+            str(repo_root / "components/log/include"),
+            "-I",
+            str(repo_root / "components/config/include"),
+            "-I",
+            str(repo_root / "components/event/include"),
+            "-I",
+            str(repo_root / "components/timer/include"),
+            "-I",
+            str(repo_root / "components/file/include"),
+            "-I",
+            str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
+            str(source),
+            str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/log/src/ep_log.c"),
+            str(repo_root / "components/config/src/ep_config.c"),
+            str(repo_root / "components/event/src/ep_event.c"),
+            str(repo_root / "components/timer/src/ep_timer.c"),
+            str(repo_root / "components/file/src/ep_file.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/src/elog.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/src/elog_utils.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/port/elog_port.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_queue.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_mutex.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_thread.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_time.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_mem.c"),
+            "-pthread",
+            "-o",
+            str(executable),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+        check=False,
+    )
+
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [str(executable)],
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+        check=False,
+    )
+
+    assert run_result.returncode == 0, (
+        f"framework missing config smoke failed with {run_result.returncode}\n"
+        f"stdout:\n{run_result.stdout}\n"
+        f"stderr:\n{run_result.stderr}"
+    )
+
+
+def test_framework_init_fails_on_invalid_default_config(tmp_path):
+    assert COMPILER, "Expected clang or cc to be available"
+
+    repo_root = Path(__file__).resolve().parents[2]
+    source = tmp_path / "framework_bad_config_smoke.c"
+    executable = tmp_path / "framework_bad_config_smoke"
+    config_dir = tmp_path / "config/profiles"
+
+    config_dir.mkdir(parents=True)
+    (config_dir / "host.cfg").write_text("bad config\n", encoding="utf-8")
+
+    source.write_text(
+        """
+        #include "ep_framework.h"
+        #include "ep_osal_err.h"
+
+        int app_main(void)
+        {
+            return 0;
+        }
+
+        int ep_platform_boot(void)
+        {
+            return 0;
+        }
+
+        int main(void)
+        {
+            return ep_framework_init() == EP_ERR_INVAL ? 0 : 1;
+        }
+        """.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    compile_result = subprocess.run(
+        [
+            COMPILER,
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            str(repo_root / "core/include"),
+            "-I",
+            str(repo_root / "app/include"),
+            "-I",
+            str(repo_root / "osal/include"),
+            "-I",
+            str(repo_root / "components/log/include"),
+            "-I",
+            str(repo_root / "components/config/include"),
+            "-I",
+            str(repo_root / "components/event/include"),
+            "-I",
+            str(repo_root / "components/timer/include"),
+            "-I",
+            str(repo_root / "components/file/include"),
+            "-I",
+            str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
+            str(source),
+            str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/log/src/ep_log.c"),
+            str(repo_root / "components/config/src/ep_config.c"),
+            str(repo_root / "components/event/src/ep_event.c"),
+            str(repo_root / "components/timer/src/ep_timer.c"),
+            str(repo_root / "components/file/src/ep_file.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/src/elog.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/src/elog_utils.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/port/elog_port.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_queue.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_mutex.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_thread.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_time.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_mem.c"),
+            "-pthread",
+            "-o",
+            str(executable),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+        check=False,
+    )
+
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [str(executable)],
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+        check=False,
+    )
+
+    assert run_result.returncode == 0, (
+        f"framework bad config smoke failed with {run_result.returncode}\n"
+        f"stdout:\n{run_result.stdout}\n"
+        f"stderr:\n{run_result.stderr}"
+    )
