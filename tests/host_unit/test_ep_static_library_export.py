@@ -138,3 +138,40 @@ def test_ep_static_library_export_target_builds(tmp_path):
     )
     assert build.returncode == 0, build.stderr
     assert (build_dir / "libep_app_core_export.a").is_file()
+
+
+def test_build_script_export_ep_creates_package_after_build():
+    configure = subprocess.run(
+        [str(BUILD_SCRIPT), "configure"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert configure.returncode == 0, configure.stderr
+
+    build = subprocess.run(
+        [
+            "cmake",
+            "--build",
+            str(REPO_ROOT / "build"),
+            "--target",
+            "ep_app_core_export",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert build.returncode == 0, build.stderr
+
+    export = subprocess.run(
+        [str(BUILD_SCRIPT), "export-ep", "--clean", "--target", "host_rtos_demo"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert export.returncode == 0, export.stderr
+
+    package_root = REPO_ROOT / "out" / "ep" / "host_rtos_demo"
+    assert (package_root / "lib" / "libep_app_core.a").is_file()
+    assert (package_root / "include" / "ep_framework.h").is_file()
+    assert (package_root / "manifest.json").is_file()
