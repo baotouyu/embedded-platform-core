@@ -111,3 +111,30 @@ def test_export_script_fails_when_archive_is_missing(tmp_path):
     assert result.returncode != 0
     assert "缺少静态库产物" in result.stderr
     assert "libep_app_core_export.a" in result.stderr
+
+
+def test_ep_static_library_export_target_builds(tmp_path):
+    build_dir = tmp_path / "build"
+
+    configure = subprocess.run(
+        ["cmake", "-S", str(REPO_ROOT), "-B", str(build_dir)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert configure.returncode == 0, configure.stderr
+
+    build = subprocess.run(
+        [
+            "cmake",
+            "--build",
+            str(build_dir),
+            "--target",
+            "ep_app_core_export",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert build.returncode == 0, build.stderr
+    assert (build_dir / "libep_app_core_export.a").is_file()
