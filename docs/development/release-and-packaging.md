@@ -118,6 +118,25 @@ out/firmware/<target>/
 
 Luban Lite 的最终固件必须由对应 SDK 构建系统产出。主工程负责提供公共代码、平台适配代码、target 描述和 `out/ep/<target>` 静态库包。
 
+当前第一阶段先支持伪 target：
+
+```bash
+./build.sh configure
+cmake --build build --target ep_app_core_export
+./build.sh export-ep --clean --target host_rtos_demo
+```
+
+输出目录：
+
+```text
+out/ep/host_rtos_demo/
+  lib/libep_app_core.a
+  include/
+  manifest.json
+```
+
+这个 target 只用于验证主工程导出包格式，不代表已经完成真实 Luban-Lite 适配。
+
 ## 全志 Linux 产物
 
 全志 Linux 后续属于 Linux 用户态平台。
