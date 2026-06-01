@@ -1,0 +1,8 @@
+cJSON v1.7.19
+
+来源：
+https://github.com/DaveGamble/cJSON/releases/tag/v1.7.19
+https://github.com/DaveGamble/cJSON/archive/refs/tags/v1.7.19.tar.gz
+
+接入方式：
+保留 cJSON.c、cJSON.h 和 LICENSE，作为源码快照由主工程 CMake 编译为 ep_thirdparty_cjson。

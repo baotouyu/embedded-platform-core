@@ -24,7 +24,9 @@
 
 ## 第三方目录
 
-`third_party/external/` 放第三方源码快照，例如 EasyLogger。这里可以包含少量为了主工程编译必须保留的本地 port 文件。
+`third_party/external/` 放第三方源码快照，例如 EasyLogger、cJSON 和 SQLite。这里可以包含少量为了主工程编译必须保留的本地 port 文件。
+
+当前源码快照包括 EasyLogger、cJSON 和 SQLite。cJSON 暴露为 `ep_thirdparty_cjson`，SQLite 暴露为 `ep_thirdparty_sqlite`。这两个目标只负责第三方库接入，不代表主工程已经有 JSON 组件或数据库组件。
 
 `third_party/prebuilt/` 放预编译包，例如：
 
