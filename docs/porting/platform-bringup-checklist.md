@@ -13,22 +13,26 @@
 
 ## 第一阶段：建立平台边界
 
-1. 新建平台目录。
+1. 确认平台管理方式。
+
+RTOS 平台先确认 SDK 家族、芯片、板子和 target 名称。例如匠芯创 Luban-Lite 使用一个 SDK 家族仓库 `sdk-artinchip-luban-lite`，再用 target 区分 `d12x/demo68-nor`、`d13x/demo88-nor` 等具体目标。
+
+2. 新建平台目录。
 
 ```text
-platforms/rtos/luban_lite/
+platforms/rtos/artinchip/luban_lite/
 platforms/linux/tina/
 ```
 
-2. 新增 `CMakeLists.txt`。
+3. 新增 `CMakeLists.txt`。
 
-3. 新增启动入口目录。
+4. 新增启动入口目录。
 
 ```text
 startup/
 ```
 
-4. 新增 OSAL、HAL、能力表、路径等目录。
+5. 新增 OSAL、HAL、能力表、路径等目录。
 
 ```text
 osal_port/
@@ -40,7 +44,15 @@ board/
 config/
 ```
 
-5. 保证新平台目录只放该平台适配代码，不放业务代码。
+6. 保证新平台目录只放该平台适配代码，不放业务代码。
+
+7. RTOS 平台补 target 描述文件。
+
+```text
+targets/<target>.yaml
+```
+
+target 描述文件负责绑定 SDK 仓库、SDK ref、chip、board、kernel、defconfig 和输出目录。
 
 ## 第二阶段：启动入口
 
@@ -213,17 +225,31 @@ resources/common/
 
 ## 第十阶段：编译和冒烟测试
 
-1. 先保证平台能编译。
+1. RTOS 平台先保证主工程能导出静态库包。
 
-2. 再保证最小程序能启动。
+```text
+out/ep/<target>/
+  lib/libep_app_core.a
+  include/
+  manifest.json
+```
 
-3. 再检查日志是否可用。
+2. 再保证 SDK 仓库能链接该静态库。
 
-4. 再检查配置文件是否能加载。
+3. 再保证 SDK 输出最终固件。
 
-5. 再检查资源路径是否能访问。
+```text
+out/firmware/<target>/
+```
 
-6. 最后再做 UI、触摸、硬件驱动等更复杂验证。
+4. 再保证最小程序能启动。
+
+5. 再检查日志是否可用。
+
+6. 再检查配置文件是否能加载。
+
+7. 再检查资源路径是否能访问。
+
+8. 最后再做 UI、触摸、硬件驱动等更复杂验证。
 
 每个平台最终都应该有自己的冒烟测试说明。真实目标板测试可能依赖串口、烧录器或专用 runner，不要求一开始接入 GitHub CI。
-

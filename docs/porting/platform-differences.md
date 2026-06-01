@@ -6,7 +6,7 @@
 
 - 应用层和公共组件尽量保持平台无关。
 - 平台差异收口到 `platforms/`、`osal/`、`hal/`、`config/`、`resources/` 和 `third_party/prebuilt/`。
-- 厂商 SDK 保持自己的构建和目录习惯，主工程只保留边界和适配代码。
+- 厂商 SDK 保持自己的构建和目录习惯，主工程只保留边界、适配代码和导出库包规则。
 - 能用公共接口表达的差异，不在业务代码里写平台判断。
 
 ## 差异归属表
@@ -20,7 +20,7 @@
 | 资源路径差异 | `platforms/include/ep_platform_paths.h` 和平台 paths 实现 | 当前平台配置文件、资源根目录、图片、字体、主题路径。 |
 | 能力差异 | `platforms/include/ep_platform_capability.h` 和平台能力表 | 用统一接口表达平台是否支持文件系统、LVGL、显示、触摸、网络等能力。 |
 | 配置差异 | `config/profiles/<platform>.cfg` | 平台启动参数、功能开关和少量运行配置。 |
-| 厂商 SDK | 外部 SDK 仓库和预编译产物边界 | 主工程不提交大型厂商 SDK。 |
+| 厂商 SDK | 外部 SDK 仓库和 RTOS 静态库接入边界 | 主工程不提交大型厂商 SDK；RTOS 由主工程导出库给 SDK 链接。 |
 
 ## OS 差异
 
@@ -43,7 +43,7 @@ osal/include/
 
 ```text
 platforms/host/posix/osal_port/
-platforms/rtos/luban_lite/osal_port/
+platforms/rtos/artinchip/luban_lite/osal_port/
 platforms/linux/tina/osal_port/
 ```
 
@@ -165,8 +165,13 @@ config/profiles/<platform>.cfg
 厂商 SDK 的规则：
 
 - 主工程不提交大型厂商 SDK。
-- 厂商 SDK 按芯片或 SoC 放到外部 SDK 仓库管理。
-- 主工程只消费外部 SDK 仓库导出的头文件、静态库和 manifest。
-- 主工程只提交必要的平台适配代码、说明文档和小型配置样例。
+- 厂商 SDK 放到外部 SDK 仓库管理，例如 `sdk-artinchip-luban-lite`。
+- RTOS 平台由主工程导出 `libep_app_core.a`、头文件和 manifest，芯片 SDK 仓库负责链接、打包和烧录。
+- 一个 SDK 已经覆盖多个芯片时，优先一个 SDK 家族一个仓库，再用 target 区分具体芯片和板子。
+- 主工程只提交必要的平台适配代码、target 描述、说明文档和小型配置样例。
 
 这样做的目的是保持主工程轻量，也避免把不同平台的 SDK 习惯强行揉成一套目录。
+
+RTOS SDK 静态库接入模型见：
+
+- `docs/porting/rtos-sdk-library-model.md`

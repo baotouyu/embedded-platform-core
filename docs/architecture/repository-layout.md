@@ -20,7 +20,7 @@
 | `tools/` | 辅助脚本。没有实际 CI 脚本时不保留空 `tools/ci/`。 |
 | `third_party/` | 第三方源码或预编译包。 |
 
-主工程不再保留顶层 `vendor/` 空目录。厂商 SDK 按芯片或 SoC 放到外部 SDK 仓库管理，例如 `sdk-jxc-<chip>`、`sdk-allwinner-<chip>`。主工程只消费外部 SDK 仓库导出的头文件、静态库和 manifest。
+主工程不再保留顶层 `vendor/` 空目录。大型厂商 SDK 放到外部 SDK 仓库管理。RTOS 平台的主线规则是：主工程编译出 `libep_app_core.a`、头文件和 manifest，芯片 SDK 仓库负责链接、打包和输出最终固件。
 
 ## 第三方目录
 
@@ -39,7 +39,7 @@ third_party/prebuilt/vendor/<platform>
 
 不要直接修改预编译包里的 lv_conf.h。正式修改 LVGL 配置时，先去对应的 `lvgl-prebuilt-*` 仓库修改源头配置并重新产包，再同步回主工程。
 
-厂商 SDK 适配也走同样规则：先在外部 SDK 仓库里处理原厂工程、工具链和芯片差异，再把主工程需要的 `.h`、`.a`、`manifest.txt` 同步到 `third_party/prebuilt/vendor/<platform>` 或具体组件的预编译目录。
+厂商 SDK 适配不把完整 SDK 放到 `third_party/prebuilt/`。RTOS SDK 先在外部 SDK 仓库里处理原厂工程、工具链、芯片差异和固件打包，再由主工程导出 `out/ep/<target>` 静态库包给 SDK 链接。只有少量确实需要被主工程直接消费的厂商预编译库，才放到 `third_party/prebuilt/vendor/<platform>`。
 
 ## 平台目录
 
@@ -55,12 +55,14 @@ platforms/include/ep_platform_paths.h
 
 `platforms/host/posix/` 是本机调试平台，目前负责 macOS host 程序和 SDL2/LVGL demo。没有实际公共代码时，不保留 `platforms/host/common/`、`platforms/linux/common/` 或 `platforms/rtos/common/` 空目录。
 
-`platforms/linux/demo_family/` 和 `platforms/rtos/demo_family/` 是早期占位平台，用来验证 Linux/RTOS 平台边界和 CMake 接入方式。真实芯片适配时，应新增具体平台目录，例如：
+`platforms/linux/demo_family/` 和 `platforms/rtos/demo_family/` 是早期占位平台，用来验证 Linux/RTOS 平台边界和 CMake 接入方式。真实芯片适配时，应按 SDK 家族新增具体平台目录，例如：
 
 ```text
-platforms/rtos/jxc/<chip>/
+platforms/rtos/artinchip/luban_lite/
 platforms/linux/allwinner/<chip>/
 ```
+
+RTOS 具体芯片、板子、内核和 defconfig 不靠平台目录堆深层级表达，而是通过后续的 `targets/<target>.yaml` 描述。相关规则见 `docs/porting/rtos-sdk-library-model.md`。
 
 ## 组件目录
 
