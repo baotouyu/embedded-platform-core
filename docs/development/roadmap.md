@@ -103,6 +103,8 @@
 - 真实资源加载示例。
 - 真实平台资源目录命名规则。
 - 资源检查、打包或拷贝脚本。
+- 发布和打包流程。
+- 平台差异整理。
 
 这个阶段可以和 UI 业务开发交替进行。
 
@@ -152,3 +154,9 @@
 ```
 
 菜谱解析和用户数据暂时不急，因为菜谱格式和数据需求还没有完全确定。真实芯片平台也可以继续等板子和 SDK 环境更清楚后再开始。下一步更适合选择一个边界很小、能在 host/macOS 上验证的任务，例如资源工具脚本、真实资源加载示例，或某个已经明确的 UI/业务小能力。
+
+发布、打包和平台差异相关规范见：
+
+- `docs/development/release-and-packaging.md`
+- `docs/porting/platform-differences.md`
+- `docs/porting/platform-bringup-checklist.md`
