@@ -27,7 +27,7 @@ English: A portable embedded platform framework for RTOS and Linux, with unified
 
 框架当前采用分层组织：
 
-`app -> core -> components -> osal/hal -> platforms/* -> vendor sdk 或 linux standard interfaces`
+`app -> core -> components -> osal/hal -> platforms/* -> 外部 SDK 仓库或 linux standard interfaces`
 
 ### 架构框图
 
@@ -39,7 +39,7 @@ flowchart TD
     D[osal / hal<br/>统一 OS 抽象 / 驱动抽象]
     E1[platforms/rtos/*<br/>RTOS 平台适配包]
     E2[platforms/linux/*<br/>Linux 平台适配包]
-    F1[vendor/*<br/>原厂 SDK / BSP 边界]
+    F1[外部 SDK 仓库<br/>原厂 SDK / BSP 边界]
     F2[Linux 用户态标准接口<br/>pthread / socket / ioctl / 文件系统]
 
     A --> B
@@ -101,7 +101,6 @@ embedded-platform-core/
 │   └── include/
 ├── cmake/
 │   ├── modules/
-│   ├── presets/
 │   └── toolchains/
 ├── components/
 │   ├── config/
@@ -112,17 +111,13 @@ embedded-platform-core/
 │   ├── timer/
 │   └── ui/
 ├── config/
-│   ├── common/
-│   ├── feature/
 │   └── profiles/
 ├── core/
 │   ├── include/
 │   └── src/
 ├── docs/
 │   ├── architecture/
-│   ├── decisions/
 │   ├── porting/
-│   ├── testing/
 │   └── superpowers/
 ├── hal/
 │   └── include/
@@ -130,10 +125,8 @@ embedded-platform-core/
 │   └── include/
 ├── platforms/
 │   ├── linux/
-│   │   ├── common/
 │   │   └── demo_family/
 │   └── rtos/
-│       ├── common/
 │       └── demo_family/
 ├── tests/
 │   ├── api_contract/
@@ -142,9 +135,7 @@ embedded-platform-core/
 │   ├── external/
 │   └── prebuilt/
 ├── tools/
-│   ├── ci/
 │   └── scripts/
-└── vendor/
 ```
 
 ## 关键目录说明
@@ -216,9 +207,9 @@ embedded-platform-core/
 - `board/`
 - `config/`
 
-### `vendor/`
+### 外部 SDK 仓库
 
-厂商 SDK 边界。主工程当前不提交大型 SDK，也不为暂未接入的 SDK 预留空子目录。
+厂商 SDK 按芯片或 SoC 单独建仓库管理。主工程不提交大型 SDK，也不为暂未接入的 SDK 预留空目录；主工程只消费外部 SDK 仓库导出的 `.h`、`.a` 和 `manifest.txt`。
 
 ### `third_party/`
 

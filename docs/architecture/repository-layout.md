@@ -12,14 +12,15 @@
 | `osal/` | OS 抽象层公共接口，例如时间、内存、线程、互斥锁、信号量、队列。 |
 | `hal/` | 硬件抽象层公共接口，例如 GPIO、I2C、SPI、UART、PWM、ADC。 |
 | `platforms/` | 平台公共接口和平台适配代码。真实平台、host 调试平台、Linux 平台、RTOS 平台都在这里实现公共接口。 |
-| `config/` | 默认配置、功能开关配置和运行配置样例。 |
+| `config/` | 运行配置样例。当前只保留已经使用的 `config/profiles/`。 |
 | `resources/` | 平台资源目录，例如图片、字体、主题。主工程只放公共资源和 host 调试资源，真实平台资源按平台目录隔离。 |
-| `cmake/` | CMake 模块、工具链文件和构建选项。 |
+| `cmake/` | CMake 模块和工具链文件。没有实际 preset 时不保留空 `cmake/presets/`。 |
 | `tests/` | host 单元测试和 API 契约测试。集成测试、目标板冒烟测试需要真实需求时再新增目录。 |
 | `docs/` | 中文设计、流程、移植和测试文档。 |
-| `tools/` | 辅助脚本和 CI 工具。 |
+| `tools/` | 辅助脚本。没有实际 CI 脚本时不保留空 `tools/ci/`。 |
 | `third_party/` | 第三方源码或预编译包。 |
-| `vendor/` | 厂商 SDK 边界。主工程当前不提交大型 SDK，也不为未接入 SDK 预留空子目录。 |
+
+主工程不再保留顶层 `vendor/` 空目录。厂商 SDK 按芯片或 SoC 放到外部 SDK 仓库管理，例如 `sdk-jxc-<chip>`、`sdk-allwinner-<chip>`。主工程只消费外部 SDK 仓库导出的头文件、静态库和 manifest。
 
 ## 第三方目录
 
@@ -31,11 +32,14 @@
 
 ```text
 third_party/prebuilt/lvgl/host_macos
+third_party/prebuilt/vendor/<platform>
 ```
 
 预编译包必须包含头文件、静态库和 manifest。主工程只消费这些产物，不在这里直接改第三方库配置。
 
 不要直接修改预编译包里的 lv_conf.h。正式修改 LVGL 配置时，先去对应的 `lvgl-prebuilt-*` 仓库修改源头配置并重新产包，再同步回主工程。
+
+厂商 SDK 适配也走同样规则：先在外部 SDK 仓库里处理原厂工程、工具链和芯片差异，再把主工程需要的 `.h`、`.a`、`manifest.txt` 同步到 `third_party/prebuilt/vendor/<platform>` 或具体组件的预编译目录。
 
 ## 平台目录
 
@@ -49,13 +53,13 @@ platforms/include/ep_platform_paths.h
 
 这个接口负责告诉应用和组件当前平台的配置文件路径、资源根目录，以及图片、字体、主题这类资源的拼接路径。组件不应该自己硬编码 `resources/host` 或真实平台路径，而是通过平台资源路径接口获取。
 
-`platforms/host/posix/` 是本机调试平台，目前负责 macOS host 程序和 SDL2/LVGL demo。
+`platforms/host/posix/` 是本机调试平台，目前负责 macOS host 程序和 SDL2/LVGL demo。没有实际公共代码时，不保留 `platforms/host/common/`、`platforms/linux/common/` 或 `platforms/rtos/common/` 空目录。
 
 `platforms/linux/demo_family/` 和 `platforms/rtos/demo_family/` 是早期占位平台，用来验证 Linux/RTOS 平台边界和 CMake 接入方式。真实芯片适配时，应新增具体平台目录，例如：
 
 ```text
-platforms/rtos/luban_lite/
-platforms/linux/tina/
+platforms/rtos/jxc/<chip>/
+platforms/linux/allwinner/<chip>/
 ```
 
 ## 组件目录
@@ -87,19 +91,17 @@ components/ui
 资源目录先按“公共资源”和“平台资源”拆开：
 
 ```text
-resources/common/images
-resources/common/fonts
-resources/common/themes
+resources/common/
 resources/host/images
 resources/host/fonts
 resources/host/themes
 ```
 
-`resources/common/` 放所有平台都可以复用的资源。`resources/host/` 放本机调试资源。后续接入真实平台时，可以新增类似下面的目录：
+`resources/common/` 放所有平台都可以复用的资源。当前如果没有真实公共资源，不强行保留 `images`、`fonts`、`themes` 空子目录。`resources/host/` 放本机调试资源。后续接入真实平台时，可以新增类似下面的目录：
 
 ```text
-resources/luban_lite/
-resources/tina/
+resources/jxc_<chip>/
+resources/allwinner_<chip>/
 ```
 
 当前 host/macOS 平台约定：

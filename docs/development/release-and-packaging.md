@@ -6,6 +6,7 @@
 
 - 主工程发布公共框架代码、平台无关组件、host 验证程序和小型第三方产物。
 - 主工程不提交大型厂商 SDK。
+- 厂商 SDK 按芯片或 SoC 放到外部 SDK 仓库管理，主工程只消费导出的头文件、静态库和 manifest。
 - 每个平台的最终产物可以不同，但必须能说明可执行文件、配置文件、资源目录和第三方库来自哪里。
 - LVGL 这类平台差异明显的库，优先通过 `third_party/prebuilt/<name>/<platform>` 消费产物。
 - 发布流程先从 host/macOS 跑通，再扩展到真实 RTOS 和 Linux 平台。
@@ -88,22 +89,22 @@ out/packages/host_macos/manifest.txt
 建议产物边界包括：
 
 ```text
-platforms/rtos/luban_lite/
+platforms/rtos/jxc/<chip>/
 config/profiles/luban_lite.cfg
 resources/luban_lite/
 resources/common/
 third_party/prebuilt/lvgl/luban_lite/
-vendor/
+third_party/prebuilt/vendor/luban_lite/
 ```
 
 说明：
 
-- `platforms/rtos/luban_lite/` 放主工程侧平台适配代码。
+- `platforms/rtos/jxc/<chip>/` 放主工程侧平台适配代码。
 - `config/profiles/luban_lite.cfg` 放 Luban Lite 平台启动配置。
 - `resources/luban_lite/` 放 Luban Lite 专用资源。
 - `resources/common/` 放公共资源。
 - `third_party/prebuilt/lvgl/luban_lite/` 放从 Luban Lite SDK 或独立 LVGL 仓库产出的头文件、静态库和 manifest。
-- `vendor/` 只作为厂商 SDK 边界。大型 SDK 不直接提交进主工程。
+- `third_party/prebuilt/vendor/luban_lite/` 放外部 SDK 仓库导出的少量 `.h`、`.a` 和 manifest。
 
 Luban Lite 的最终固件或 SDK app 产物应由对应 SDK 构建系统产出。主工程负责提供公共代码、平台适配代码和需要同步进去的资源/库边界。
 

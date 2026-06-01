@@ -7,7 +7,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def test_host_posix_package_shape_exists():
     expected_paths = [
-        "platforms/host/common",
         "platforms/host/posix/CMakeLists.txt",
         "platforms/host/posix/startup/main.c",
         "platforms/host/posix/osal_port/ep_host_osal_stub.c",
