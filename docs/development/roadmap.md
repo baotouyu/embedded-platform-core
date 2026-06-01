@@ -115,9 +115,11 @@
 建议顺序：
 
 1. 匠芯创 Luban Lite：
-   - 新增 `platforms/rtos/luban_lite/`。
-   - 对接 Luban Lite / RT-Thread 风格 OS 能力。
-   - 接入 SDK 里或独立仓库产出的 LVGL 静态库。
+   - 使用独立 SDK 仓库 `sdk-artinchip-luban-lite` 维护官方 Luban-Lite 和本项目入口。
+   - 新增 `platforms/rtos/artinchip/luban_lite/`。
+   - 新增第一个 target 描述文件，例如 `artinchip_d12x_demo68_nor`。
+   - 主工程先导出 `out/ep/<target>/lib/libep_app_core.a`。
+   - Luban-Lite SDK 链接该静态库并输出最终固件。
    - 做最小启动和冒烟测试。
 
 2. 全志 Linux：
@@ -160,3 +162,4 @@
 - `docs/development/release-and-packaging.md`
 - `docs/porting/platform-differences.md`
 - `docs/porting/platform-bringup-checklist.md`
+- `docs/porting/rtos-sdk-library-model.md`
