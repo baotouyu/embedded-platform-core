@@ -39,6 +39,32 @@ third_party/prebuilt/lvgl/host_macos/
 
 host/macOS 第一阶段可以不做安装包，先以构建目录产物加配置和资源目录的方式验证。
 
+当前提供 host/macOS 发布包脚本：
+
+```bash
+python3 tools/scripts/package_host.py --clean
+```
+
+默认输出：
+
+```text
+out/packages/host_macos/
+```
+
+目录结构：
+
+```text
+out/packages/host_macos/bin/
+out/packages/host_macos/config/profiles/host.cfg
+out/packages/host_macos/resources/host/
+out/packages/host_macos/resources/common/
+out/packages/host_macos/manifest.txt
+```
+
+这个脚本只生成本地目录包，不做压缩包、签名或安装器。
+
+当前脚本生成的是 host 运行包，不复制 `third_party/prebuilt/lvgl/host_macos/`。host 可执行文件已经静态链接 LVGL；后续如果需要源码构建包或 SDK 同步包，再单独扩展脚本。
+
 ## 匠芯创 Luban Lite 产物
 
 匠芯创 Luban Lite 后续属于 RTOS 类平台。
@@ -174,4 +200,3 @@ host/macOS 还应该手动验证：
 ```
 
 真实平台后续需要增加自己的编译命令、烧录命令和冒烟测试命令。
-
