@@ -1,0 +1,90 @@
+#!/bin/sh
+
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=$SCRIPT_DIR
+BUILD_DIR=$REPO_ROOT/build
+
+print_help() {
+    cat <<EOF
+用法:
+  ./build.sh <命令> [参数]
+
+命令:
+  help          显示帮助
+  configure    生成 CMake 构建目录
+  build        编译当前构建目录
+  test         运行 host 单元测试和 API 契约测试
+  package-host 生成 host/macOS 发布目录包
+  clean        清理 build 和 host/macOS 发布包
+  all          依次执行 configure、build、test、package-host --clean
+
+示例:
+  ./build.sh help
+  ./build.sh configure
+  ./build.sh build
+  ./build.sh test
+  ./build.sh package-host --clean
+  ./build.sh all
+EOF
+}
+
+run_configure() {
+    cmake -S "$REPO_ROOT" -B "$BUILD_DIR"
+}
+
+run_build() {
+    cmake --build "$BUILD_DIR"
+}
+
+run_test() {
+    cd "$REPO_ROOT"
+    pytest tests/host_unit tests/api_contract -v
+}
+
+run_package_host() {
+    "$REPO_ROOT/tools/scripts/package_host.sh" "$@"
+}
+
+run_clean() {
+    rm -rf "$BUILD_DIR" "$REPO_ROOT/out/packages/host_macos"
+    printf '%s\n' "已清理 build 和 out/packages/host_macos"
+}
+
+command=${1:-help}
+if [ "$#" -gt 0 ]; then
+    shift
+fi
+
+case "$command" in
+    help|-h|--help)
+        print_help
+        ;;
+    configure)
+        run_configure
+        ;;
+    build)
+        run_build
+        ;;
+    test)
+        run_test
+        ;;
+    package-host)
+        run_package_host "$@"
+        ;;
+    clean)
+        run_clean
+        ;;
+    all)
+        run_configure
+        run_build
+        run_test
+        run_package_host --clean "$@"
+        ;;
+    *)
+        printf '未知命令：%s\n\n' "$command" >&2
+        print_help >&2
+        exit 2
+        ;;
+esac
