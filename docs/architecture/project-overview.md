@@ -47,7 +47,7 @@ third_party / vendor
 | `hal/` | 硬件抽象接口，例如 GPIO、I2C、SPI、UART、PWM、ADC。 |
 | `platforms/` | 具体平台适配，例如 host/macOS、Linux、RTOS、厂商平台。 |
 | `third_party/` | 第三方源码快照或预编译包。 |
-| `vendor/` | 厂商 SDK 边界。主工程不提交大型 SDK。 |
+| 外部 SDK 仓库 | 厂商 SDK 按芯片或 SoC 单独管理，主工程不提交大型 SDK。 |
 
 ## 当前已经完成什么
 

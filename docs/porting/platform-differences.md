@@ -20,7 +20,7 @@
 | 资源路径差异 | `platforms/include/ep_platform_paths.h` 和平台 paths 实现 | 当前平台配置文件、资源根目录、图片、字体、主题路径。 |
 | 能力差异 | `platforms/include/ep_platform_capability.h` 和平台能力表 | 用统一接口表达平台是否支持文件系统、LVGL、显示、触摸、网络等能力。 |
 | 配置差异 | `config/profiles/<platform>.cfg` | 平台启动参数、功能开关和少量运行配置。 |
-| 厂商 SDK | `vendor/` 边界和外部 SDK 工作区 | 主工程不提交大型厂商 SDK。 |
+| 厂商 SDK | 外部 SDK 仓库和预编译产物边界 | 主工程不提交大型厂商 SDK。 |
 
 ## OS 差异
 
@@ -165,9 +165,8 @@ config/profiles/<platform>.cfg
 厂商 SDK 的规则：
 
 - 主工程不提交大型厂商 SDK。
-- `vendor/` 只保留边界。
-- SDK 可以在外部目录、独立仓库或构建机环境中管理。
-- 主工程只提交必要的适配代码、说明文档和小型配置样例。
+- 厂商 SDK 按芯片或 SoC 放到外部 SDK 仓库管理。
+- 主工程只消费外部 SDK 仓库导出的头文件、静态库和 manifest。
+- 主工程只提交必要的平台适配代码、说明文档和小型配置样例。
 
 这样做的目的是保持主工程轻量，也避免把不同平台的 SDK 习惯强行揉成一套目录。
-

@@ -4,11 +4,8 @@ from pathlib import Path
 REQUIRED_DIRECTORIES = [
     "cmake/modules",
     "cmake/toolchains",
-    "cmake/presets",
     "docs/architecture",
     "docs/porting",
-    "docs/testing",
-    "docs/decisions",
     "core/include",
     "core/src",
     "components/log",
@@ -17,23 +14,15 @@ REQUIRED_DIRECTORIES = [
     "components/config",
     "components/device",
     "components/file",
-    "platforms/rtos/common",
-    "platforms/linux/common",
     "platforms/include",
-    "vendor",
-    "config/common",
-    "config/feature",
     "config/profiles",
-    "resources/common/images",
-    "resources/common/fonts",
-    "resources/common/themes",
+    "resources/common",
     "resources/host/images",
     "resources/host/fonts",
     "resources/host/themes",
     "tests/host_unit",
     "tests/api_contract",
     "tools/scripts",
-    "tools/ci",
     "third_party/external/EasyLogger",
     "third_party/external/cjson",
     "third_party/external/sqlite",
@@ -46,7 +35,59 @@ REMOVED_PLACEHOLDER_DIRECTORIES = [
     "examples",
     "tests/integration",
     "tests/target_smoke",
+    "tools/ci",
+    "vendor",
     "vendor/rtos",
+    "cmake/presets",
+    "config/common",
+    "config/feature",
+    "docs/decisions",
+    "docs/testing",
+    "platforms/host/common",
+    "platforms/linux/common",
+    "platforms/rtos/common",
+    "resources/common/fonts",
+    "resources/common/images",
+    "resources/common/themes",
+    "third_party/external/lvgl",
+]
+
+
+REMOVED_GITKEEP_FILES = [
+    "cmake/modules/.gitkeep",
+    "cmake/presets/.gitkeep",
+    "cmake/toolchains/.gitkeep",
+    "components/config/.gitkeep",
+    "components/event/.gitkeep",
+    "components/file/.gitkeep",
+    "components/log/.gitkeep",
+    "components/timer/.gitkeep",
+    "config/common/.gitkeep",
+    "config/feature/.gitkeep",
+    "config/profiles/.gitkeep",
+    "core/include/.gitkeep",
+    "core/src/.gitkeep",
+    "docs/architecture/.gitkeep",
+    "docs/decisions/.gitkeep",
+    "docs/porting/.gitkeep",
+    "docs/testing/.gitkeep",
+    "platforms/host/common/.gitkeep",
+    "platforms/linux/common/.gitkeep",
+    "platforms/linux/demo_family/board/demo_board/.gitkeep",
+    "platforms/rtos/common/.gitkeep",
+    "platforms/rtos/demo_family/board/demo_board/.gitkeep",
+    "resources/common/fonts/.gitkeep",
+    "resources/common/images/.gitkeep",
+    "resources/common/themes/.gitkeep",
+    "resources/host/fonts/.gitkeep",
+    "resources/host/images/.gitkeep",
+    "resources/host/themes/.gitkeep",
+    "tests/api_contract/.gitkeep",
+    "third_party/external/EasyLogger/.gitkeep",
+    "third_party/external/lvgl/.gitkeep",
+    "tools/ci/.gitkeep",
+    "tools/scripts/.gitkeep",
+    "vendor/.gitkeep",
 ]
 
 
@@ -75,6 +116,24 @@ def test_repository_does_not_keep_empty_future_placeholder_directories():
     )
 
 
+def test_repository_does_not_keep_useless_gitkeep_files():
+    repo_root = Path(__file__).resolve().parents[2]
+
+    unexpected_files = [
+        path for path in REMOVED_GITKEEP_FILES if (repo_root / path).exists()
+    ]
+
+    assert not unexpected_files, (
+        "Unexpected useless .gitkeep files: " + ", ".join(unexpected_files)
+    )
+
+
+def test_resources_common_root_is_kept_for_packaging_boundary():
+    repo_root = Path(__file__).resolve().parents[2]
+
+    assert (repo_root / "resources/common/.gitkeep").is_file()
+
+
 def test_repository_layout_document_explains_top_level_directories_in_chinese():
     repo_root = Path(__file__).resolve().parents[2]
     layout_doc = repo_root / "docs/architecture/repository-layout.md"
@@ -91,7 +150,7 @@ def test_repository_layout_document_explains_top_level_directories_in_chinese():
     assert "third_party/prebuilt/" in content
     assert "resources/" in content
     assert "平台资源路径接口" in content
-    assert "vendor/" in content
+    assert "外部 SDK 仓库" in content
     assert "不要直接修改预编译包里的 lv_conf.h" in content
     assert "不为远期想法预留空目录" in content
 
