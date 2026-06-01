@@ -18,6 +18,7 @@ print_help() {
   test         运行 host 单元测试和 API 契约测试
   package-host 生成 host/macOS 发布目录包
   export-ep    生成主工程静态库导出包 out/ep/<target>
+  export-target 通过 targets/<target>.yaml 导出主工程静态库包
   clean        清理 build 和 host/macOS 发布包
   all          依次执行 configure、build、test、package-host --clean
 
@@ -28,6 +29,7 @@ print_help() {
   ./build.sh test
   ./build.sh package-host --clean
   ./build.sh export-ep --clean
+  ./build.sh export-target host_rtos_demo
   ./build.sh all
 EOF
 }
@@ -51,6 +53,16 @@ run_package_host() {
 
 run_export_ep() {
     "$REPO_ROOT/tools/scripts/export_ep_package.sh" "$@"
+}
+
+run_export_target() {
+    target=${1:-}
+    if [ -z "$target" ]; then
+        printf '缺少 target 名称\n' >&2
+        exit 2
+    fi
+    shift
+    "$REPO_ROOT/tools/scripts/export_target.sh" --target "$target" "$@"
 }
 
 run_clean() {
@@ -81,6 +93,9 @@ case "$command" in
         ;;
     export-ep)
         run_export_ep "$@"
+        ;;
+    export-target)
+        run_export_target "$@"
         ;;
     clean)
         run_clean
