@@ -306,15 +306,18 @@ scripts/flash.sh
 建议主工程调用方式：
 
 ```bash
-../sdks/sdk-artinchip-luban-lite/scripts/prepare.sh
-
-../sdks/sdk-artinchip-luban-lite/scripts/build_firmware.sh \
-  --target artinchip_d12x_demo68_nor \
-  --ep-package out/ep/artinchip_d12x_demo68_nor \
-  --out out/firmware/artinchip_d12x_demo68_nor
+./build.sh build-firmware artinchip_d12x_demo68_nor --clean
 ```
 
-SDK 内部可以继续使用 SCons、Makefile 或原厂脚本。主工程只认这些稳定入口。
+主工程内部调度顺序是：
+
+```text
+prepare-sdk
+  -> export-target
+  -> SDK scripts/build_firmware.sh
+```
+
+主工程会把 `--target`、`--ep-package` 和 `--out` 传给 SDK 的 `scripts/build_firmware.sh`。SDK 内部可以继续使用 SCons、Makefile 或原厂脚本。主工程只认这些稳定入口，不解析 SDK 内部构建细节。
 
 ## Luban-Lite 接入方式
 
@@ -355,7 +358,7 @@ target/configs/d12x_demo68-nor_rt-thread_ep_app_defconfig
 4. 在主工程新增 target 描述文件。
 5. 主工程实现 `out/ep/<target>` 静态库包导出。
 6. SDK 仓库实现 `scripts/build_firmware.sh`，链接 `libep_app_core.a`。
-7. 主工程构建调度脚本串起 SDK 拉取、主工程导出库、SDK 生成固件。
+7. 主工程通过 `./build.sh build-firmware <target>` 串起 SDK 拉取、主工程导出库、SDK 生成固件。
 
 第一块真实芯片只选一个 target 跑通，不同时适配所有芯片。
 

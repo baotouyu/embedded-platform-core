@@ -13,3 +13,4 @@ sdk:
 
 output:
   ep_package: out/ep/host_rtos_demo
+  firmware: out/firmware/host_rtos_demo
