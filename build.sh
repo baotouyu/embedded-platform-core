@@ -17,6 +17,7 @@ print_help() {
   build        编译当前构建目录
   test         运行 host 单元测试和 API 契约测试
   package-host 生成 host/macOS 发布目录包
+  export-ep    生成主工程静态库导出包 out/ep/<target>
   clean        清理 build 和 host/macOS 发布包
   all          依次执行 configure、build、test、package-host --clean
 
@@ -26,6 +27,7 @@ print_help() {
   ./build.sh build
   ./build.sh test
   ./build.sh package-host --clean
+  ./build.sh export-ep --clean
   ./build.sh all
 EOF
 }
@@ -45,6 +47,10 @@ run_test() {
 
 run_package_host() {
     "$REPO_ROOT/tools/scripts/package_host.sh" "$@"
+}
+
+run_export_ep() {
+    "$REPO_ROOT/tools/scripts/export_ep_package.sh" "$@"
 }
 
 run_clean() {
@@ -72,6 +78,9 @@ case "$command" in
         ;;
     package-host)
         run_package_host "$@"
+        ;;
+    export-ep)
+        run_export_ep "$@"
         ;;
     clean)
         run_clean
