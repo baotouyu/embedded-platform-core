@@ -1,0 +1,10 @@
+target: host_rtos_demo
+os: rtos
+vendor: host
+sdk_family: demo
+chip: host
+board: rtos-demo
+kernel: none
+
+output:
+  ep_package: out/ep/host_rtos_demo
