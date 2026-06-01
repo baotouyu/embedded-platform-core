@@ -305,3 +305,11 @@ pytest tests/host_unit tests/api_contract -v
 - `docs/superpowers/plans/`
 
 这些文档记录了当前仓库的架构思路、边界约束和骨架实现顺序。
+
+常用规范入口：
+
+- `docs/architecture/project-overview.md`：项目总览。
+- `docs/architecture/repository-layout.md`：仓库目录边界。
+- `docs/development/release-and-packaging.md`：发布和打包流程。
+- `docs/porting/platform-differences.md`：平台差异整理。
+- `docs/porting/platform-bringup-checklist.md`：平台移植检查清单。

@@ -1,0 +1,229 @@
+# 平台移植检查清单
+
+本文作为新增真实平台时的执行清单。每个平台可以按这份清单逐步补齐，不要求一次做完全部能力。
+
+## 适用平台
+
+当前预期会覆盖：
+
+- host/macOS。
+- 匠芯创 Luban Lite。
+- 全志 Linux。
+- 后续其他 RTOS 或 Linux 平台。
+
+## 第一阶段：建立平台边界
+
+1. 新建平台目录。
+
+```text
+platforms/rtos/luban_lite/
+platforms/linux/tina/
+```
+
+2. 新增 `CMakeLists.txt`。
+
+3. 新增启动入口目录。
+
+```text
+startup/
+```
+
+4. 新增 OSAL、HAL、能力表、路径等目录。
+
+```text
+osal_port/
+hal_port/
+capability/
+paths/
+component_port/
+board/
+config/
+```
+
+5. 保证新平台目录只放该平台适配代码，不放业务代码。
+
+## 第二阶段：启动入口
+
+1. 接入平台启动入口。
+
+```text
+platforms/<family>/<platform>/startup/
+```
+
+2. 确认启动入口能进入框架生命周期。
+
+3. 启动路径应保持清楚：
+
+```text
+平台 main 或 SDK app entry
+  -> 平台 boot
+  -> framework init
+  -> app main
+```
+
+4. 启动入口不直接写业务 UI 页面、菜谱逻辑或设备业务。
+
+## 第三阶段：OSAL
+
+1. 确认平台需要实现哪些 OSAL 能力。
+
+```text
+时间
+内存
+线程
+互斥锁
+信号量
+队列
+```
+
+2. 在平台 `osal_port/` 内补实现。
+
+3. 先允许 stub，再逐步替换为真实实现。
+
+4. 公共组件只包含 `osal/include/` 里的头文件。
+
+## 第四阶段：HAL
+
+1. 确认平台需要哪些 HAL 能力。
+
+```text
+GPIO
+I2C
+SPI
+UART
+PWM
+ADC
+```
+
+2. 在平台 `hal_port/` 内补实现。
+
+3. 没有真实硬件需求前，可以继续保持 stub。
+
+4. 真实驱动接入后，需要补目标板冒烟测试。
+
+## 第五阶段：平台能力表
+
+1. 新增平台能力表。
+
+```text
+platforms/<family>/<platform>/capability/
+```
+
+2. 至少声明这些能力的真实状态：
+
+```text
+文件系统
+配置持久化
+日志
+线程
+LVGL
+显示
+触摸
+GPIO
+I2C
+SPI
+UART
+PWM
+ADC
+网络
+```
+
+3. 应用和组件通过 `ep_platform_has_capability()` 查询能力，不直接判断平台名。
+
+## 第六阶段：平台路径
+
+1. 新增平台路径实现。
+
+```text
+platforms/<family>/<platform>/paths/
+```
+
+2. 确认这些路径能返回：
+
+```text
+配置文件
+资源根目录
+图片路径
+字体路径
+主题路径
+```
+
+3. host 可以使用仓库目录。
+
+4. 真实平台可以使用安装目录、文件系统目录、flash 分区或 SDK 资源路径。
+
+## 第七阶段：配置文件
+
+1. 新增平台配置文件。
+
+```text
+config/profiles/<platform>.cfg
+```
+
+2. 配置内容只放小型运行参数和功能开关。
+
+3. 不把大型资源、数据库、SDK 配置塞进 profile。
+
+## 第八阶段：LVGL 预编译包
+
+1. 准备平台 LVGL 产物。
+
+```text
+third_party/prebuilt/lvgl/<platform>/
+```
+
+2. 包内至少包含：
+
+```text
+include/
+lib/
+manifest
+```
+
+3. manifest 需要说明：
+
+```text
+LVGL 版本
+显示后端
+输入后端
+文件系统能力
+图片解码能力
+字体能力
+```
+
+4. 主工程不直接改该平台 `lv_conf.h`，应从对应 SDK 或 LVGL 预编译仓库重新产包。
+
+## 第九阶段：资源目录
+
+1. 新增平台资源目录。
+
+```text
+resources/<platform>/images
+resources/<platform>/fonts
+resources/<platform>/themes
+```
+
+2. 公共资源继续放在：
+
+```text
+resources/common/
+```
+
+3. 资源加载代码通过平台路径接口获取路径。
+
+## 第十阶段：编译和冒烟测试
+
+1. 先保证平台能编译。
+
+2. 再保证最小程序能启动。
+
+3. 再检查日志是否可用。
+
+4. 再检查配置文件是否能加载。
+
+5. 再检查资源路径是否能访问。
+
+6. 最后再做 UI、触摸、硬件驱动等更复杂验证。
+
+每个平台最终都应该有自己的冒烟测试说明。真实目标板测试可能依赖串口、烧录器或专用 runner，不要求一开始接入 GitHub CI。
+
