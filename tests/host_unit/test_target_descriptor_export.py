@@ -125,3 +125,39 @@ def test_export_target_script_fails_for_missing_descriptor(tmp_path):
     assert result.returncode != 0
     assert "缺少 target 描述文件" in result.stderr
     assert "missing_target.yaml" in result.stderr
+
+
+def test_build_script_export_target_uses_descriptor_after_build():
+    configure = subprocess.run(
+        [str(BUILD_SCRIPT), "configure"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert configure.returncode == 0, configure.stderr
+
+    build = subprocess.run(
+        [
+            "cmake",
+            "--build",
+            str(REPO_ROOT / "build"),
+            "--target",
+            "ep_app_core_export",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert build.returncode == 0, build.stderr
+
+    result = subprocess.run(
+        [str(BUILD_SCRIPT), "export-target", "host_rtos_demo", "--clean"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+    package_root = REPO_ROOT / "out" / "ep" / "host_rtos_demo"
+    assert (package_root / "lib" / "libep_app_core.a").is_file()
+    assert (package_root / "manifest.json").is_file()
