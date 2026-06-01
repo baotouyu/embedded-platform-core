@@ -15,12 +15,11 @@
 | `config/` | 默认配置、功能开关配置和运行配置样例。 |
 | `resources/` | 平台资源目录，例如图片、字体、主题。主工程只放公共资源和 host 调试资源，真实平台资源按平台目录隔离。 |
 | `cmake/` | CMake 模块、工具链文件和构建选项。 |
-| `tests/` | host 单元测试、API 契约测试、集成测试和目标板冒烟测试。 |
+| `tests/` | host 单元测试和 API 契约测试。集成测试、目标板冒烟测试需要真实需求时再新增目录。 |
 | `docs/` | 中文设计、流程、移植和测试文档。 |
 | `tools/` | 辅助脚本和 CI 工具。 |
-| `examples/` | 面向使用者的独立样例。当前可以为空，业务 demo 优先放在对应平台目录。 |
 | `third_party/` | 第三方源码或预编译包。 |
-| `vendor/` | 厂商 SDK 放置位置。主工程当前不提交大型 SDK，只保留目录边界。 |
+| `vendor/` | 厂商 SDK 边界。主工程当前不提交大型 SDK，也不为未接入 SDK 预留空子目录。 |
 
 ## 第三方目录
 
@@ -69,7 +68,19 @@ components/<name>/src
 components/<name>/CMakeLists.txt
 ```
 
-尚未实现的方向可以保留空目录和 `.gitkeep`，但不要在空目录里放临时文件。网络、菜谱解析、用户数据等后续功能可以按这个规则逐步补齐。
+不为远期想法预留空目录。网络、菜谱解析、用户数据等方向暂时不放空目录，等需求明确并开始实现时，再新增对应组件目录。
+
+当前真实组件包括：
+
+```text
+components/config
+components/device
+components/event
+components/file
+components/log
+components/timer
+components/ui
+```
 
 ## 资源目录
 

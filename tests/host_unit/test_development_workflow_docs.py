@@ -29,6 +29,7 @@ def test_testing_strategy_doc_exists_and_defines_test_layers():
         "tests/api_contract",
         "tests/integration",
         "tests/target_smoke",
+        "不提前保留空目录",
         "模块化测试",
     ]
 

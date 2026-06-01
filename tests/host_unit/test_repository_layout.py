@@ -17,11 +17,10 @@ REQUIRED_DIRECTORIES = [
     "components/config",
     "components/device",
     "components/file",
-    "components/net",
     "platforms/rtos/common",
     "platforms/linux/common",
     "platforms/include",
-    "vendor/rtos",
+    "vendor",
     "config/common",
     "config/feature",
     "config/profiles",
@@ -33,13 +32,21 @@ REQUIRED_DIRECTORIES = [
     "resources/host/themes",
     "tests/host_unit",
     "tests/api_contract",
-    "tests/integration",
-    "tests/target_smoke",
     "tools/scripts",
     "tools/ci",
-    "examples",
     "third_party/external/EasyLogger",
-    "third_party/external/lvgl",
+    "third_party/external/cjson",
+    "third_party/external/sqlite",
+    "third_party/prebuilt/lvgl/host_macos",
+]
+
+
+REMOVED_PLACEHOLDER_DIRECTORIES = [
+    "components/net",
+    "examples",
+    "tests/integration",
+    "tests/target_smoke",
+    "vendor/rtos",
 ]
 
 
@@ -52,6 +59,19 @@ def test_repository_layout_matches_task_requirements():
 
     assert not missing_directories, (
         "Missing required directories: " + ", ".join(missing_directories)
+    )
+
+
+def test_repository_does_not_keep_empty_future_placeholder_directories():
+    repo_root = Path(__file__).resolve().parents[2]
+
+    unexpected_directories = [
+        path for path in REMOVED_PLACEHOLDER_DIRECTORIES if (repo_root / path).exists()
+    ]
+
+    assert not unexpected_directories, (
+        "Unexpected empty placeholder directories: "
+        + ", ".join(unexpected_directories)
     )
 
 
@@ -73,6 +93,7 @@ def test_repository_layout_document_explains_top_level_directories_in_chinese():
     assert "平台资源路径接口" in content
     assert "vendor/" in content
     assert "不要直接修改预编译包里的 lv_conf.h" in content
+    assert "不为远期想法预留空目录" in content
 
 
 def test_project_overview_and_roadmap_document_current_direction():
