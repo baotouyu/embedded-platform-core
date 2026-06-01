@@ -1,0 +1,8 @@
+SQLite 3.53.1
+
+来源：
+https://www.sqlite.org/download.html
+https://www.sqlite.org/2026/sqlite-amalgamation-3530100.zip
+
+接入方式：
+保留 sqlite3.c、sqlite3.h、sqlite3ext.h 和 LICENSE.md，作为官方 amalgamation 源码快照由主工程 CMake 编译为 ep_thirdparty_sqlite。

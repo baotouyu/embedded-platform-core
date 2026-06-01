@@ -89,9 +89,13 @@ third_party / vendor
 ### 第三方库
 
 - EasyLogger 作为日志后端。
+- cJSON v1.7.19 源码快照。
+- SQLite 3.53.1 amalgamation 源码快照。
 - LVGL 9.1 host/macOS 预编译包。
 - `lvgl-prebuilt-host-macos` 独立仓库负责 host LVGL 配置和产物。
 - host 资源目录约定为 `resources/host`，图片、字体、主题分别放在对应子目录。
+
+cJSON 和 SQLite 当前只作为第三方库目标接入，后续业务组件可以按需链接。
 
 ## 文档分工
 
