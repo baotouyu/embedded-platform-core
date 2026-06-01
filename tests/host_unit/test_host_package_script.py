@@ -1,10 +1,10 @@
 import subprocess
-import sys
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PACKAGE_SCRIPT = REPO_ROOT / "tools" / "scripts" / "package_host.py"
+BUILD_SCRIPT = REPO_ROOT / "build.sh"
+PACKAGE_SCRIPT = REPO_ROOT / "tools" / "scripts" / "package_host.sh"
 
 
 def _write_executable(path: Path) -> None:
@@ -50,13 +50,37 @@ def _prepare_minimal_repo(root: Path) -> None:
 
 
 def test_host_package_script_exists_and_describes_usage():
+    assert BUILD_SCRIPT.is_file()
     assert PACKAGE_SCRIPT.is_file()
+    assert not (REPO_ROOT / "tools" / "scripts" / "package_host.py").exists()
+
+    build_text = BUILD_SCRIPT.read_text(encoding="utf-8")
+    assert "package-host" in build_text
+    assert "help" in build_text
 
     text = PACKAGE_SCRIPT.read_text(encoding="utf-8")
-    assert "package_host" in text
+    assert "package_host.sh" in text
     assert "out/packages/host_macos" in text
     assert "manifest.txt" in text
     assert "ep_host_lvgl_widgets_demo" in text
+
+
+def test_build_script_help_lists_supported_commands():
+    result = subprocess.run(
+        [str(BUILD_SCRIPT), "help"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0
+    assert "用法" in result.stdout
+    assert "configure" in result.stdout
+    assert "build" in result.stdout
+    assert "test" in result.stdout
+    assert "package-host" in result.stdout
+    assert "clean" in result.stdout
+    assert "all" in result.stdout
 
 
 def test_host_package_script_creates_package_from_required_outputs(tmp_path):
@@ -66,8 +90,8 @@ def test_host_package_script_creates_package_from_required_outputs(tmp_path):
     output_dir = tmp_path / "package"
     result = subprocess.run(
         [
-            sys.executable,
-            str(PACKAGE_SCRIPT),
+            str(BUILD_SCRIPT),
+            "package-host",
             "--repo-root",
             str(repo),
             "--output-dir",
@@ -109,7 +133,6 @@ def test_host_package_script_fails_when_required_output_is_missing(tmp_path):
 
     result = subprocess.run(
         [
-            sys.executable,
             str(PACKAGE_SCRIPT),
             "--repo-root",
             str(repo),

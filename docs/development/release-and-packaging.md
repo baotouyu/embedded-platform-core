@@ -1,6 +1,6 @@
 # 发布和打包流程
 
-本文说明 `embedded-platform-core` 后续发布、打包和平台产物的边界。当前先定义规则，不新增打包脚本。
+本文说明 `embedded-platform-core` 后续发布、打包和平台产物的边界。
 
 ## 基本原则
 
@@ -39,10 +39,26 @@ third_party/prebuilt/lvgl/host_macos/
 
 host/macOS 第一阶段可以不做安装包，先以构建目录产物加配置和资源目录的方式验证。
 
-当前提供 host/macOS 发布包脚本：
+当前提供根目录构建调度脚本：
 
 ```bash
-python3 tools/scripts/package_host.py --clean
+./build.sh help
+```
+
+常用命令：
+
+```bash
+./build.sh configure
+./build.sh build
+./build.sh test
+./build.sh package-host --clean
+./build.sh all
+```
+
+`package-host` 会调用 `tools/scripts/package_host.sh` 生成 host/macOS 发布包：
+
+```bash
+./build.sh package-host --clean
 ```
 
 默认输出：
@@ -186,9 +202,9 @@ third_party/prebuilt/lvgl/host_macos
 每次准备发布或同步平台产物前，至少检查：
 
 ```bash
-pytest tests/host_unit tests/api_contract -v
-cmake -S . -B build
-cmake --build build
+./build.sh configure
+./build.sh build
+./build.sh test
 ```
 
 host/macOS 还应该手动验证：
