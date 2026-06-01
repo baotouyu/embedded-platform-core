@@ -10,9 +10,9 @@
 ```text
 tests/host_unit/
 tests/api_contract/
-tests/integration/
-tests/target_smoke/
 ```
+
+当前主仓库只保留已经实际使用的测试目录。集成测试和目标板冒烟测试作为测试分层保留在文档里，但不提前保留空目录。
 
 ### `tests/host_unit`
 
@@ -50,7 +50,7 @@ tests/target_smoke/
 
 ### `tests/integration`
 
-`tests/integration` 放集成测试，用来验证多个框架层之间的协作。
+`tests/integration` 后续用于放集成测试，用来验证多个框架层之间的协作。当前还没有真实集成测试，所以不保留空目录。
 
 适合覆盖：
 
@@ -63,7 +63,7 @@ tests/target_smoke/
 
 ### `tests/target_smoke`
 
-`tests/target_smoke` 放目标环境冒烟测试，用于真实板子、RTOS SDK 或目标 Linux 环境。
+`tests/target_smoke` 后续用于放目标环境冒烟测试，用于真实板子、RTOS SDK 或目标 Linux 环境。当前还没有目标板 runner，所以不保留空目录。
 
 适合覆盖：
 
@@ -72,8 +72,7 @@ tests/target_smoke/
 - 基础 GPIO、UART、I2C、SPI 等驱动访问
 - 最小 `app_main()` 路径是否能跑通
 
-这类测试可能依赖硬件、串口、烧录器或专用 runner。第一阶段可以先保留目录和测试计划，
-等真实目标环境稳定后再接入 CI 的手动或专用 job。
+这类测试可能依赖硬件、串口、烧录器或专用 runner。等真实目标环境稳定后，再新增目录并接入 CI 的手动或专用 job。
 
 ## 模块化测试规则
 
