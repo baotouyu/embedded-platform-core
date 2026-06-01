@@ -6,5 +6,10 @@ chip: host
 board: rtos-demo
 kernel: none
 
+sdk:
+  name: sdk-artinchip-luban-lite
+  repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
+  ref: main
+
 output:
   ep_package: out/ep/host_rtos_demo

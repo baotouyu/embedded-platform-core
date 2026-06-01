@@ -19,6 +19,7 @@ print_help() {
   package-host 生成 host/macOS 发布目录包
   export-ep    生成主工程静态库导出包 out/ep/<target>
   export-target 通过 targets/<target>.yaml 导出主工程静态库包
+  prepare-sdk  通过 targets/<target>.yaml 准备工程外本地 SDK，默认 ../sdks
   clean        清理 build 和 host/macOS 发布包
   all          依次执行 configure、build、test、package-host --clean
 
@@ -30,6 +31,8 @@ print_help() {
   ./build.sh package-host --clean
   ./build.sh export-ep --clean
   ./build.sh export-target host_rtos_demo
+  ./build.sh prepare-sdk host_rtos_demo
+  EP_SDK_ROOT=/opt/ep-sdks ./build.sh prepare-sdk host_rtos_demo
   ./build.sh all
 EOF
 }
@@ -65,6 +68,16 @@ run_export_target() {
     "$REPO_ROOT/tools/scripts/export_target.sh" --target "$target" "$@"
 }
 
+run_prepare_sdk() {
+    target=${1:-}
+    if [ -z "$target" ]; then
+        printf '缺少 target 名称\n' >&2
+        exit 2
+    fi
+    shift
+    "$REPO_ROOT/tools/scripts/prepare_target_sdk.sh" --target "$target" "$@"
+}
+
 run_clean() {
     rm -rf "$BUILD_DIR" "$REPO_ROOT/out/packages/host_macos"
     printf '%s\n' "已清理 build 和 out/packages/host_macos"
@@ -96,6 +109,9 @@ case "$command" in
         ;;
     export-target)
         run_export_target "$@"
+        ;;
+    prepare-sdk)
+        run_prepare_sdk "$@"
         ;;
     clean)
         run_clean

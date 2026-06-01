@@ -60,6 +60,33 @@ https://gitee.com/artinchip/luban-lite.git
 
 后续官方更新时，在 SDK 仓库里合并 upstream，不在主工程里直接同步 Luban-Lite 源码。
 
+## SDK 本地缓存规则
+
+SDK 仓库源码不克隆到主工程目录里。主工程只保存 target 描述文件，描述 SDK 仓库地址和版本；本地 SDK 缓存放在主工程外部，避免污染主工程文件结构和 git 状态。
+
+默认本地缓存路径：
+
+```text
+../sdks/<sdk.name>/
+```
+
+以当前仓库为例，默认会放在：
+
+```text
+项目父目录/
+  embedded-platform-core/
+  sdks/
+    sdk-artinchip-luban-lite/
+```
+
+也可以通过环境变量指定统一缓存目录：
+
+```bash
+EP_SDK_ROOT=/opt/ep-sdks ./build.sh prepare-sdk artinchip_d12x_demo68_nor
+```
+
+target 描述文件不要记录本地 SDK 路径。路径是每台开发机自己的事情，不属于工程配置。
+
 ## 产物格式
 
 RTOS target 的主工程产物放在：
@@ -163,7 +190,6 @@ sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
   ref: main
-  path: .sdk/artinchip/luban-lite
 
 luban:
   defconfig: d12x_demo68-nor_rt-thread_ep_app_defconfig
@@ -280,9 +306,9 @@ scripts/flash.sh
 建议主工程调用方式：
 
 ```bash
-.sdk/artinchip/luban-lite/scripts/prepare.sh
+../sdks/sdk-artinchip-luban-lite/scripts/prepare.sh
 
-.sdk/artinchip/luban-lite/scripts/build_firmware.sh \
+../sdks/sdk-artinchip-luban-lite/scripts/build_firmware.sh \
   --target artinchip_d12x_demo68_nor \
   --ep-package out/ep/artinchip_d12x_demo68_nor \
   --out out/firmware/artinchip_d12x_demo68_nor
@@ -341,4 +367,3 @@ target/configs/d12x_demo68-nor_rt-thread_ep_app_defconfig
 - 不使用 host/macOS 编译器生成 RTOS 静态库。
 - 不把不同芯片的板级配置复制到主工程里重复维护。
 - 不为了远期芯片预留大量空目录。
-
