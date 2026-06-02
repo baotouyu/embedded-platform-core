@@ -206,6 +206,16 @@ output:
 
 这个文件是主工程和 SDK 仓库之间的契约。主工程不应该在构建脚本里散落一堆芯片名判断。
 
+## target 校验
+
+新增或修改 target 后，先运行：
+
+```bash
+./build.sh validate-targets
+```
+
+这个命令只校验 `targets/*.yaml` 的结构和约定，不拉取 SDK，也不执行编译。它会检查 target 名、`platform:` 分组、SDK 来源字段、输出目录和禁止的本地 SDK 路径。
+
 ## 不同芯片平台管理规则
 
 ### 一个 SDK 家族一个 SDK 仓库
