@@ -60,9 +60,13 @@ https://gitee.com/artinchip/luban-lite.git
 
 后续官方更新时，在 SDK 仓库里合并 upstream，不在主工程里直接同步 Luban-Lite 源码。
 
-## SDK 本地缓存规则
+## SDK 获取和版本锁定策略
 
-SDK 仓库源码不克隆到主工程目录里。主工程只保存 target 描述文件，描述 SDK 仓库地址和版本；本地 SDK 缓存放在主工程外部，避免污染主工程文件结构和 git 状态。
+SDK 管理分成两件事：本地怎么拿到 SDK，以及工程如何锁定 SDK 版本。
+
+### 外部缓存模式
+
+如果没有检出 SDK 子模块，自动化脚本会使用外部缓存模式。主工程只保存 target 描述文件，描述 SDK 仓库地址和版本；本地 SDK 缓存放在主工程外部，避免污染主工程文件结构和 git 状态。
 
 默认本地缓存路径：
 
@@ -86,6 +90,56 @@ EP_SDK_ROOT=/opt/ep-sdks ./build.sh prepare-sdk artinchip_d12x_demo68_nor
 ```
 
 target 描述文件不要记录本地 SDK 路径。路径是每台开发机自己的事情，不属于工程配置。
+
+### git submodule 锁定模式
+
+如果项目需要由主工程明确记录“当前适配过的 SDK 版本”，可以把 SDK 仓库作为 `git submodule` 接入。submodule 是子仓库引用：主工程记录 SDK 仓库 URL、放置路径，以及固定到某个 commit 的 gitlink；主工程不是把 SDK 源码复制提交进自己的历史。
+
+这个模式适合当前诉求：SDK 上游继续更新时，主工程不会自动跟随上游更新。主工程只会继续使用已经记录的那个 SDK commit，直到我们主动适配并提交新的 submodule 指针。
+
+建议路径：
+
+```text
+third_party/sdk/<sdk.name>/
+```
+
+添加 SDK 子模块示例：
+
+```bash
+git submodule add <sdk-repo-url> third_party/sdk/sdk-artinchip-luban-lite
+git -C third_party/sdk/sdk-artinchip-luban-lite checkout <sdk-commit-or-tag>
+git add .gitmodules third_party/sdk/sdk-artinchip-luban-lite
+git commit -m "chore: pin luban-lite sdk"
+```
+
+克隆主工程后拉取子模块：
+
+```bash
+git submodule update --init --recursive
+```
+
+日常开发不要运行：
+
+```bash
+git submodule update --remote
+```
+
+`git submodule update --remote` 会把子模块移动到远端分支的最新提交，和“主工程不受 SDK 上游更新影响”的目标相反。真实平台也不要使用浮动分支，例如 `main`、`master`、`develop` 作为稳定版本来源；`sdk.ref` 应填写已经验证过的 tag 或 commit。`host_rtos_demo` 这类 stub target 可以临时使用 `main`，但不能作为真实芯片 target 的版本锁定模板。
+
+主动适配 SDK 新版本时，流程应该是：
+
+```bash
+git -C third_party/sdk/sdk-artinchip-luban-lite fetch --tags
+git -C third_party/sdk/sdk-artinchip-luban-lite checkout <new-sdk-commit-or-tag>
+
+./build.sh validate-targets
+./build.sh build-firmware <target> --clean
+
+git add third_party/sdk/sdk-artinchip-luban-lite targets/<target>.yaml
+git commit -m "chore: update luban-lite sdk"
+```
+
+如果 SDK 已作为 submodule 接入，`targets/<target>.yaml` 仍然要保留 `sdk.name`、`sdk.repo` 和 `sdk.ref`，作为主工程和 SDK 仓库之间的契约；其中 `sdk.ref` 要和子模块当前 HEAD 对齐。当前 `prepare-sdk` 和 `build-firmware` 会优先复用 `third_party/sdk/<sdk.name>/`，没有检出子模块时才按 `sdk.repo` 和 `sdk.ref` 准备外部缓存。
 
 ## 产物格式
 
@@ -203,7 +257,7 @@ platform:
 sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
-  ref: main
+  ref: f482285eb73268654180ffbea7713af6b5b24f3f
 
 toolchain:
   source: sdk
@@ -357,7 +411,7 @@ C08/
   sdk-artinchip-luban-lite/
 ```
 
-先确保两个仓库都在 `main`，并且 `sdk-artinchip-luban-lite` 已经提供：
+先确保主工程 target 的 `sdk.ref` 与 SDK 子模块当前 HEAD 一致，并且 `sdk-artinchip-luban-lite` 已经提供：
 
 ```text
 scripts/build_firmware.sh
@@ -370,7 +424,7 @@ EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08 \
 ./build.sh build-firmware host_rtos_demo --clean
 ```
 
-这条命令会复用同级的 SDK 仓库：
+如果没有检出 SDK 子模块，这条命令会复用同级的 SDK 仓库：
 
 ```text
 /Users/yuwei/Documents/KitchenIdea/项目/C08/sdk-artinchip-luban-lite

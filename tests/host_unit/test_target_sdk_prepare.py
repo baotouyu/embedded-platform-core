@@ -74,6 +74,39 @@ def test_host_rtos_demo_target_declares_sdk_boundary():
     assert ".sdk" not in text
 
 
+def test_target_sdk_resolver_script_exists():
+    resolver = REPO_ROOT / "tools" / "scripts" / "target_sdk_resolver.sh"
+    text = resolver.read_text(encoding="utf-8")
+
+    assert resolver.is_file()
+    assert "sdk_resolve_dir" in text
+    assert "third_party/sdk/$sdk_name" in text
+
+
+def test_luban_lite_sdk_submodule_is_pinned_to_target_ref():
+    submodule_path = REPO_ROOT / "third_party" / "sdk" / "sdk-artinchip-luban-lite"
+    gitmodules = (REPO_ROOT / ".gitmodules").read_text(encoding="utf-8")
+
+    assert "third_party/sdk/sdk-artinchip-luban-lite" in gitmodules
+    assert submodule_path.is_dir()
+
+    result = subprocess.run(
+        ["git", "-C", str(submodule_path), "rev-parse", "HEAD"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+    submodule_head = result.stdout.strip()
+    for target_name in [
+        "host_rtos_demo.yaml",
+        "artinchip_d121_lubanlite_demo.yaml",
+    ]:
+        target_text = (REPO_ROOT / "targets" / target_name).read_text(encoding="utf-8")
+        assert f"ref: {submodule_head}" in target_text
+
+
 def test_build_help_lists_prepare_sdk_command():
     result = subprocess.run(
         [str(BUILD_SCRIPT), "help"],
@@ -85,6 +118,7 @@ def test_build_help_lists_prepare_sdk_command():
     assert result.returncode == 0
     assert "prepare-sdk" in result.stdout
     assert "targets/<target>.yaml" in result.stdout
+    assert "third_party/sdk/<sdk.name>" in result.stdout
     assert "../sdks" in result.stdout
 
 
@@ -93,6 +127,7 @@ def test_rtos_sdk_document_keeps_local_sdk_outside_main_repo():
 
     assert "EP_SDK_ROOT" in text
     assert "../sdks" in text
+    assert "优先复用 `third_party/sdk/<sdk.name>/`" in text
     assert "path: .sdk" not in text
     assert ".sdk/" not in text
 
@@ -185,6 +220,37 @@ def test_prepare_target_sdk_reuses_existing_sdk_directory(tmp_path):
     assert (sdk_path / "marker.txt").read_text(encoding="utf-8") == "existing\n"
     assert not (repo / ".sdk").exists()
     assert "SDK 已存在" in result.stdout
+
+
+def test_prepare_target_sdk_prefers_checked_out_submodule_inside_main_repo(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk"
+    _create_local_sdk_repo(sdk_repo)
+
+    repo = tmp_path / "repo"
+    _prepare_repo_with_target(repo, sdk_repo)
+    submodule_path = repo / "third_party" / "sdk" / "fake-sdk"
+    submodule_path.mkdir(parents=True)
+    _write_file(submodule_path / "README.md", "submodule sdk\n")
+
+    result = subprocess.run(
+        [
+            str(PREPARE_SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--sdk-root",
+            str(tmp_path / "sdks"),
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert not (tmp_path / "sdks" / "fake-sdk").exists()
+    assert (submodule_path / "README.md").read_text(encoding="utf-8") == "submodule sdk\n"
+    assert f"SDK 使用子模块：{submodule_path}" in result.stdout
 
 
 def test_prepare_target_sdk_allows_relative_sibling_sdk_root(tmp_path):

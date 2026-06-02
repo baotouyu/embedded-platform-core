@@ -1,0 +1,3 @@
+[submodule "third_party/sdk/sdk-artinchip-luban-lite"]
+	path = third_party/sdk/sdk-artinchip-luban-lite
+	url = https://github.com/baotouyu/sdk-artinchip-luban-lite.git

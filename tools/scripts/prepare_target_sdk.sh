@@ -4,6 +4,7 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/target_descriptor.sh"
+. "$SCRIPT_DIR/target_sdk_resolver.sh"
 
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 TARGET=
@@ -17,7 +18,8 @@ print_help() {
 参数:
   --repo-root <路径>  仓库根目录，默认自动使用当前脚本所在仓库
   --target <名称>     target 名称，对应 targets/<target>.yaml
-  --sdk-root <路径>   SDK 本地缓存根目录，默认 ../sdks，也可用 EP_SDK_ROOT 指定
+  --sdk-root <路径>   SDK 外部缓存根目录，默认 ../sdks，也可用 EP_SDK_ROOT 指定
+                     如果 third_party/sdk/<sdk.name> 已检出，会优先复用子模块
   -h, --help         显示帮助
 EOF
 }
@@ -25,22 +27,6 @@ EOF
 die() {
     printf '%s\n' "$1" >&2
     exit 1
-}
-
-resolve_path() {
-    path=$1
-    base=$2
-
-    case "$path" in
-        /*) printf '%s\n' "$path" ;;
-        *)
-            if [ -d "$base/$path" ]; then
-                CDPATH= cd -- "$base/$path" && pwd
-            else
-                printf '%s\n' "$base/$path"
-            fi
-            ;;
-    esac
 }
 
 while [ "$#" -gt 0 ]; do
@@ -87,17 +73,13 @@ td_require_value "$sdk_name" "target 描述缺少 sdk.name：$TARGET_FILE"
 td_require_value "$sdk_repo" "target 描述缺少 sdk.repo：$TARGET_FILE"
 td_require_value "$sdk_ref" "target 描述缺少 sdk.ref：$TARGET_FILE"
 
-if [ -z "$SDK_ROOT" ]; then
-    SDK_ROOT=$(dirname -- "$REPO_ROOT")/sdks
-fi
+SDK_SOURCE=$(sdk_resolve_source "$REPO_ROOT" "$sdk_name")
+SDK_DIR=$(sdk_resolve_dir "$REPO_ROOT" "$sdk_name" "$SDK_ROOT")
 
-SDK_ROOT=$(resolve_path "$SDK_ROOT" "$REPO_ROOT")
-case "$SDK_ROOT" in
-    "$REPO_ROOT"|"$REPO_ROOT"/*)
-        die "SDK 本地缓存不能放在主工程目录内：$SDK_ROOT"
-        ;;
-esac
-SDK_DIR=$SDK_ROOT/$sdk_name
+if [ "$SDK_SOURCE" = "submodule" ]; then
+    printf 'SDK 使用子模块：%s\n' "$SDK_DIR"
+    exit 0
+fi
 
 if [ -d "$SDK_DIR" ]; then
     printf 'SDK 已存在：%s\n' "$SDK_DIR"

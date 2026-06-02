@@ -47,6 +47,34 @@ require_section_value() {
     printf '%s\n' "$value"
 }
 
+require_pinned_sdk_ref() {
+    target_file=$1
+    sdk_ref=$2
+
+    case "$sdk_ref" in
+        main|master|develop|HEAD)
+            td_die "target 描述不能使用浮动 sdk.ref：$target_file"
+            ;;
+    esac
+}
+
+validate_submodule_head() {
+    target_file=$1
+    sdk_name=$2
+    sdk_ref=$3
+    submodule_dir=$REPO_ROOT/third_party/sdk/$sdk_name
+
+    [ -d "$submodule_dir" ] || return 0
+
+    if ! submodule_head=$(git -C "$submodule_dir" rev-parse HEAD 2>/dev/null); then
+        td_die "SDK 子模块无法读取 HEAD：$submodule_dir"
+    fi
+
+    if [ "$submodule_head" != "$sdk_ref" ]; then
+        td_die "SDK 子模块 HEAD 与 target sdk.ref 不一致：$target_file"
+    fi
+}
+
 [ -d "$TARGET_DIR" ] || td_die "缺少 targets 目录：$TARGET_DIR"
 
 count=0
@@ -77,9 +105,11 @@ for target_file in "$TARGET_DIR"/*.yaml; do
     require_section_value "$target_file" "output" "ep_package" >/dev/null
 
     if [ "$platform_family" = "rtos" ]; then
-        require_section_value "$target_file" "sdk" "name" >/dev/null
+        sdk_name=$(require_section_value "$target_file" "sdk" "name")
         require_section_value "$target_file" "sdk" "repo" >/dev/null
-        require_section_value "$target_file" "sdk" "ref" >/dev/null
+        sdk_ref=$(require_section_value "$target_file" "sdk" "ref")
+        require_pinned_sdk_ref "$target_file" "$sdk_ref"
+        validate_submodule_head "$target_file" "$sdk_name" "$sdk_ref"
         require_section_value "$target_file" "output" "firmware" >/dev/null
     fi
 done

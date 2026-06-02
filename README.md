@@ -209,7 +209,11 @@ embedded-platform-core/
 
 ### 外部 SDK 仓库
 
-厂商 SDK 按芯片或 SoC 单独建仓库管理。主工程不提交大型 SDK，也不为暂未接入的 SDK 预留空目录；主工程只消费外部 SDK 仓库导出的 `.h`、`.a` 和 `manifest.txt`。
+厂商 SDK 按芯片或 SoC 单独建仓库管理。主工程不直接提交大型 SDK 源码快照，也不为暂未接入的 SDK 预留空目录；主工程只消费外部 SDK 仓库导出的 `.h`、`.a` 和 `manifest.txt`。
+
+当前 Luban-Lite SDK 已作为 `git submodule` 放在 `third_party/sdk/sdk-artinchip-luban-lite/`。submodule 会固定到主工程记录的某个 commit，不会自动跟随 SDK 上游更新；只有主动适配新 SDK 后，才更新子模块指针并提交主工程。
+
+SDK 子模块和 RTOS 固件构建边界见 `docs/porting/rtos-sdk-library-model.md`。
 
 ### `third_party/`
 

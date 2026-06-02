@@ -50,7 +50,7 @@ platform:
 sdk:
   name: fake-sdk
   repo: https://example.com/fake-sdk.git
-  ref: main
+  ref: 0123456789abcdef0123456789abcdef01234567
 
 toolchain:
   source: sdk
@@ -196,8 +196,8 @@ def test_validate_targets_fails_when_local_sdk_path_is_used(tmp_path):
     target_file = repo / "targets" / "host_rtos_demo.yaml"
     target_file.write_text(
         target_file.read_text(encoding="utf-8").replace(
-            "  ref: main\n",
-            "  ref: main\n  path: .sdk/fake-sdk\n",
+            "  ref: 0123456789abcdef0123456789abcdef01234567\n",
+            "  ref: 0123456789abcdef0123456789abcdef01234567\n  path: .sdk/fake-sdk\n",
         ),
         encoding="utf-8",
     )
@@ -211,3 +211,64 @@ def test_validate_targets_fails_when_local_sdk_path_is_used(tmp_path):
 
     assert result.returncode != 0
     assert "target 描述不能写本地 SDK 路径" in result.stderr
+
+
+def test_validate_targets_fails_when_sdk_ref_is_floating(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace(
+            "  ref: 0123456789abcdef0123456789abcdef01234567\n",
+            "  ref: main\n",
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述不能使用浮动 sdk.ref" in result.stderr
+
+
+def test_validate_targets_fails_when_submodule_head_mismatches_sdk_ref(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    submodule = repo / "third_party" / "sdk" / "fake-sdk"
+    submodule.mkdir(parents=True)
+    subprocess.run(["git", "init"], cwd=submodule, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=submodule,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=submodule,
+        check=True,
+        capture_output=True,
+    )
+    (submodule / "README.md").write_text("fake sdk\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=submodule, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "init fake sdk"],
+        cwd=submodule,
+        check=True,
+        capture_output=True,
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "SDK 子模块 HEAD 与 target sdk.ref 不一致" in result.stderr

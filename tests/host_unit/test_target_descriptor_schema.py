@@ -65,6 +65,22 @@ def test_target_files_declare_required_schema_fields():
         assert _read_section_value(text, "output", "ep_package"), target_file
 
 
+def test_repository_targets_pin_sdk_ref_to_tag_or_commit():
+    floating_refs = {"main", "master", "develop", "HEAD"}
+
+    for target_file in sorted(TARGETS_DIR.glob("*.yaml")):
+        text = target_file.read_text(encoding="utf-8")
+        sdk_name = _read_section_value(text, "sdk", "name")
+        if not sdk_name:
+            continue
+
+        sdk_ref = _read_section_value(text, "sdk", "ref")
+        assert sdk_ref, target_file
+        assert sdk_ref not in floating_refs, (
+            f"{target_file} uses floating sdk.ref {sdk_ref!r}"
+        )
+
+
 def test_artinchip_d121_lubanlite_placeholder_target_exists():
     text = ARTINCHIP_D121_TARGET.read_text(encoding="utf-8")
 

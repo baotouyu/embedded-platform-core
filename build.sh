@@ -19,7 +19,7 @@ print_help() {
   package-host 生成 host/macOS 发布目录包
   export-ep    生成主工程静态库导出包 out/ep/<target>
   export-target 通过 targets/<target>.yaml 导出主工程静态库包
-  prepare-sdk  通过 targets/<target>.yaml 准备工程外本地 SDK，默认 ../sdks
+  prepare-sdk  通过 targets/<target>.yaml 准备 SDK，优先 third_party/sdk/<sdk.name>，否则默认 ../sdks
   build-firmware 通过 SDK 标准入口生成固件 out/firmware/<target>
   validate-targets 校验 targets/*.yaml 描述文件
   validate-ep-package 校验 EP 导出包 manifest 是否匹配 target

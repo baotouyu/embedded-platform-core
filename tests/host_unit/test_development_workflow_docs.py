@@ -91,3 +91,20 @@ def test_platform_difference_docs_define_porting_boundaries():
         text = doc.read_text(encoding="utf-8")
         missing = [term for term in required_terms if term not in text]
         assert not missing, f"Missing terms in {doc}: {missing}"
+
+
+def test_rtos_sdk_doc_defines_submodule_version_lock_policy():
+    doc = REPO_ROOT / "docs" / "porting" / "rtos-sdk-library-model.md"
+    text = doc.read_text(encoding="utf-8")
+
+    required_terms = [
+        "git submodule",
+        "固定到某个 commit",
+        "不会自动跟随上游更新",
+        "git submodule update --remote",
+        "主动适配",
+        "不要使用浮动分支",
+    ]
+
+    missing = [term for term in required_terms if term not in text]
+    assert not missing, f"Missing RTOS SDK submodule policy terms: {missing}"

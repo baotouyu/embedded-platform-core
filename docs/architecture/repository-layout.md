@@ -18,7 +18,7 @@
 | `tests/` | host 单元测试和 API 契约测试。集成测试、目标板冒烟测试需要真实需求时再新增目录。 |
 | `docs/` | 中文设计、流程、移植和测试文档。 |
 | `tools/` | 辅助脚本。没有实际 CI 脚本时不保留空 `tools/ci/`。 |
-| `third_party/` | 第三方源码或预编译包。 |
+| `third_party/` | 第三方源码、预编译包，以及可选的 SDK 子模块入口。 |
 
 主工程不再保留顶层 `vendor/` 空目录。大型厂商 SDK 放到外部 SDK 仓库管理。RTOS 平台的主线规则是：主工程编译出 `libep_app_core.a`、头文件和 manifest，芯片 SDK 仓库负责链接、打包和输出最终固件。
 
@@ -40,6 +40,14 @@ third_party/prebuilt/vendor/<platform>
 不要直接修改预编译包里的 lv_conf.h。正式修改 LVGL 配置时，先去对应的 `lvgl-prebuilt-*` 仓库修改源头配置并重新产包，再同步回主工程。
 
 厂商 SDK 适配不把完整 SDK 放到 `third_party/prebuilt/`。RTOS SDK 先在外部 SDK 仓库里处理原厂工程、工具链、芯片差异和固件打包，再由主工程导出 `out/ep/<target>` 静态库包给 SDK 链接。只有少量确实需要被主工程直接消费的厂商预编译库，才放到 `third_party/prebuilt/vendor/<platform>`。
+
+需要主工程明确锁定 SDK 版本时，把 SDK 仓库作为 `git submodule` 放在：
+
+```text
+third_party/sdk/<sdk.name>/
+```
+
+这个目录只用于 submodule gitlink，不用于直接提交大型 SDK 源码快照。submodule 默认固定到主工程记录的 commit，不会自动跟随 SDK 上游更新；主动升级规则见 `docs/porting/rtos-sdk-library-model.md`。
 
 ## 平台目录
 
