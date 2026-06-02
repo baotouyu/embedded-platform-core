@@ -86,6 +86,9 @@ def test_export_script_creates_standard_package_from_existing_archive(tmp_path):
     assert manifest["library"] == "lib/libep_app_core.a"
     assert "include/ep_framework.h" in manifest["headers"]
     assert "include/ep_platform_capability.h" in manifest["headers"]
+    assert "platform" not in manifest
+    assert "sdk" not in manifest
+    assert "toolchain" not in manifest
 
 
 def test_export_script_fails_when_archive_is_missing(tmp_path):

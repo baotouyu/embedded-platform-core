@@ -132,6 +132,8 @@ out/firmware/<target>/
 - 编译选项摘要。
 - 导出的库文件和头文件列表。
 
+通过 `export-target` 导出的 `manifest.json` 会包含 target 元数据，包括 `platform`、`sdk` 和 `toolchain`。SDK 仓库可以用这些字段确认静态库包是否匹配当前芯片和板级构建。
+
 ## 工具链规则
 
 RTOS 静态库必须使用目标 SDK 对应的交叉编译工具链和编译参数生成，不能使用 host/macOS 的 clang 或本机 gcc 随便编译。

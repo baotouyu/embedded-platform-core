@@ -207,8 +207,11 @@ def test_rtos_sdk_document_describes_build_firmware_entry():
     assert "两仓库本地联调" in text
     assert "EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08" in text
     assert "host_rtos_demo" in text
+    assert "manifest.json" in text
     assert "platform:" in text
+    assert "platform" in text
     assert "toolchain:" in text
+    assert "toolchain" in text
     assert "sdk_config:" in text
     assert "artinchip_d12x_lubanlite_demo68_nor" in text
     assert "mode=stub" in text
