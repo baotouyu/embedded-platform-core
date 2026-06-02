@@ -68,7 +68,7 @@ td_require_value "$ep_package" "target 描述缺少 output.ep_package：$TARGET_
 output_parent=${ep_package%/*}
 
 if [ "$CLEAN" -eq 1 ]; then
-    "$REPO_ROOT/tools/scripts/export_ep_package.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --output-dir "$output_parent" --clean
+    "$REPO_ROOT/tools/scripts/export_ep_package.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --output-dir "$output_parent" --target-file "$TARGET_FILE" --clean
 else
-    "$REPO_ROOT/tools/scripts/export_ep_package.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --output-dir "$output_parent"
+    "$REPO_ROOT/tools/scripts/export_ep_package.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --output-dir "$output_parent" --target-file "$TARGET_FILE"
 fi

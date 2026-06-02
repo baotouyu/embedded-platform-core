@@ -28,6 +28,11 @@ platform:
   board: rtos-demo
   kernel: none
 
+sdk:
+  name: fake-sdk
+  repo: https://example.com/fake-sdk.git
+  ref: main
+
 toolchain:
   source: sdk
 
@@ -51,11 +56,12 @@ output:
     ]:
         _write_file(root / header, f"/* {header} */\n")
 
-    script = REPO_ROOT / "tools" / "scripts" / "export_ep_package.sh"
-    script_copy = root / "tools" / "scripts" / "export_ep_package.sh"
-    script_copy.parent.mkdir(parents=True, exist_ok=True)
-    script_copy.write_text(script.read_text(encoding="utf-8"), encoding="utf-8")
-    script_copy.chmod(0o755)
+    for script_name in ["target_descriptor.sh", "export_ep_package.sh"]:
+        script = REPO_ROOT / "tools" / "scripts" / script_name
+        script_copy = root / "tools" / "scripts" / script_name
+        script_copy.parent.mkdir(parents=True, exist_ok=True)
+        script_copy.write_text(script.read_text(encoding="utf-8"), encoding="utf-8")
+        script_copy.chmod(0o755)
 
 
 def test_host_rtos_demo_target_descriptor_exists():
@@ -110,6 +116,20 @@ def test_export_target_script_reads_descriptor_and_creates_package(tmp_path):
     manifest = json.loads((package_root / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["target"] == "host_rtos_demo"
     assert manifest["library"] == "lib/libep_app_core.a"
+    assert manifest["platform"] == {
+        "family": "rtos",
+        "vendor": "host",
+        "sdk_family": "demo",
+        "chip": "host",
+        "board": "rtos-demo",
+        "kernel": "none",
+    }
+    assert manifest["sdk"] == {
+        "name": "fake-sdk",
+        "repo": "https://example.com/fake-sdk.git",
+        "ref": "main",
+    }
+    assert manifest["toolchain"] == {"source": "sdk"}
 
 
 def test_export_target_script_fails_for_missing_descriptor(tmp_path):
