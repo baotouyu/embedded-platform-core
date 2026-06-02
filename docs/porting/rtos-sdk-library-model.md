@@ -257,7 +257,7 @@ platform:
 sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
-  ref: 2e3ef6103e281109565c011ef2105b765d5ee8ec
+  ref: c677230cb8541284ccf5c356c11304fe2d5b0a45
 
 toolchain:
   source: sdk
@@ -418,7 +418,13 @@ scripts/build_firmware.sh
 upstream/luban-lite/
 ```
 
-`sdk-artinchip-luban-lite` 是独立维护的 SDK 适配仓库；官方 Luban-Lite SDK 固定在这个仓库内部的 `upstream/luban-lite` 子模块里。主工程不直接维护官方 SDK 源码，只固定 `sdk-artinchip-luban-lite` 的提交。
+`sdk-artinchip-luban-lite` 是独立维护的 SDK 适配仓库；它内部的 `upstream/luban-lite` 子模块固定到 `baotouyu/luban-lite` 这个 GitHub 维护副本。主工程不直接维护 Luban-Lite SDK 源码，只固定 `sdk-artinchip-luban-lite` 的提交。
+
+`baotouyu/luban-lite` 从官方 Gitee v1.3.0 导入。两个超过 GitHub 普通 Git 单文件限制的 toolchain 压缩包放在 Release：
+
+```text
+https://github.com/baotouyu/luban-lite/releases/tag/luban-lite-v1.3.0-toolchains
+```
 
 然后在主工程执行：
 
