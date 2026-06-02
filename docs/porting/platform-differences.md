@@ -168,6 +168,7 @@ config/profiles/<platform>.cfg
 - 厂商 SDK 放到外部 SDK 仓库管理，例如 `sdk-artinchip-luban-lite`。
 - RTOS 平台由主工程导出 `libep_app_core.a`、头文件和 manifest，芯片 SDK 仓库负责链接、打包和烧录。
 - 一个 SDK 已经覆盖多个芯片时，优先一个 SDK 家族一个仓库，再用 target 区分具体芯片和板子。
+- target 描述文件使用 `platform:` 分组记录 `family`、`vendor`、`sdk_family`、`chip`、`board` 和 `kernel`，构建脚本只读取稳定字段，不把芯片判断写散。
 - 主工程只提交必要的平台适配代码、target 描述、说明文档和小型配置样例。
 
 这样做的目的是保持主工程轻量，也避免把不同平台的 SDK 习惯强行揉成一套目录。
