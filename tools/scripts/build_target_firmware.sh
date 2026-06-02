@@ -35,7 +35,13 @@ resolve_path() {
 
     case "$path" in
         /*) printf '%s\n' "$path" ;;
-        *) printf '%s\n' "$base/$path" ;;
+        *)
+            if [ -d "$base/$path" ]; then
+                CDPATH= cd -- "$base/$path" && pwd
+            else
+                printf '%s\n' "$base/$path"
+            fi
+            ;;
     esac
 }
 

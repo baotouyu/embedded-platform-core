@@ -269,6 +269,42 @@ def test_build_target_firmware_runs_ep_export_and_sdk_build(tmp_path):
     assert "固件已生成" in result.stdout
 
 
+def test_build_target_firmware_allows_relative_sibling_sdk_root(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo(sdk_repo)
+
+    workspace = tmp_path / "workspace"
+    repo = workspace / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+    sdk_path = workspace / "fake-sdk"
+    _create_fake_sdk_repo(sdk_path)
+
+    result = subprocess.run(
+        [
+            str(BUILD_FIRMWARE_SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--sdk-root",
+            "..",
+            "--clean",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+        cwd=repo,
+    )
+
+    assert result.returncode == 0, result.stderr
+    ep_package = repo / "out" / "ep" / "host_rtos_demo"
+    firmware = repo / "out" / "firmware" / "host_rtos_demo"
+    assert (ep_package / "lib" / "libep_app_core.a").is_file()
+    assert (firmware / "firmware.bin").read_text(encoding="utf-8") == "fake firmware\n"
+    assert "SDK 已存在" in result.stdout
+    assert "固件已生成" in result.stdout
+
+
 def test_build_target_firmware_fails_before_sdk_build_when_ep_package_mismatches(tmp_path):
     sdk_repo = tmp_path / "fake-sdk-src"
     _create_fake_sdk_repo(sdk_repo)
