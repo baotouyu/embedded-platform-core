@@ -165,3 +165,49 @@ def test_validate_targets_fails_when_rtos_firmware_output_is_missing(tmp_path):
 
     assert result.returncode != 0
     assert "target 描述缺少 output.firmware" in result.stderr
+
+
+def test_validate_targets_fails_when_old_top_level_os_is_used(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace(
+            "target: host_rtos_demo\n",
+            "target: host_rtos_demo\nos: rtos\n",
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述禁止使用旧顶层字段 os" in result.stderr
+
+
+def test_validate_targets_fails_when_local_sdk_path_is_used(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace(
+            "  ref: main\n",
+            "  ref: main\n  path: .sdk/fake-sdk\n",
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述不能写本地 SDK 路径" in result.stderr

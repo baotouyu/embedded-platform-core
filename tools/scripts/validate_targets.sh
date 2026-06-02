@@ -57,6 +57,16 @@ for target_file in "$TARGET_DIR"/*.yaml; do
     target_name=$(basename "$target_file" .yaml)
     td_validate_declared_target "$target_file" "$target_name"
 
+    for old_key in os vendor sdk_family chip board kernel; do
+        if grep -q "^${old_key}:" "$target_file"; then
+            td_die "target 描述禁止使用旧顶层字段 ${old_key}：$target_file"
+        fi
+    done
+
+    if grep -q '\.sdk\|/Users/\|/opt/' "$target_file"; then
+        td_die "target 描述不能写本地 SDK 路径：$target_file"
+    fi
+
     platform_family=$(require_section_value "$target_file" "platform" "family")
     require_section_value "$target_file" "platform" "vendor" >/dev/null
     require_section_value "$target_file" "platform" "sdk_family" >/dev/null
