@@ -128,6 +128,13 @@ FIRMWARE_DIR=$(resolve_path "$firmware_output" "$REPO_ROOT")
 
 "$REPO_ROOT/tools/scripts/prepare_target_sdk.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --sdk-root "$SDK_ROOT"
 
+SDK_PREPARE_SCRIPT=$SDK_DIR/scripts/prepare.sh
+[ -x "$SDK_PREPARE_SCRIPT" ] || die "SDK 缺少准备入口：$SDK_PREPARE_SCRIPT"
+(
+    cd "$SDK_DIR"
+    "$SDK_PREPARE_SCRIPT" --target "$TARGET"
+)
+
 if [ "$CLEAN" -eq 1 ]; then
     "$REPO_ROOT/tools/scripts/export_target.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --clean
 else
@@ -138,9 +145,15 @@ SDK_BUILD_SCRIPT=$SDK_DIR/scripts/build_firmware.sh
 [ -x "$SDK_BUILD_SCRIPT" ] || die "SDK 缺少固件构建入口：$SDK_BUILD_SCRIPT"
 
 if [ "$CLEAN" -eq 1 ]; then
-    "$SDK_BUILD_SCRIPT" --target "$TARGET" --ep-package "$EP_PACKAGE_DIR" --out "$FIRMWARE_DIR" --clean
+    (
+        cd "$SDK_DIR"
+        "$SDK_BUILD_SCRIPT" --target "$TARGET" --ep-package "$EP_PACKAGE_DIR" --out "$FIRMWARE_DIR" --clean
+    )
 else
-    "$SDK_BUILD_SCRIPT" --target "$TARGET" --ep-package "$EP_PACKAGE_DIR" --out "$FIRMWARE_DIR"
+    (
+        cd "$SDK_DIR"
+        "$SDK_BUILD_SCRIPT" --target "$TARGET" --ep-package "$EP_PACKAGE_DIR" --out "$FIRMWARE_DIR"
+    )
 fi
 
 printf '固件已生成：%s\n' "$FIRMWARE_DIR"

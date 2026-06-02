@@ -313,11 +313,12 @@ scripts/flash.sh
 
 ```text
 prepare-sdk
+  -> SDK scripts/prepare.sh
   -> export-target
   -> SDK scripts/build_firmware.sh
 ```
 
-主工程会把 `--target`、`--ep-package` 和 `--out` 传给 SDK 的 `scripts/build_firmware.sh`。SDK 内部可以继续使用 SCons、Makefile 或原厂脚本。主工程只认这些稳定入口，不解析 SDK 内部构建细节。
+主工程会先调用 SDK 的 `scripts/prepare.sh --target <target>`，确认 SDK 仓库结构和脚本契约可用；再把 `--target`、`--ep-package` 和 `--out` 传给 SDK 的 `scripts/build_firmware.sh`。SDK 内部可以继续使用 SCons、Makefile 或原厂脚本。主工程只认这些稳定入口，不解析 SDK 内部构建细节。
 
 ## 两仓库本地联调
 
