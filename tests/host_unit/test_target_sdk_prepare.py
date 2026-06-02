@@ -85,26 +85,39 @@ def test_target_sdk_resolver_script_exists():
 
 def test_luban_lite_sdk_submodule_is_pinned_to_target_ref():
     submodule_path = REPO_ROOT / "third_party" / "sdk" / "sdk-artinchip-luban-lite"
+    submodule_relpath = "third_party/sdk/sdk-artinchip-luban-lite"
     gitmodules = (REPO_ROOT / ".gitmodules").read_text(encoding="utf-8")
 
-    assert "third_party/sdk/sdk-artinchip-luban-lite" in gitmodules
+    assert submodule_relpath in gitmodules
     assert submodule_path.is_dir()
 
     result = subprocess.run(
-        ["git", "-C", str(submodule_path), "rev-parse", "HEAD"],
+        ["git", "-C", str(REPO_ROOT), "ls-tree", "HEAD", submodule_relpath],
         check=False,
         text=True,
         capture_output=True,
     )
     assert result.returncode == 0, result.stderr
+    gitlink_parts = result.stdout.strip().split()
+    assert gitlink_parts[:2] == ["160000", "commit"], result.stdout
+    submodule_head = gitlink_parts[2]
 
-    submodule_head = result.stdout.strip()
     for target_name in [
         "host_rtos_demo.yaml",
         "artinchip_d121_lubanlite_demo.yaml",
     ]:
         target_text = (REPO_ROOT / "targets" / target_name).read_text(encoding="utf-8")
         assert f"ref: {submodule_head}" in target_text
+
+    if (submodule_path / ".git").exists():
+        worktree_result = subprocess.run(
+            ["git", "-C", str(submodule_path), "rev-parse", "HEAD"],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        assert worktree_result.returncode == 0, worktree_result.stderr
+        assert worktree_result.stdout.strip() == submodule_head
 
 
 def test_build_help_lists_prepare_sdk_command():
