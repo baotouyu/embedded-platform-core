@@ -16,3 +16,11 @@ def test_ci_runs_host_contract_tests_and_cmake_build():
 
     missing = [term for term in required_terms if term not in text]
     assert not missing, f"Missing CI commands: {missing}"
+
+
+def test_ci_checkout_initializes_submodules():
+    workflow = REPO_ROOT / ".github" / "workflows" / "ci.yml"
+    text = workflow.read_text(encoding="utf-8")
+
+    assert "actions/checkout@v4" in text
+    assert "submodules: recursive" in text

@@ -447,6 +447,23 @@ mode=stub
 
 这说明链路已经打通，但还没有接入真实 Luban-Lite 编译、链接和打包流程。后续接真实芯片时，优先在 SDK 仓库内部替换 `scripts/build_firmware.sh` 的实现，主工程命令和参数保持不变。
 
+## 干净克隆验证
+
+SDK 子模块接入后，建议用独立目录验证新机器能完整拉取并构建：
+
+```bash
+git clone --recursive https://github.com/baotouyu/embedded-platform-core.git ep-core-check
+cd ep-core-check
+git submodule status
+
+./build.sh validate-targets
+./build.sh configure
+./build.sh build
+./build.sh build-firmware artinchip_d121_lubanlite_demo --clean
+```
+
+`build-firmware` 会消费 `build/libep_app_core_export.a`，所以干净克隆后必须先执行 `configure` 和 `build`。如果只运行 `validate-targets`，不会生成静态库产物。
+
 ## Luban-Lite 接入方式
 
 Luban-Lite SDK 里后续建议新增一个很薄的应用入口，而不是修改官方 `helloworld` 示例。

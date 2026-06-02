@@ -89,6 +89,23 @@ def test_validate_targets_passes_for_valid_temp_repo(tmp_path):
     assert "target 校验通过：1" in result.stdout
 
 
+def test_validate_targets_ignores_uninitialized_submodule_placeholder(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    placeholder = repo / "third_party" / "sdk" / "fake-sdk"
+    placeholder.mkdir(parents=True)
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "target 校验通过：1" in result.stdout
+
+
 def test_validate_targets_fails_when_file_name_mismatches_target(tmp_path):
     repo = tmp_path / "repo"
     _write_valid_target(repo, name="real_target")

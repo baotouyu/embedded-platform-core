@@ -65,6 +65,7 @@ validate_submodule_head() {
     submodule_dir=$REPO_ROOT/third_party/sdk/$sdk_name
 
     [ -d "$submodule_dir" ] || return 0
+    [ -e "$submodule_dir/.git" ] || return 0
 
     if ! submodule_head=$(git -C "$submodule_dir" rev-parse HEAD 2>/dev/null); then
         td_die "SDK 子模块无法读取 HEAD：$submodule_dir"
