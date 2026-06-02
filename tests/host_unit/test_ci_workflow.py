@@ -18,9 +18,9 @@ def test_ci_runs_host_contract_tests_and_cmake_build():
     assert not missing, f"Missing CI commands: {missing}"
 
 
-def test_ci_checkout_initializes_submodules():
+def test_ci_does_not_checkout_private_sdk_submodules():
     workflow = REPO_ROOT / ".github" / "workflows" / "ci.yml"
     text = workflow.read_text(encoding="utf-8")
 
     assert "actions/checkout@v4" in text
-    assert "submodules: recursive" in text
+    assert "submodules: recursive" not in text

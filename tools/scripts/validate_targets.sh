@@ -63,6 +63,13 @@ validate_submodule_head() {
     sdk_name=$2
     sdk_ref=$3
     submodule_dir=$REPO_ROOT/third_party/sdk/$sdk_name
+    submodule_path=third_party/sdk/$sdk_name
+
+    if gitlink=$(git -C "$REPO_ROOT" ls-tree HEAD "$submodule_path" 2>/dev/null | awk '{print $3}'); then
+        if [ -n "$gitlink" ] && [ "$gitlink" != "$sdk_ref" ]; then
+            td_die "SDK 子模块 gitlink 与 target sdk.ref 不一致：$target_file"
+        fi
+    fi
 
     [ -d "$submodule_dir" ] || return 0
     [ -e "$submodule_dir/.git" ] || return 0

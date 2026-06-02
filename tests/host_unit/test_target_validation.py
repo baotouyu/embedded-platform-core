@@ -289,3 +289,46 @@ def test_validate_targets_fails_when_submodule_head_mismatches_sdk_ref(tmp_path)
 
     assert result.returncode != 0
     assert "SDK 子模块 HEAD 与 target sdk.ref 不一致" in result.stderr
+
+
+def test_validate_targets_fails_when_gitlink_mismatches_sdk_ref_without_checkout(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["git", "add", "targets/host_rtos_demo.yaml"], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git",
+            "update-index",
+            "--add",
+            "--cacheinfo",
+            "160000,ffffffffffffffffffffffffffffffffffffffff,third_party/sdk/fake-sdk",
+        ],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["git", "commit", "-m", "add target and sdk gitlink"], cwd=repo, check=True)
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "SDK 子模块 gitlink 与 target sdk.ref 不一致" in result.stderr
