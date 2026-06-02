@@ -5,19 +5,19 @@ platform:
   vendor: artinchip
   sdk_family: luban-lite
   chip: d121
-  board: demo
+  board: demo68-nor
   kernel: rt-thread
 
 sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
-  ref: f482285eb73268654180ffbea7713af6b5b24f3f
+  ref: 2e3ef6103e281109565c011ef2105b765d5ee8ec
 
 toolchain:
   source: sdk
 
 sdk_config:
-  defconfig: d121_demo_rt-thread_ep_app_defconfig
+  defconfig: d12x_demo68-nor_rt-thread_helloworld_defconfig
 
 output:
   ep_package: out/ep/artinchip_d121_lubanlite_demo

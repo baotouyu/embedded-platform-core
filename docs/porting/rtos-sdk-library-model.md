@@ -257,7 +257,7 @@ platform:
 sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
-  ref: f482285eb73268654180ffbea7713af6b5b24f3f
+  ref: 2e3ef6103e281109565c011ef2105b765d5ee8ec
 
 toolchain:
   source: sdk
@@ -415,7 +415,10 @@ C08/
 
 ```text
 scripts/build_firmware.sh
+upstream/luban-lite/
 ```
+
+`sdk-artinchip-luban-lite` 是独立维护的 SDK 适配仓库；官方 Luban-Lite SDK 固定在这个仓库内部的 `upstream/luban-lite` 子模块里。主工程不直接维护官方 SDK 源码，只固定 `sdk-artinchip-luban-lite` 的提交。
 
 然后在主工程执行：
 

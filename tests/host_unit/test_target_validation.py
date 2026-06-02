@@ -332,3 +332,88 @@ def test_validate_targets_fails_when_gitlink_mismatches_sdk_ref_without_checkout
 
     assert result.returncode != 0
     assert "SDK 子模块 gitlink 与 target sdk.ref 不一致" in result.stderr
+
+
+def test_validate_targets_prefers_checked_out_submodule_head_over_committed_gitlink(
+    tmp_path,
+):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+
+    subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["git", "add", "targets/host_rtos_demo.yaml"], cwd=repo, check=True)
+    subprocess.run(
+        [
+            "git",
+            "update-index",
+            "--add",
+            "--cacheinfo",
+            "160000,ffffffffffffffffffffffffffffffffffffffff,third_party/sdk/fake-sdk",
+        ],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(["git", "commit", "-m", "add target and old sdk gitlink"], cwd=repo, check=True)
+
+    submodule = repo / "third_party" / "sdk" / "fake-sdk"
+    submodule.mkdir(parents=True)
+    subprocess.run(["git", "init"], cwd=submodule, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=submodule,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=submodule,
+        check=True,
+        capture_output=True,
+    )
+    (submodule / "README.md").write_text("fake sdk\n", encoding="utf-8")
+    subprocess.run(["git", "add", "README.md"], cwd=submodule, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "commit", "-m", "init fake sdk"],
+        cwd=submodule,
+        check=True,
+        capture_output=True,
+    )
+    submodule_head = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=submodule,
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace(
+            "  ref: 0123456789abcdef0123456789abcdef01234567\n",
+            f"  ref: {submodule_head}\n",
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "target 校验通过：1" in result.stdout

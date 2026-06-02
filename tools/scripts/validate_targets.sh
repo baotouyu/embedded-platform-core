@@ -65,21 +65,22 @@ validate_submodule_head() {
     submodule_dir=$REPO_ROOT/third_party/sdk/$sdk_name
     submodule_path=third_party/sdk/$sdk_name
 
+    if [ -d "$submodule_dir" ] && [ -e "$submodule_dir/.git" ]; then
+        if ! submodule_head=$(git -C "$submodule_dir" rev-parse HEAD 2>/dev/null); then
+            td_die "SDK 子模块无法读取 HEAD：$submodule_dir"
+        fi
+
+        if [ "$submodule_head" != "$sdk_ref" ]; then
+            td_die "SDK 子模块 HEAD 与 target sdk.ref 不一致：$target_file"
+        fi
+
+        return 0
+    fi
+
     if gitlink=$(git -C "$REPO_ROOT" ls-tree HEAD "$submodule_path" 2>/dev/null | awk '{print $3}'); then
         if [ -n "$gitlink" ] && [ "$gitlink" != "$sdk_ref" ]; then
             td_die "SDK 子模块 gitlink 与 target sdk.ref 不一致：$target_file"
         fi
-    fi
-
-    [ -d "$submodule_dir" ] || return 0
-    [ -e "$submodule_dir/.git" ] || return 0
-
-    if ! submodule_head=$(git -C "$submodule_dir" rev-parse HEAD 2>/dev/null); then
-        td_die "SDK 子模块无法读取 HEAD：$submodule_dir"
-    fi
-
-    if [ "$submodule_head" != "$sdk_ref" ]; then
-        td_die "SDK 子模块 HEAD 与 target sdk.ref 不一致：$target_file"
     fi
 }
 
