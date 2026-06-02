@@ -21,6 +21,7 @@ print_help() {
   export-target 通过 targets/<target>.yaml 导出主工程静态库包
   prepare-sdk  通过 targets/<target>.yaml 准备工程外本地 SDK，默认 ../sdks
   build-firmware 通过 SDK 标准入口生成固件 out/firmware/<target>
+  validate-targets 校验 targets/*.yaml 描述文件
   clean        清理 build 和 host/macOS 发布包
   all          依次执行 configure、build、test、package-host --clean
 
@@ -35,6 +36,7 @@ print_help() {
   ./build.sh prepare-sdk host_rtos_demo
   EP_SDK_ROOT=/opt/ep-sdks ./build.sh prepare-sdk host_rtos_demo
   ./build.sh build-firmware host_rtos_demo --clean
+  ./build.sh validate-targets
   ./build.sh all
 EOF
 }
@@ -90,6 +92,10 @@ run_build_firmware() {
     "$REPO_ROOT/tools/scripts/build_target_firmware.sh" --target "$target" "$@"
 }
 
+run_validate_targets() {
+    "$REPO_ROOT/tools/scripts/validate_targets.sh" "$@"
+}
+
 run_clean() {
     rm -rf "$BUILD_DIR" "$REPO_ROOT/out/packages/host_macos"
     printf '%s\n' "已清理 build 和 out/packages/host_macos"
@@ -127,6 +133,9 @@ case "$command" in
         ;;
     build-firmware)
         run_build_firmware "$@"
+        ;;
+    validate-targets)
+        run_validate_targets "$@"
         ;;
     clean)
         run_clean
