@@ -38,6 +38,15 @@ done
 REPO_ROOT=$(CDPATH= cd -- "$REPO_ROOT" && pwd)
 TARGET_DIR=$REPO_ROOT/targets
 
+require_section_value() {
+    target_file=$1
+    section=$2
+    key=$3
+    value=$(td_trim "$(td_read_section_value "$target_file" "$section" "$key")")
+    td_require_value "$value" "target 描述缺少 ${section}.${key}：$target_file"
+    printf '%s\n' "$value"
+}
+
 [ -d "$TARGET_DIR" ] || td_die "缺少 targets 目录：$TARGET_DIR"
 
 count=0
@@ -47,7 +56,22 @@ for target_file in "$TARGET_DIR"/*.yaml; do
 
     target_name=$(basename "$target_file" .yaml)
     td_validate_declared_target "$target_file" "$target_name"
-    td_read_section_value "$target_file" "platform" "family" >/dev/null
+
+    platform_family=$(require_section_value "$target_file" "platform" "family")
+    require_section_value "$target_file" "platform" "vendor" >/dev/null
+    require_section_value "$target_file" "platform" "sdk_family" >/dev/null
+    require_section_value "$target_file" "platform" "chip" >/dev/null
+    require_section_value "$target_file" "platform" "board" >/dev/null
+    require_section_value "$target_file" "platform" "kernel" >/dev/null
+    require_section_value "$target_file" "toolchain" "source" >/dev/null
+    require_section_value "$target_file" "output" "ep_package" >/dev/null
+
+    if [ "$platform_family" = "rtos" ]; then
+        require_section_value "$target_file" "sdk" "name" >/dev/null
+        require_section_value "$target_file" "sdk" "repo" >/dev/null
+        require_section_value "$target_file" "sdk" "ref" >/dev/null
+        require_section_value "$target_file" "output" "firmware" >/dev/null
+    fi
 done
 
 printf 'target 校验通过：%s\n' "$count"

@@ -87,3 +87,81 @@ def test_validate_targets_passes_for_valid_temp_repo(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert "target 校验通过：1" in result.stdout
+
+
+def test_validate_targets_fails_when_file_name_mismatches_target(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo, name="real_target")
+    (repo / "targets" / "real_target.yaml").rename(repo / "targets" / "wrong_name.yaml")
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述不匹配" in result.stderr
+
+
+def test_validate_targets_fails_when_platform_family_is_missing(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace("  family: rtos\n", ""),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述缺少 platform.family" in result.stderr
+
+
+def test_validate_targets_fails_when_rtos_sdk_name_is_missing(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace("  name: fake-sdk\n", ""),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述缺少 sdk.name" in result.stderr
+
+
+def test_validate_targets_fails_when_rtos_firmware_output_is_missing(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace(
+            "  firmware: out/firmware/host_rtos_demo\n", ""
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述缺少 output.firmware" in result.stderr
