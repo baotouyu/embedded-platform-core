@@ -4,6 +4,11 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HELPER = REPO_ROOT / "tools" / "scripts" / "target_descriptor.sh"
+TARGET_SCRIPT_NAMES = [
+    "prepare_target_sdk.sh",
+    "export_target.sh",
+    "build_target_firmware.sh",
+]
 
 
 def _write_file(path: Path, content: str) -> None:
@@ -62,3 +67,16 @@ td_require_value "$(td_read_section_value '{target_file}' sdk name)" "target 描
 
     assert result.returncode != 0
     assert f"target 描述缺少 sdk.name：{target_file}" in result.stderr
+
+
+def test_target_scripts_reuse_shared_descriptor_helper():
+    for script_name in TARGET_SCRIPT_NAMES:
+        text = (REPO_ROOT / "tools" / "scripts" / script_name).read_text(
+            encoding="utf-8"
+        )
+
+        assert '. "$SCRIPT_DIR/target_descriptor.sh"' in text
+        assert "\ntrim() {" not in text
+        assert "\nread_top_level_value() {" not in text
+        assert "\nread_section_value() {" not in text
+        assert "\nread_output_ep_package() {" not in text

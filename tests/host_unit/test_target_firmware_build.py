@@ -31,17 +31,22 @@ def _prepare_minimal_repo(root: Path, sdk_repo: Path, with_firmware_output: bool
     _write_file(
         root / "targets" / "host_rtos_demo.yaml",
         f"""target: host_rtos_demo
-os: rtos
-vendor: host
-sdk_family: demo
-chip: host
-board: rtos-demo
-kernel: none
+
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
 
 sdk:
   name: fake-sdk
   repo: {sdk_repo}
   ref: HEAD
+
+toolchain:
+  source: sdk
 
 output:
   ep_package: out/ep/host_rtos_demo
@@ -65,6 +70,7 @@ output:
         _write_file(root / header, f"/* {header} */\n")
 
     for script_name in [
+        "target_descriptor.sh",
         "prepare_target_sdk.sh",
         "export_target.sh",
         "export_ep_package.sh",

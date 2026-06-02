@@ -40,17 +40,22 @@ def _prepare_repo_with_target(root: Path, sdk_repo: Path) -> None:
     _write_file(
         root / "targets" / "host_rtos_demo.yaml",
         f"""target: host_rtos_demo
-os: rtos
-vendor: host
-sdk_family: demo
-chip: host
-board: rtos-demo
-kernel: none
+
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
 
 sdk:
   name: fake-sdk
   repo: {sdk_repo}
   ref: HEAD
+
+toolchain:
+  source: sdk
 
 output:
   ep_package: out/ep/host_rtos_demo
@@ -214,6 +219,17 @@ def test_prepare_target_sdk_fails_when_descriptor_lacks_sdk(tmp_path):
     _write_file(
         repo / "targets" / "host_rtos_demo.yaml",
         """target: host_rtos_demo
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
+
+toolchain:
+  source: sdk
+
 output:
   ep_package: out/ep/host_rtos_demo
 """,
