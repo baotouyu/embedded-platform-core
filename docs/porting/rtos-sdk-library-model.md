@@ -319,6 +319,52 @@ prepare-sdk
 
 主工程会把 `--target`、`--ep-package` 和 `--out` 传给 SDK 的 `scripts/build_firmware.sh`。SDK 内部可以继续使用 SCons、Makefile 或原厂脚本。主工程只认这些稳定入口，不解析 SDK 内部构建细节。
 
+## 两仓库本地联调
+
+当前已经可以用主工程和 SDK 仓库做本地 stub 联调。目录建议保持为同级仓库：
+
+```text
+C08/
+  embedded-platform-core/
+  sdk-artinchip-luban-lite/
+```
+
+先确保两个仓库都在 `main`，并且 `sdk-artinchip-luban-lite` 已经提供：
+
+```text
+scripts/build_firmware.sh
+```
+
+然后在主工程执行：
+
+```bash
+EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08 \
+./build.sh build-firmware host_rtos_demo --clean
+```
+
+这条命令会复用同级的 SDK 仓库：
+
+```text
+/Users/yuwei/Documents/KitchenIdea/项目/C08/sdk-artinchip-luban-lite
+```
+
+输出结果：
+
+```text
+out/ep/host_rtos_demo/
+out/firmware/host_rtos_demo/
+  firmware.bin
+  build_manifest.txt
+```
+
+当前 `sdk-artinchip-luban-lite/scripts/build_firmware.sh` 仍然是占位实现，`build_manifest.txt` 中会记录：
+
+```text
+mode=stub
+```
+
+这说明链路已经打通，但还没有接入真实 Luban-Lite 编译、链接和打包流程。后续接真实芯片时，优先在 SDK 仓库内部替换 `scripts/build_firmware.sh` 的实现，主工程命令和参数保持不变。
+
 ## Luban-Lite 接入方式
 
 Luban-Lite SDK 里后续建议新增一个很薄的应用入口，而不是修改官方 `helloworld` 示例。
