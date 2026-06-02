@@ -32,3 +32,58 @@ def test_validate_targets_script_exists_and_uses_descriptor_helper():
     assert '. "$SCRIPT_DIR/target_descriptor.sh"' in text
     assert "td_read_section_value" in text
     assert "td_validate_declared_target" in text
+
+
+def _write_valid_target(root: Path, name: str = "host_rtos_demo") -> None:
+    _write_file(
+        root / "targets" / f"{name}.yaml",
+        f"""target: {name}
+
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
+
+sdk:
+  name: fake-sdk
+  repo: https://example.com/fake-sdk.git
+  ref: main
+
+toolchain:
+  source: sdk
+
+output:
+  ep_package: out/ep/{name}
+  firmware: out/firmware/{name}
+""",
+    )
+
+
+def test_validate_targets_passes_for_current_repository_targets():
+    result = subprocess.run(
+        [str(BUILD_SCRIPT), "validate-targets"],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "target 校验通过：" in result.stdout
+
+
+def test_validate_targets_passes_for_valid_temp_repo(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "target 校验通过：1" in result.stdout
