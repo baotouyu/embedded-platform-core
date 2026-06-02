@@ -166,6 +166,10 @@ def test_rtos_sdk_document_describes_build_firmware_entry():
     text = RTOS_SDK_DOC.read_text(encoding="utf-8")
 
     assert "./build.sh build-firmware" in text
+    assert "两仓库本地联调" in text
+    assert "EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08" in text
+    assert "host_rtos_demo" in text
+    assert "mode=stub" in text
     assert "SDK scripts/build_firmware.sh" in text
     assert "--ep-package" in text
     assert "--out" in text
