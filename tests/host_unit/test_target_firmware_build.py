@@ -82,6 +82,34 @@ def _create_fake_sdk_repo(path: Path, with_build_entry: bool = True) -> None:
     _run_git(["config", "user.email", "test@example.com"], path)
     _run_git(["config", "user.name", "Test User"], path)
     _write_file(path / "README.md", "fake sdk\n")
+    _write_file(
+        path / "scripts" / "prepare.sh",
+        """#!/bin/sh
+set -eu
+
+TARGET=
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --target)
+            TARGET=$2
+            shift 2
+            ;;
+        *)
+            printf '未知参数：%s\\n' "$1" >&2
+            exit 2
+            ;;
+    esac
+done
+
+[ -n "$TARGET" ] || exit 2
+printf 'SDK 准备完成\\n'
+printf 'target=%s\\n' "$TARGET"
+printf 'status=stub\\n'
+printf 'prepared=%s\\n' "$TARGET" > prepared.txt
+""",
+    )
+    (path / "scripts" / "prepare.sh").chmod(0o755)
     if with_build_entry:
         build_script = path / "scripts" / "build_firmware.sh"
         _write_file(
@@ -123,6 +151,7 @@ done
 [ -n "$EP_PACKAGE" ] || exit 2
 [ -n "$OUT" ] || exit 2
 [ -f "$EP_PACKAGE/lib/libep_app_core.a" ] || exit 3
+[ -f prepared.txt ] || exit 4
 
 if [ "$CLEAN" -eq 1 ]; then
     rm -rf "$OUT"
@@ -134,6 +163,7 @@ mkdir -p "$OUT"
     printf 'ep_package=%s\\n' "$EP_PACKAGE"
     printf 'out=%s\\n' "$OUT"
     printf 'clean=%s\\n' "$CLEAN"
+    cat prepared.txt
 } > "$OUT/build_args.txt"
 printf 'fake firmware\\n' > "$OUT/firmware.bin"
 """,
@@ -170,6 +200,8 @@ def test_rtos_sdk_document_describes_build_firmware_entry():
     assert "EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08" in text
     assert "host_rtos_demo" in text
     assert "mode=stub" in text
+    assert "SDK scripts/prepare.sh" in text
+    assert "scripts/prepare.sh --target <target>" in text
     assert "SDK scripts/build_firmware.sh" in text
     assert "--ep-package" in text
     assert "--out" in text
@@ -212,7 +244,38 @@ def test_build_target_firmware_runs_ep_export_and_sdk_build(tmp_path):
     assert f"ep_package={ep_package}" in args_text
     assert f"out={firmware}" in args_text
     assert "clean=1" in args_text
+    assert "prepared=host_rtos_demo" in args_text
+    assert "SDK 准备完成" in result.stdout
     assert "固件已生成" in result.stdout
+
+
+def test_build_target_firmware_fails_when_sdk_prepare_entry_is_missing(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo(sdk_repo)
+    (sdk_repo / "scripts" / "prepare.sh").unlink()
+    _run_git(["add", "-A"], sdk_repo)
+    _run_git(["commit", "-m", "remove prepare entry"], sdk_repo)
+
+    repo = tmp_path / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+
+    result = subprocess.run(
+        [
+            str(BUILD_FIRMWARE_SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--sdk-root",
+            str(tmp_path / "sdks"),
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "SDK 缺少准备入口" in result.stderr
 
 
 def test_build_target_firmware_fails_when_sdk_build_entry_is_missing(tmp_path):
