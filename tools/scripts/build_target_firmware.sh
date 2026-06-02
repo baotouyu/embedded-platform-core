@@ -3,6 +3,8 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$SCRIPT_DIR/target_descriptor.sh"
+
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 TARGET=
 SDK_ROOT=${EP_SDK_ROOT:-}
@@ -25,31 +27,6 @@ EOF
 die() {
     printf '%s\n' "$1" >&2
     exit 1
-}
-
-trim() {
-    printf '%s' "$1" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
-}
-
-read_top_level_value() {
-    file=$1
-    key=$2
-    sed -n "s/^${key}:[[:space:]]*//p" "$file" | head -n 1
-}
-
-read_section_value() {
-    file=$1
-    section=$2
-    key=$3
-    awk -v section="$section" -v key="$key" '
-        $0 ~ "^" section ":" { in_section = 1; next }
-        /^[^[:space:]].*:/ { in_section = 0 }
-        in_section && $0 ~ "^[[:space:]]+" key ":" {
-            sub("^[[:space:]]+" key ":[[:space:]]*", "")
-            print
-            exit
-        }
-    ' "$file"
 }
 
 resolve_path() {
@@ -100,16 +77,15 @@ TARGET_FILE=$REPO_ROOT/targets/$TARGET.yaml
 
 [ -f "$TARGET_FILE" ] || die "缺少 target 描述文件：$TARGET_FILE"
 
-declared_target=$(trim "$(read_top_level_value "$TARGET_FILE" "target")")
-[ "$declared_target" = "$TARGET" ] || die "target 描述不匹配：文件内 target 为 ${declared_target}，命令参数为 ${TARGET}"
+td_validate_declared_target "$TARGET_FILE" "$TARGET"
 
-sdk_name=$(trim "$(read_section_value "$TARGET_FILE" "sdk" "name")")
-ep_package=$(trim "$(read_section_value "$TARGET_FILE" "output" "ep_package")")
-firmware_output=$(trim "$(read_section_value "$TARGET_FILE" "output" "firmware")")
+sdk_name=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "name")")
+ep_package=$(td_trim "$(td_read_section_value "$TARGET_FILE" "output" "ep_package")")
+firmware_output=$(td_trim "$(td_read_section_value "$TARGET_FILE" "output" "firmware")")
 
-[ -n "$sdk_name" ] || die "target 描述缺少 sdk.name：$TARGET_FILE"
-[ -n "$ep_package" ] || die "target 描述缺少 output.ep_package：$TARGET_FILE"
-[ -n "$firmware_output" ] || die "target 描述缺少 output.firmware：$TARGET_FILE"
+td_require_value "$sdk_name" "target 描述缺少 sdk.name：$TARGET_FILE"
+td_require_value "$ep_package" "target 描述缺少 output.ep_package：$TARGET_FILE"
+td_require_value "$firmware_output" "target 描述缺少 output.firmware：$TARGET_FILE"
 
 if [ -z "$SDK_ROOT" ]; then
     SDK_ROOT=$(dirname -- "$REPO_ROOT")/sdks

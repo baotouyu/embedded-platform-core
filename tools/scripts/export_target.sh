@@ -3,6 +3,8 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$SCRIPT_DIR/target_descriptor.sh"
+
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 TARGET=
 CLEAN=0
@@ -23,29 +25,6 @@ EOF
 die() {
     printf '%s\n' "$1" >&2
     exit 1
-}
-
-trim() {
-    printf '%s' "$1" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
-}
-
-read_top_level_value() {
-    file=$1
-    key=$2
-    sed -n "s/^${key}:[[:space:]]*//p" "$file" | head -n 1
-}
-
-read_output_ep_package() {
-    file=$1
-    awk '
-        /^output:/ { in_output = 1; next }
-        /^[^[:space:]].*:/ { in_output = 0 }
-        in_output && /^[[:space:]]+ep_package:/ {
-            sub(/^[[:space:]]+ep_package:[[:space:]]*/, "")
-            print
-            exit
-        }
-    ' "$file"
 }
 
 while [ "$#" -gt 0 ]; do
@@ -81,11 +60,10 @@ TARGET_FILE=$REPO_ROOT/targets/$TARGET.yaml
 
 [ -f "$TARGET_FILE" ] || die "缺少 target 描述文件：$TARGET_FILE"
 
-declared_target=$(trim "$(read_top_level_value "$TARGET_FILE" "target")")
-[ "$declared_target" = "$TARGET" ] || die "target 描述不匹配：文件内 target 为 ${declared_target}，命令参数为 ${TARGET}"
+td_validate_declared_target "$TARGET_FILE" "$TARGET"
 
-ep_package=$(trim "$(read_output_ep_package "$TARGET_FILE")")
-[ -n "$ep_package" ] || die "target 描述缺少 output.ep_package：$TARGET_FILE"
+ep_package=$(td_trim "$(td_read_section_value "$TARGET_FILE" "output" "ep_package")")
+td_require_value "$ep_package" "target 描述缺少 output.ep_package：$TARGET_FILE"
 
 output_parent=${ep_package%/*}
 

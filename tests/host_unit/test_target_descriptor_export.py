@@ -19,12 +19,17 @@ def _prepare_minimal_repo(root: Path) -> None:
     _write_file(
         root / "targets" / "host_rtos_demo.yaml",
         """target: host_rtos_demo
-os: rtos
-vendor: host
-sdk_family: demo
-chip: host
-board: rtos-demo
-kernel: none
+
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
+
+toolchain:
+  source: sdk
 
 output:
   ep_package: out/ep/host_rtos_demo
@@ -57,8 +62,10 @@ def test_host_rtos_demo_target_descriptor_exists():
     assert TARGET_FILE.is_file()
     text = TARGET_FILE.read_text(encoding="utf-8")
     assert "target: host_rtos_demo" in text
-    assert "os: rtos" in text
+    assert "platform:" in text
+    assert "family: rtos" in text
     assert "sdk_family: demo" in text
+    assert "toolchain:" in text
     assert "ep_package: out/ep/host_rtos_demo" in text
 
 

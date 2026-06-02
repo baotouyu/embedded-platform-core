@@ -1,0 +1,24 @@
+target: artinchip_d121_lubanlite_demo
+
+platform:
+  family: rtos
+  vendor: artinchip
+  sdk_family: luban-lite
+  chip: d121
+  board: demo
+  kernel: rt-thread
+
+sdk:
+  name: sdk-artinchip-luban-lite
+  repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
+  ref: main
+
+toolchain:
+  source: sdk
+
+sdk_config:
+  defconfig: d121_demo_rt-thread_ep_app_defconfig
+
+output:
+  ep_package: out/ep/artinchip_d121_lubanlite_demo
+  firmware: out/firmware/artinchip_d121_lubanlite_demo

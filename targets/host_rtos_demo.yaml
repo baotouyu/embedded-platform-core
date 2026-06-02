@@ -1,15 +1,20 @@
 target: host_rtos_demo
-os: rtos
-vendor: host
-sdk_family: demo
-chip: host
-board: rtos-demo
-kernel: none
+
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
 
 sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
   ref: main
+
+toolchain:
+  source: sdk
 
 output:
   ep_package: out/ep/host_rtos_demo
