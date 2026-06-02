@@ -117,6 +117,8 @@ else
     "$REPO_ROOT/tools/scripts/export_target.sh" --repo-root "$REPO_ROOT" --target "$TARGET"
 fi
 
+"$REPO_ROOT/tools/scripts/validate_ep_package.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --ep-package "$EP_PACKAGE_DIR"
+
 SDK_BUILD_SCRIPT=$SDK_DIR/scripts/build_firmware.sh
 [ -x "$SDK_BUILD_SCRIPT" ] || die "SDK 缺少固件构建入口：$SDK_BUILD_SCRIPT"
 
