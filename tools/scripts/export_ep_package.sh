@@ -3,8 +3,11 @@
 set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+. "$SCRIPT_DIR/target_descriptor.sh"
+
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
 TARGET=host_rtos_demo
+TARGET_FILE=
 OUTPUT_DIR=out/ep
 CLEAN=0
 
@@ -16,6 +19,7 @@ print_help() {
 参数:
   --repo-root <路径>   仓库根目录，默认自动使用当前脚本所在仓库
   --target <名称>      导出目标名称，默认 host_rtos_demo
+  --target-file <路径> target 描述文件，存在时写入 platform/sdk/toolchain 元数据
   --output-dir <路径>  输出父目录，脚本会生成 <路径>/<target>
   --clean             导出前删除已有 target 输出目录
   -h, --help          显示帮助
@@ -56,6 +60,11 @@ while [ "$#" -gt 0 ]; do
             TARGET=$2
             shift 2
             ;;
+        --target-file)
+            [ "$#" -ge 2 ] || die "缺少 --target-file 参数值"
+            TARGET_FILE=$2
+            shift 2
+            ;;
         --output-dir)
             [ "$#" -ge 2 ] || die "缺少 --output-dir 参数值"
             OUTPUT_DIR=$2
@@ -76,6 +85,10 @@ while [ "$#" -gt 0 ]; do
 done
 
 REPO_ROOT=$(CDPATH= cd -- "$REPO_ROOT" && pwd)
+if [ -n "$TARGET_FILE" ]; then
+    TARGET_FILE=$(resolve_path "$TARGET_FILE" "$REPO_ROOT")
+    [ -f "$TARGET_FILE" ] || die "缺少 target 描述文件：$TARGET_FILE"
+fi
 OUTPUT_DIR=$(resolve_path "$OUTPUT_DIR" "$REPO_ROOT")
 PACKAGE_ROOT=$OUTPUT_DIR/$TARGET
 ARCHIVE=$REPO_ROOT/build/libep_app_core_export.a
@@ -118,6 +131,31 @@ for dir in $HEADER_DIRS; do
     done
 done
 
+target_platform_family=
+target_platform_vendor=
+target_platform_sdk_family=
+target_platform_chip=
+target_platform_board=
+target_platform_kernel=
+target_sdk_name=
+target_sdk_repo=
+target_sdk_ref=
+target_toolchain_source=
+
+if [ -n "$TARGET_FILE" ]; then
+    td_validate_declared_target "$TARGET_FILE" "$TARGET"
+    target_platform_family=$(td_trim "$(td_read_section_value "$TARGET_FILE" "platform" "family")")
+    target_platform_vendor=$(td_trim "$(td_read_section_value "$TARGET_FILE" "platform" "vendor")")
+    target_platform_sdk_family=$(td_trim "$(td_read_section_value "$TARGET_FILE" "platform" "sdk_family")")
+    target_platform_chip=$(td_trim "$(td_read_section_value "$TARGET_FILE" "platform" "chip")")
+    target_platform_board=$(td_trim "$(td_read_section_value "$TARGET_FILE" "platform" "board")")
+    target_platform_kernel=$(td_trim "$(td_read_section_value "$TARGET_FILE" "platform" "kernel")")
+    target_sdk_name=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "name")")
+    target_sdk_repo=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "repo")")
+    target_sdk_ref=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "ref")")
+    target_toolchain_source=$(td_trim "$(td_read_section_value "$TARGET_FILE" "toolchain" "source")")
+fi
+
 MANIFEST=$PACKAGE_ROOT/manifest.json
 {
     printf '{\n'
@@ -125,6 +163,24 @@ MANIFEST=$PACKAGE_ROOT/manifest.json
     printf '  "target": "%s",\n' "$(json_escape "$TARGET")"
     printf '  "format": "static-library",\n'
     printf '  "library": "lib/libep_app_core.a",\n'
+    if [ -n "$TARGET_FILE" ]; then
+        printf '  "platform": {\n'
+        printf '    "family": "%s",\n' "$(json_escape "$target_platform_family")"
+        printf '    "vendor": "%s",\n' "$(json_escape "$target_platform_vendor")"
+        printf '    "sdk_family": "%s",\n' "$(json_escape "$target_platform_sdk_family")"
+        printf '    "chip": "%s",\n' "$(json_escape "$target_platform_chip")"
+        printf '    "board": "%s",\n' "$(json_escape "$target_platform_board")"
+        printf '    "kernel": "%s"\n' "$(json_escape "$target_platform_kernel")"
+        printf '  },\n'
+        printf '  "sdk": {\n'
+        printf '    "name": "%s",\n' "$(json_escape "$target_sdk_name")"
+        printf '    "repo": "%s",\n' "$(json_escape "$target_sdk_repo")"
+        printf '    "ref": "%s"\n' "$(json_escape "$target_sdk_ref")"
+        printf '  },\n'
+        printf '  "toolchain": {\n'
+        printf '    "source": "%s"\n' "$(json_escape "$target_toolchain_source")"
+        printf '  },\n'
+    fi
     printf '  "headers": [\n'
 
     first=1
