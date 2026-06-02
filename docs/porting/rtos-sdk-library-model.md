@@ -134,6 +134,16 @@ out/firmware/<target>/
 
 通过 `export-target` 导出的 `manifest.json` 会包含 target 元数据，包括 `platform`、`sdk` 和 `toolchain`。SDK 仓库可以用这些字段确认静态库包是否匹配当前芯片和板级构建。
 
+## EP 导出包校验
+
+进入 SDK 固件构建前，主工程会校验 EP 导出包是否匹配当前 target：
+
+```sh
+./build.sh validate-ep-package <target>
+```
+
+`build-firmware` 会在 `export-target` 之后、调用 SDK `scripts/build_firmware.sh` 之前自动执行这一步。校验内容包括 `manifest.json` 里的 `target`、`platform`、`sdk` 和 `toolchain` 是否与 `targets/<target>.yaml` 一致。
+
 ## 工具链规则
 
 RTOS 静态库必须使用目标 SDK 对应的交叉编译工具链和编译参数生成，不能使用 host/macOS 的 clang 或本机 gcc 随便编译。
