@@ -187,6 +187,38 @@ def test_prepare_target_sdk_reuses_existing_sdk_directory(tmp_path):
     assert "SDK 已存在" in result.stdout
 
 
+def test_prepare_target_sdk_allows_relative_sibling_sdk_root(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk"
+    _create_local_sdk_repo(sdk_repo)
+
+    workspace = tmp_path / "workspace"
+    repo = workspace / "repo"
+    _prepare_repo_with_target(repo, sdk_repo)
+    sdk_path = workspace / "fake-sdk"
+    sdk_path.mkdir(parents=True)
+    _write_file(sdk_path / "marker.txt", "existing sibling sdk\n")
+
+    result = subprocess.run(
+        [
+            str(PREPARE_SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--sdk-root",
+            "..",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+        cwd=repo,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (sdk_path / "marker.txt").read_text(encoding="utf-8") == "existing sibling sdk\n"
+    assert "SDK 已存在" in result.stdout
+
+
 def test_prepare_target_sdk_rejects_sdk_root_inside_main_repo(tmp_path):
     sdk_repo = tmp_path / "fake-sdk"
     _create_local_sdk_repo(sdk_repo)
