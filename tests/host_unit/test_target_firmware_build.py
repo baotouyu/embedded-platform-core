@@ -74,6 +74,7 @@ output:
         "prepare_target_sdk.sh",
         "export_target.sh",
         "export_ep_package.sh",
+        "validate_ep_package.sh",
     ]:
         source = REPO_ROOT / "tools" / "scripts" / script_name
         script_copy = root / "tools" / "scripts" / script_name
@@ -261,7 +262,105 @@ def test_build_target_firmware_runs_ep_export_and_sdk_build(tmp_path):
     assert "clean=1" in args_text
     assert "prepared=host_rtos_demo" in args_text
     assert "SDK 准备完成" in result.stdout
+    assert "EP 导出包校验通过" in result.stdout
     assert "固件已生成" in result.stdout
+
+
+def test_build_target_firmware_fails_before_sdk_build_when_ep_package_mismatches(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo(sdk_repo)
+
+    repo = tmp_path / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+    sdk_root = tmp_path / "sdks"
+
+    export_script = repo / "tools" / "scripts" / "export_target.sh"
+    export_script.write_text(
+        """#!/bin/sh
+set -eu
+
+REPO_ROOT=
+TARGET=
+CLEAN=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --repo-root)
+            REPO_ROOT=$2
+            shift 2
+            ;;
+        --target)
+            TARGET=$2
+            shift 2
+            ;;
+        --clean)
+            CLEAN=1
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+[ -n "$REPO_ROOT" ] || exit 2
+[ -n "$TARGET" ] || exit 2
+
+PACKAGE_ROOT="$REPO_ROOT/out/ep/$TARGET"
+if [ "$CLEAN" -eq 1 ]; then
+    rm -rf "$PACKAGE_ROOT"
+fi
+mkdir -p "$PACKAGE_ROOT/lib"
+printf 'fake archive\\n' > "$PACKAGE_ROOT/lib/libep_app_core.a"
+cat > "$PACKAGE_ROOT/manifest.json" <<EOF
+{
+  "package": "ep_app_core",
+  "target": "$TARGET",
+  "format": "static-library",
+  "library": "lib/libep_app_core.a",
+  "platform": {
+    "family": "rtos",
+    "vendor": "host",
+    "sdk_family": "demo",
+    "chip": "wrong-chip",
+    "board": "rtos-demo",
+    "kernel": "none"
+  },
+  "sdk": {
+    "name": "fake-sdk",
+    "repo": "__SDK_REPO__",
+    "ref": "HEAD"
+  },
+  "toolchain": {
+    "source": "sdk"
+  },
+  "headers": []
+}
+EOF
+""".replace("__SDK_REPO__", str(sdk_repo)),
+        encoding="utf-8",
+    )
+    export_script.chmod(0o755)
+
+    result = subprocess.run(
+        [
+            str(BUILD_FIRMWARE_SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--clean",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "EP_SDK_ROOT": str(sdk_root)},
+    )
+
+    assert result.returncode != 0
+    assert "EP 导出包校验失败" in result.stderr
+    assert "manifest platform.chip 为 wrong-chip，target 描述为 host" in result.stderr
+    assert not (repo / "out" / "firmware" / "host_rtos_demo" / "firmware.bin").exists()
 
 
 def test_build_target_firmware_fails_when_sdk_prepare_entry_is_missing(tmp_path):
