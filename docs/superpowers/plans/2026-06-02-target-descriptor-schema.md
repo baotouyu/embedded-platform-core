@@ -14,7 +14,7 @@
 
 - 新增 `tools/scripts/target_descriptor.sh`：集中提供 `td_read_top_level_value`、`td_read_section_value`、`td_require_value`、`td_validate_declared_target` 等固定字段读取和校验函数。
 - 修改 `targets/host_rtos_demo.yaml`：迁移到 `platform:` 分组，并增加 `toolchain.source: sdk`。
-- 新增 `targets/artinchip_d121_lubanlite_demo.yaml`：匠芯创 D121 Luban-Lite 占位 target，暂时仍走 SDK stub。
+- 新增 `targets/artinchip_d12x_lubanlite_demo.yaml`：匠芯创 D12x Luban-Lite 占位 target，暂时仍走 SDK stub。
 - 修改 `tools/scripts/prepare_target_sdk.sh`：复用 `target_descriptor.sh` 读取 `sdk.*` 字段。
 - 修改 `tools/scripts/export_target.sh`：复用 `target_descriptor.sh` 读取 `output.ep_package`。
 - 修改 `tools/scripts/build_target_firmware.sh`：复用 `target_descriptor.sh` 读取 `sdk.name`、`output.*`。
@@ -40,7 +40,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TARGETS_DIR = REPO_ROOT / "targets"
 HOST_RTOS_TARGET = TARGETS_DIR / "host_rtos_demo.yaml"
-ARTINCHIP_D121_TARGET = TARGETS_DIR / "artinchip_d121_lubanlite_demo.yaml"
+ARTINCHIP_D12X_TARGET = TARGETS_DIR / "artinchip_d12x_lubanlite_demo.yaml"
 
 
 def _read_section_value(text: str, section: str, key: str) -> str:
@@ -101,18 +101,18 @@ def test_target_files_declare_required_schema_fields():
         assert _read_section_value(text, "output", "ep_package"), target_file
 
 
-def test_artinchip_d121_lubanlite_placeholder_target_exists():
-    text = ARTINCHIP_D121_TARGET.read_text(encoding="utf-8")
+def test_artinchip_d12x_lubanlite_placeholder_target_exists():
+    text = ARTINCHIP_D12X_TARGET.read_text(encoding="utf-8")
 
-    assert "target: artinchip_d121_lubanlite_demo" in text
+    assert "target: artinchip_d12x_lubanlite_demo" in text
     assert _read_section_value(text, "platform", "family") == "rtos"
     assert _read_section_value(text, "platform", "vendor") == "artinchip"
     assert _read_section_value(text, "platform", "sdk_family") == "luban-lite"
-    assert _read_section_value(text, "platform", "chip") == "d121"
+    assert _read_section_value(text, "platform", "chip") == "d12x"
     assert _read_section_value(text, "platform", "kernel") == "rt-thread"
     assert _read_section_value(text, "sdk", "name") == "sdk-artinchip-luban-lite"
     assert _read_section_value(text, "output", "firmware") == (
-        "out/firmware/artinchip_d121_lubanlite_demo"
+        "out/firmware/artinchip_d12x_lubanlite_demo"
     )
 ```
 
@@ -124,13 +124,13 @@ Run:
 pytest tests/host_unit/test_target_descriptor_schema.py -v
 ```
 
-Expected: FAIL because `host_rtos_demo.yaml` still uses flat fields and `artinchip_d121_lubanlite_demo.yaml` does not exist.
+Expected: FAIL because `host_rtos_demo.yaml` still uses flat fields and `artinchip_d12x_lubanlite_demo.yaml` does not exist.
 
 ## Task 2: 迁移 target 文件到新 schema
 
 **Files:**
 - Modify: `targets/host_rtos_demo.yaml`
-- Create: `targets/artinchip_d121_lubanlite_demo.yaml`
+- Create: `targets/artinchip_d12x_lubanlite_demo.yaml`
 
 - [ ] **Step 1: Update `targets/host_rtos_demo.yaml`**
 
@@ -160,18 +160,18 @@ output:
   firmware: out/firmware/host_rtos_demo
 ```
 
-- [ ] **Step 2: Add `targets/artinchip_d121_lubanlite_demo.yaml`**
+- [ ] **Step 2: Add `targets/artinchip_d12x_lubanlite_demo.yaml`**
 
 Create:
 
 ```yaml
-target: artinchip_d121_lubanlite_demo
+target: artinchip_d12x_lubanlite_demo
 
 platform:
   family: rtos
   vendor: artinchip
   sdk_family: luban-lite
-  chip: d121
+  chip: d12x
   board: demo
   kernel: rt-thread
 
@@ -184,11 +184,11 @@ toolchain:
   source: sdk
 
 sdk_config:
-  defconfig: d121_demo_rt-thread_ep_app_defconfig
+  defconfig: d12x_demo_rt-thread_ep_app_defconfig
 
 output:
-  ep_package: out/ep/artinchip_d121_lubanlite_demo
-  firmware: out/firmware/artinchip_d121_lubanlite_demo
+  ep_package: out/ep/artinchip_d12x_lubanlite_demo
+  firmware: out/firmware/artinchip_d12x_lubanlite_demo
 ```
 
 - [ ] **Step 3: Run schema tests and verify remaining failures are script-related only**
@@ -206,7 +206,7 @@ Expected: PASS for schema tests after target files are updated.
 Run:
 
 ```bash
-git add targets/host_rtos_demo.yaml targets/artinchip_d121_lubanlite_demo.yaml tests/host_unit/test_target_descriptor_schema.py
+git add targets/host_rtos_demo.yaml targets/artinchip_d12x_lubanlite_demo.yaml tests/host_unit/test_target_descriptor_schema.py
 git commit -m "feat: 迁移target描述规范"
 ```
 
@@ -576,7 +576,7 @@ Run:
 
 ```bash
 EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08 ./build.sh build-firmware host_rtos_demo --clean
-EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08 ./build.sh build-firmware artinchip_d121_lubanlite_demo --clean
+EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08 ./build.sh build-firmware artinchip_d12x_lubanlite_demo --clean
 ```
 
 Expected:
@@ -584,7 +584,7 @@ Expected:
 - Both commands exit `0`.
 - Output includes `SDK 准备完成`.
 - `out/firmware/host_rtos_demo/build_manifest.txt` exists.
-- `out/firmware/artinchip_d121_lubanlite_demo/build_manifest.txt` exists.
+- `out/firmware/artinchip_d12x_lubanlite_demo/build_manifest.txt` exists.
 
 - [ ] **Step 6: Run full verification**
 
@@ -628,6 +628,6 @@ gh pr create --base main --head <branch> --title "feat: 规范target描述文件
 PR 内容必须包含：
 
 - `host_rtos_demo` 已迁移到 `platform:` 分组。
-- 新增 `artinchip_d121_lubanlite_demo` 占位 target。
+- 新增 `artinchip_d12x_lubanlite_demo` 占位 target。
 - 构建脚本复用 `target_descriptor.sh` 读取固定字段。
 - 验证命令和结果。

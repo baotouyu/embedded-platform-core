@@ -6,7 +6,7 @@
 
 ```bash
 ./build.sh export-target host_rtos_demo
-./build.sh export-target artinchip_d121_lubanlite_demo
+./build.sh export-target artinchip_d12x_lubanlite_demo
 ```
 
 当前 `out/ep/<target>/manifest.json` 只记录包名、target、库文件、头文件列表等基础信息。随着 RTOS SDK 仓库开始消费这些导出包，manifest 需要能回答几个问题：
@@ -23,12 +23,12 @@
 
 ```json
 {
-  "target": "artinchip_d121_lubanlite_demo",
+  "target": "artinchip_d12x_lubanlite_demo",
   "platform": {
     "family": "rtos",
     "vendor": "artinchip",
     "sdk_family": "luban-lite",
-    "chip": "d121",
+    "chip": "d12x",
     "board": "demo",
     "kernel": "rt-thread"
   },

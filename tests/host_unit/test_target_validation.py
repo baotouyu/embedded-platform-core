@@ -88,8 +88,8 @@ def _read_section_value(target_file: Path, section: str, key: str) -> str:
     raise AssertionError(f"{target_file} missing {section}.{key}")
 
 
-def test_artinchip_d121_lubanlite_targets_cover_rt_thread_board_defconfigs():
-    targets = sorted(REPO_ROOT.glob("targets/artinchip_d121_lubanlite_*.yaml"))
+def test_artinchip_d12x_lubanlite_targets_cover_rt_thread_board_defconfigs():
+    targets = sorted(REPO_ROOT.glob("targets/artinchip_d12x_lubanlite_*.yaml"))
 
     actual = {
         _read_section_value(target, "platform", "board"): _read_section_value(

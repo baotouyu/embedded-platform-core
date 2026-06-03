@@ -1,17 +1,17 @@
-target: artinchip_d121_lubanlite_demo68_mmc
+target: artinchip_d12x_lubanlite_demo68_mmc
 
 platform:
   family: rtos
   vendor: artinchip
   sdk_family: luban-lite
-  chip: d121
+  chip: d12x
   board: demo68-mmc
   kernel: rt-thread
 
 sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
-  ref: e863ca3e2fc7c5a36f4db48a35ebf9c0ca66fa35
+  ref: 835fd9240ba8a035d34ac78af3d547e6bd3dab20
 
 toolchain:
   source: sdk
@@ -20,5 +20,5 @@ sdk_config:
   defconfig: d12x_demo68-mmc_rt-thread_helloworld_defconfig
 
 output:
-  ep_package: out/ep/artinchip_d121_lubanlite_demo68_mmc
-  firmware: out/firmware/artinchip_d121_lubanlite_demo68_mmc
+  ep_package: out/ep/artinchip_d12x_lubanlite_demo68_mmc
+  firmware: out/firmware/artinchip_d12x_lubanlite_demo68_mmc

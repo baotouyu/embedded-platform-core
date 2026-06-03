@@ -2,7 +2,7 @@
 
 ## 背景
 
-主工程已经把 target 描述迁移到 `platform:` 分组，并新增了 `artinchip_d121_lubanlite_demo` 占位 target。现在 target 已经成为平台适配的正式入口：
+主工程已经把 target 描述迁移到 `platform:` 分组，并新增了 `artinchip_d12x_lubanlite_demo` 占位 target。现在 target 已经成为平台适配的正式入口：
 
 ```text
 targets/<target>.yaml

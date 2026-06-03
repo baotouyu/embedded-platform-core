@@ -4,7 +4,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TARGETS_DIR = REPO_ROOT / "targets"
 HOST_RTOS_TARGET = TARGETS_DIR / "host_rtos_demo.yaml"
-ARTINCHIP_D121_TARGET = TARGETS_DIR / "artinchip_d121_lubanlite_demo68_nor.yaml"
+ARTINCHIP_D12X_TARGET = TARGETS_DIR / "artinchip_d12x_lubanlite_demo68_nor.yaml"
 
 
 def _read_section_value(text: str, section: str, key: str) -> str:
@@ -81,14 +81,14 @@ def test_repository_targets_pin_sdk_ref_to_tag_or_commit():
         )
 
 
-def test_artinchip_d121_lubanlite_demo68_nor_target_exists():
-    text = ARTINCHIP_D121_TARGET.read_text(encoding="utf-8")
+def test_artinchip_d12x_lubanlite_demo68_nor_target_exists():
+    text = ARTINCHIP_D12X_TARGET.read_text(encoding="utf-8")
 
-    assert "target: artinchip_d121_lubanlite_demo68_nor" in text
+    assert "target: artinchip_d12x_lubanlite_demo68_nor" in text
     assert _read_section_value(text, "platform", "family") == "rtos"
     assert _read_section_value(text, "platform", "vendor") == "artinchip"
     assert _read_section_value(text, "platform", "sdk_family") == "luban-lite"
-    assert _read_section_value(text, "platform", "chip") == "d121"
+    assert _read_section_value(text, "platform", "chip") == "d12x"
     assert _read_section_value(text, "platform", "board") == "demo68-nor"
     assert _read_section_value(text, "platform", "kernel") == "rt-thread"
     assert _read_section_value(text, "sdk", "name") == "sdk-artinchip-luban-lite"
@@ -96,5 +96,5 @@ def test_artinchip_d121_lubanlite_demo68_nor_target_exists():
         "d12x_demo68-nor_rt-thread_helloworld_defconfig"
     )
     assert _read_section_value(text, "output", "firmware") == (
-        "out/firmware/artinchip_d121_lubanlite_demo68_nor"
+        "out/firmware/artinchip_d12x_lubanlite_demo68_nor"
     )

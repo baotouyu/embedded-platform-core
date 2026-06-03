@@ -302,8 +302,8 @@ Run:
 ```bash
 ./build.sh configure
 cmake --build build --target ep_app_core_export
-./build.sh export-target artinchip_d121_lubanlite_demo --clean
-python3 -m json.tool out/ep/artinchip_d121_lubanlite_demo/manifest.json >/dev/null
+./build.sh export-target artinchip_d12x_lubanlite_demo --clean
+python3 -m json.tool out/ep/artinchip_d12x_lubanlite_demo/manifest.json >/dev/null
 ```
 
 Expected: all commands exit `0`.

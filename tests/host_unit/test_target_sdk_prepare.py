@@ -114,10 +114,10 @@ def test_luban_lite_sdk_submodule_is_pinned_to_target_ref():
 
     for target_name in [
         "host_rtos_demo.yaml",
-        "artinchip_d121_lubanlite_demo68_mmc.yaml",
-        "artinchip_d121_lubanlite_demo68_nand.yaml",
-        "artinchip_d121_lubanlite_demo68_nor.yaml",
-        "artinchip_d121_lubanlite_hmi_nor.yaml",
+        "artinchip_d12x_lubanlite_demo68_mmc.yaml",
+        "artinchip_d12x_lubanlite_demo68_nand.yaml",
+        "artinchip_d12x_lubanlite_demo68_nor.yaml",
+        "artinchip_d12x_lubanlite_hmi_nor.yaml",
     ]:
         target_text = (REPO_ROOT / "targets" / target_name).read_text(encoding="utf-8")
         assert f"ref: {submodule_head}" in target_text
