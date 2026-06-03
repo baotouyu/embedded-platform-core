@@ -86,7 +86,7 @@ SDK 管理分成两件事：本地怎么拿到 SDK，以及工程如何锁定 SD
 也可以通过环境变量指定统一缓存目录：
 
 ```bash
-EP_SDK_ROOT=/opt/ep-sdks ./build.sh prepare-sdk artinchip_d12x_demo68_nor
+EP_SDK_ROOT=/opt/ep-sdks ./build.sh prepare-sdk artinchip_d121_lubanlite_demo68_nor
 ```
 
 target 描述文件不要记录本地 SDK 路径。路径是每台开发机自己的事情，不属于工程配置。
@@ -430,7 +430,7 @@ scripts/flash.sh
 建议主工程调用方式：
 
 ```bash
-./build.sh build-firmware artinchip_d12x_demo68_nor --clean
+./build.sh build-firmware artinchip_d121_lubanlite_demo68_nor --clean
 ```
 
 主工程内部调度顺序是：
