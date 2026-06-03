@@ -74,6 +74,39 @@ def test_validate_targets_passes_for_current_repository_targets():
     assert "target 校验通过：" in result.stdout
 
 
+def _read_section_value(target_file: Path, section: str, key: str) -> str:
+    in_section = False
+    for line in target_file.read_text(encoding="utf-8").splitlines():
+        if line == f"{section}:":
+            in_section = True
+            continue
+        if line and not line.startswith(" ") and line.endswith(":"):
+            in_section = False
+        prefix = f"  {key}: "
+        if in_section and line.startswith(prefix):
+            return line.removeprefix(prefix)
+    raise AssertionError(f"{target_file} missing {section}.{key}")
+
+
+def test_artinchip_d121_lubanlite_targets_cover_rt_thread_board_defconfigs():
+    targets = sorted(REPO_ROOT.glob("targets/artinchip_d121_lubanlite_*.yaml"))
+
+    actual = {
+        _read_section_value(target, "platform", "board"): _read_section_value(
+            target, "sdk_config", "defconfig"
+        )
+        for target in targets
+    }
+
+    assert actual == {
+        "demo68-mmc": "d12x_demo68-mmc_rt-thread_helloworld_defconfig",
+        "demo68-nand": "d12x_demo68-nand_rt-thread_helloworld_defconfig",
+        "demo68-nor": "d12x_demo68-nor_rt-thread_helloworld_defconfig",
+        "hmi-nor": "d12x_hmi-nor_rt-thread_helloworld_defconfig",
+    }
+    assert all("baremetal_bootloader" not in defconfig for defconfig in actual.values())
+
+
 def test_validate_targets_passes_for_valid_temp_repo(tmp_path):
     repo = tmp_path / "repo"
     _write_valid_target(repo)

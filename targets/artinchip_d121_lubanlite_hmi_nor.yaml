@@ -1,0 +1,24 @@
+target: artinchip_d121_lubanlite_hmi_nor
+
+platform:
+  family: rtos
+  vendor: artinchip
+  sdk_family: luban-lite
+  chip: d121
+  board: hmi-nor
+  kernel: rt-thread
+
+sdk:
+  name: sdk-artinchip-luban-lite
+  repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
+  ref: e863ca3e2fc7c5a36f4db48a35ebf9c0ca66fa35
+
+toolchain:
+  source: sdk
+
+sdk_config:
+  defconfig: d12x_hmi-nor_rt-thread_helloworld_defconfig
+
+output:
+  ep_package: out/ep/artinchip_d121_lubanlite_hmi_nor
+  firmware: out/firmware/artinchip_d121_lubanlite_hmi_nor

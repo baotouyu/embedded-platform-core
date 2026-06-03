@@ -11,7 +11,7 @@ platform:
 sdk:
   name: sdk-artinchip-luban-lite
   repo: https://github.com/baotouyu/sdk-artinchip-luban-lite.git
-  ref: c677230cb8541284ccf5c356c11304fe2d5b0a45
+  ref: e863ca3e2fc7c5a36f4db48a35ebf9c0ca66fa35
 
 toolchain:
   source: sdk
