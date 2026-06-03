@@ -206,10 +206,12 @@ choose_action() {
     actions_file=$WORK_DIR/actions.values
     cat > "$actions_file" <<EOF
 show-target - 只显示选择结果
+check-env - 检查 SDK 环境
+install-env - 安装/修复 SDK 环境
 prepare-sdk - 准备外部SDK
 export-target - 导出EP静态库包
-build-firmware - 编译固件
-full - 导出EP包、准备SDK并编译固件
+build-firmware - 准备SDK、检查环境并编译固件
+full - 准备SDK、检查环境、导出EP包并编译固件
 EOF
     action_label=$(choose_from_file "$(label_for action)" "$actions_file")
     printf '%s\n' "${action_label%% - *}"

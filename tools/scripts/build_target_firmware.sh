@@ -85,6 +85,14 @@ FIRMWARE_DIR=$(sdk_resolve_path "$firmware_output" "$REPO_ROOT")
 
 "$REPO_ROOT/tools/scripts/prepare_target_sdk.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --sdk-root "$SDK_ROOT"
 
+check_result=0
+"$REPO_ROOT/tools/scripts/check_target_env.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --sdk-root "$SDK_ROOT" || check_result=$?
+if [ "$check_result" -ne 0 ]; then
+    printf '\n环境检查失败（exit=%s）。请先运行 install-env 安装依赖。\n' "$check_result" >&2
+    printf '  ./build.sh install-env %s\n' "$TARGET" >&2
+    exit "$check_result"
+fi
+
 SDK_PREPARE_SCRIPT=$SDK_DIR/scripts/prepare.sh
 [ -x "$SDK_PREPARE_SCRIPT" ] || die "SDK 缺少准备入口：$SDK_PREPARE_SCRIPT"
 (
