@@ -206,6 +206,8 @@ choose_action() {
     actions_file=$WORK_DIR/actions.values
     cat > "$actions_file" <<EOF
 show-target - 只显示选择结果
+check-env - 检查 SDK 环境
+install-env - 安装/修复 SDK 环境
 prepare-sdk - 准备外部SDK
 export-target - 导出EP静态库包
 build-firmware - 编译固件

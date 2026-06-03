@@ -423,6 +423,8 @@ RTOS target 更适合输出：
 ```text
 sdk.yaml
 scripts/prepare.sh
+scripts/check_env.sh
+scripts/install_env.sh
 scripts/build_firmware.sh
 scripts/flash.sh
 ```
@@ -430,6 +432,8 @@ scripts/flash.sh
 建议主工程调用方式：
 
 ```bash
+./build.sh check-env artinchip_d12x_lubanlite_demo68_nor
+./build.sh install-env artinchip_d12x_lubanlite_demo68_nor
 ./build.sh build-firmware artinchip_d12x_lubanlite_demo68_nor --clean
 ```
 
@@ -438,9 +442,30 @@ scripts/flash.sh
 ```text
 prepare-sdk
   -> SDK scripts/prepare.sh
+  -> check-env（自动，在 build-firmware/full 前执行）
+  -> SDK scripts/check_env.sh
   -> export-target
   -> SDK scripts/build_firmware.sh
 ```
+
+### SDK 环境检测/安装契约
+
+每个 RTOS SDK 仓库必须提供两个固定脚本：
+
+- `scripts/check_env.sh --target <target> --sdk-root <path>`：检查环境是否就绪
+- `scripts/install_env.sh --target <target> --sdk-root <path> [--yes] [--dry-run]`：安装缺失依赖
+
+退出码约定：
+
+| 退出码 | 含义 |
+| --- | --- |
+| 0 | 环境 OK |
+| 10 | 缺依赖，但可通过 install_env 修复 |
+| 11 | 系统不支持本机安装，推荐 Docker |
+| 12 | 不可自动修复的问题 |
+
+主工程通过 `./build.sh check-env <target>` 和 `./build.sh install-env <target>` 调度。
+`build-firmware` 和 `full` 在构建前会自动调用 `check-env`，失败时停止并提示运行 `install-env`。
 
 主工程会先调用 SDK 的 `scripts/prepare.sh --target <target>`，确认 SDK 仓库结构和脚本契约可用；再把 `--target`、`--ep-package` 和 `--out` 传给 SDK 的 `scripts/build_firmware.sh`。SDK 内部可以继续使用 SCons、Makefile 或原厂脚本。主工程只认这些稳定入口，不解析 SDK 内部构建细节。
 

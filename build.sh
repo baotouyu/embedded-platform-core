@@ -22,6 +22,8 @@ print_help() {
   export-target 通过 targets/<target>.yaml 导出主工程静态库包
   prepare-sdk  通过 targets/<target>.yaml 准备 SDK，优先 third_party/sdk/<sdk.name>，否则默认 ../sdks
   build-firmware 通过 SDK 标准入口生成固件 out/firmware/<target>
+  check-env   检查 SDK 环境是否就绪
+  install-env 安装/修复 SDK 环境依赖
   validate-targets 校验 targets/*.yaml 描述文件
   validate-ep-package 校验 EP 导出包 manifest 是否匹配 target
   clean        清理 build 和 host/macOS 发布包
@@ -39,6 +41,8 @@ print_help() {
   ./build.sh export-target host_rtos_demo
   ./build.sh prepare-sdk host_rtos_demo
   EP_SDK_ROOT=/opt/ep-sdks ./build.sh prepare-sdk host_rtos_demo
+  ./build.sh check-env host_rtos_demo
+  ./build.sh install-env host_rtos_demo
   ./build.sh build-firmware host_rtos_demo --clean
   ./build.sh validate-targets
   ./build.sh validate-ep-package host_rtos_demo
@@ -94,7 +98,35 @@ run_build_firmware() {
         exit 2
     fi
     shift
+    # Check environment first
+    check_result=0
+    "$REPO_ROOT/tools/scripts/check_target_env.sh" --target "$target" || check_result=$?
+    if [ "$check_result" -ne 0 ]; then
+        printf '\n环境检查失败（exit=%s）。请先运行 install-env 安装依赖。\n' "$check_result" >&2
+        printf '  ./build.sh install-env %s\n' "$target" >&2
+        exit "$check_result"
+    fi
     "$REPO_ROOT/tools/scripts/build_target_firmware.sh" --target "$target" "$@"
+}
+
+run_check_env() {
+    target=${1:-}
+    if [ -z "$target" ]; then
+        printf '缺少 target 名称\n' >&2
+        exit 2
+    fi
+    shift
+    "$REPO_ROOT/tools/scripts/check_target_env.sh" --target "$target" "$@"
+}
+
+run_install_env() {
+    target=${1:-}
+    if [ -z "$target" ]; then
+        printf '缺少 target 名称\n' >&2
+        exit 2
+    fi
+    shift
+    "$REPO_ROOT/tools/scripts/install_target_env.sh" --target "$target" "$@"
 }
 
 run_validate_targets() {
@@ -135,7 +167,14 @@ run_interactive() {
         build-firmware)
             run_build_firmware "$target"
             ;;
+        check-env)
+            run_check_env "$target"
+            ;;
+        install-env)
+            run_install_env "$target"
+            ;;
         full)
+            run_check_env "$target"
             run_export_target "$target"
             run_prepare_sdk "$target"
             run_build_firmware "$target"
@@ -187,6 +226,12 @@ case "$command" in
         ;;
     build-firmware)
         run_build_firmware "$@"
+        ;;
+    check-env)
+        run_check_env "$@"
+        ;;
+    install-env)
+        run_install_env "$@"
         ;;
     validate-targets)
         run_validate_targets "$@"

@@ -6,6 +6,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BUILD_SCRIPT = REPO_ROOT / "build.sh"
 BUILD_FIRMWARE_SCRIPT = REPO_ROOT / "tools" / "scripts" / "build_target_firmware.sh"
+SELECT_SCRIPT = REPO_ROOT / "tools" / "scripts" / "select_target.sh"
 TARGET_FILE = REPO_ROOT / "targets" / "host_rtos_demo.yaml"
 RTOS_SDK_DOC = REPO_ROOT / "docs" / "porting" / "rtos-sdk-library-model.md"
 
@@ -521,3 +522,288 @@ def test_build_target_firmware_fails_when_descriptor_lacks_firmware_output(tmp_p
 
     assert result.returncode != 0
     assert "target 描述缺少 output.firmware" in result.stderr
+
+
+# --- check-env / install-env integration tests ---
+
+CHECK_ENV_SCRIPT = REPO_ROOT / "tools" / "scripts" / "check_target_env.sh"
+INSTALL_ENV_SCRIPT = REPO_ROOT / "tools" / "scripts" / "install_target_env.sh"
+
+
+def _create_fake_sdk_repo_with_env(path: Path, check_env_exit: int = 0) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    _run_git(["init"], path)
+    _run_git(["config", "user.email", "test@example.com"], path)
+    _run_git(["config", "user.name", "Test User"], path)
+    _write_file(path / "README.md", "fake sdk\n")
+    _write_file(
+        path / "scripts" / "prepare.sh",
+        "#!/bin/sh\nset -eu\n"
+        "TARGET=\n"
+        "while [ \"$#\" -gt 0 ]; do\n"
+        "  case \"$1\" in\n"
+        "    --target) TARGET=$2; shift 2 ;;\n"
+        "    *) shift ;;\n"
+        "  esac\n"
+        "done\n"
+        "[ -n \"$TARGET\" ] || exit 2\n"
+        "printf 'SDK 准备完成\\n'\n"
+        "printf 'target=%s\\n' \"$TARGET\"\n"
+        "printf 'status=stub\\n'\n",
+    )
+    (path / "scripts" / "prepare.sh").chmod(0o755)
+    _write_file(
+        path / "scripts" / "check_env.sh",
+        f"#!/bin/sh\n"
+        f"set -eu\n"
+        f"TARGET=\nSDK_ROOT=\n"
+        f"while [ \"$#\" -gt 0 ]; do\n"
+        f"  case \"$1\" in\n"
+        f"    --target) TARGET=$2; shift 2 ;;\n"
+        f"    --sdk-root) SDK_ROOT=$2; shift 2 ;;\n"
+        f"    *) shift ;;\n"
+        f"  esac\n"
+        f"done\n"
+        f"[ -n \"$TARGET\" ] || exit 2\n"
+        f"[ -n \"$SDK_ROOT\" ] || exit 2\n"
+        f"printf '=== check_env ===\\n'\n"
+        f"printf 'target=%s\\n' \"$TARGET\"\n"
+        f"printf 'sdk_root=%s\\n' \"$SDK_ROOT\"\n"
+        f"exit {check_env_exit}\n",
+    )
+    (path / "scripts" / "check_env.sh").chmod(0o755)
+    _write_file(
+        path / "scripts" / "install_env.sh",
+        "#!/bin/sh\nset -eu\n"
+        "TARGET=\nSDK_ROOT=\nDRY_RUN=0\nYES=0\n"
+        "while [ \"$#\" -gt 0 ]; do\n"
+        "  case \"$1\" in\n"
+        "    --target) TARGET=$2; shift 2 ;;\n"
+        "    --sdk-root) SDK_ROOT=$2; shift 2 ;;\n"
+        "    --dry-run) DRY_RUN=1; shift ;;\n"
+        "    --yes) YES=1; shift ;;\n"
+        "    *) shift ;;\n"
+        "  esac\n"
+        "done\n"
+        "[ -n \"$TARGET\" ] || exit 2\n"
+        "[ -n \"$SDK_ROOT\" ] || exit 2\n"
+        "printf '=== install_env ===\\n'\n"
+        "printf 'target=%s\\n' \"$TARGET\"\n"
+        "printf 'sdk_root=%s\\n' \"$SDK_ROOT\"\n"
+        "printf 'dry_run=%s\\n' \"$DRY_RUN\"\n"
+        "printf 'yes=%s\\n' \"$YES\"\n"
+        "exit 0\n",
+    )
+    (path / "scripts" / "install_env.sh").chmod(0o755)
+    _write_file(
+        path / "scripts" / "build_firmware.sh",
+        "#!/bin/sh\nset -eu\n"
+        "TARGET=\nEP_PACKAGE=\nOUT=\nCLEAN=0\n"
+        "while [ \"$#\" -gt 0 ]; do\n"
+        "  case \"$1\" in\n"
+        "    --target) TARGET=$2; shift 2 ;;\n"
+        "    --ep-package) EP_PACKAGE=$2; shift 2 ;;\n"
+        "    --out) OUT=$2; shift 2 ;;\n"
+        "    --clean) CLEAN=1; shift ;;\n"
+        "    *) shift ;;\n"
+        "  esac\n"
+        "done\n"
+        "[ -n \"$TARGET\" ] || exit 2\n"
+        "[ -n \"$EP_PACKAGE\" ] || exit 2\n"
+        "[ -n \"$OUT\" ] || exit 2\n"
+        "[ -f \"$EP_PACKAGE/lib/libep_app_core.a\" ] || exit 3\n"
+        "if [ \"$CLEAN\" -eq 1 ]; then rm -rf \"$OUT\"; fi\n"
+        "mkdir -p \"$OUT\"\n"
+        "printf 'fake firmware\\n' > \"$OUT/firmware.bin\"\n",
+    )
+    (path / "scripts" / "build_firmware.sh").chmod(0o755)
+    _run_git(["add", "."], path)
+    _run_git(["commit", "-m", "init fake sdk"], path)
+
+
+def _prepare_repo_with_sdk_and_upstream(
+    root: Path, sdk_repo: Path, *, target_name: str = "host_rtos_demo"
+) -> Path:
+    _write_file(
+        root / "targets" / f"{target_name}.yaml",
+        f"""target: {target_name}
+
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
+
+sdk:
+  name: fake-sdk
+  repo: {sdk_repo}
+  ref: HEAD
+
+toolchain:
+  source: sdk
+
+output:
+  ep_package: out/ep/{target_name}
+  firmware: out/firmware/{target_name}
+""",
+    )
+    _write_file(root / "build" / "libep_app_core_export.a", "fake archive\n")
+    for header in [
+        "core/include/ep_framework.h",
+        "app/include/app_main.h",
+        "components/log/include/ep_log.h",
+    ]:
+        _write_file(root / header, f"/* {header} */\n")
+    for script_name in [
+        "target_descriptor.sh",
+        "target_sdk_resolver.sh",
+        "prepare_target_sdk.sh",
+        "export_target.sh",
+        "export_ep_package.sh",
+        "validate_ep_package.sh",
+    ]:
+        source = REPO_ROOT / "tools" / "scripts" / script_name
+        script_copy = root / "tools" / "scripts" / script_name
+        script_copy.parent.mkdir(parents=True, exist_ok=True)
+        script_copy.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        script_copy.chmod(0o755)
+
+    # Also copy check_target_env.sh and install_target_env.sh
+    for script_name in ["check_target_env.sh", "install_target_env.sh"]:
+        source = REPO_ROOT / "tools" / "scripts" / script_name
+        script_copy = root / "tools" / "scripts" / script_name
+        script_copy.parent.mkdir(parents=True, exist_ok=True)
+        script_copy.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        script_copy.chmod(0o755)
+
+    return root
+
+
+def test_build_help_lists_check_env_and_install_env():
+    result = subprocess.run(
+        [str(BUILD_SCRIPT), "help"],
+        check=False, text=True, capture_output=True,
+    )
+    assert result.returncode == 0
+    assert "check-env" in result.stdout
+    assert "install-env" in result.stdout
+
+
+def test_select_target_includes_check_env_and_install_env_actions(tmp_path):
+    repo = tmp_path / "repo"
+    _write_file(
+        repo / "targets" / "test_target.yaml",
+        """target: test_target
+platform:
+  family: rtos
+  vendor: host
+  sdk_family: demo
+  chip: host
+  board: rtos-demo
+  kernel: none
+sdk:
+  name: fake-sdk
+  repo: https://example.com/fake.git
+  ref: 0123456789abcdef0123456789abcdef01234567
+toolchain:
+  source: sdk
+output:
+  ep_package: out/ep/test_target
+  firmware: out/firmware/test_target
+""",
+    )
+    result = subprocess.run(
+        [str(SELECT_SCRIPT), "--repo-root", str(repo)],
+        input="1\n1\n",
+        check=False, text=True, capture_output=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "check-env - 检查 SDK 环境" in result.stderr
+    assert "install-env - 安装/修复 SDK 环境" in result.stderr
+
+
+def test_check_env_calls_sdk_script(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=0)
+
+    repo = tmp_path / "repo"
+    _prepare_repo_with_sdk_and_upstream(repo, sdk_repo)
+    sdk_root = tmp_path / "sdks"
+    submodule_path = repo / "third_party" / "sdk" / "fake-sdk"
+    _create_fake_sdk_repo_with_env(submodule_path, check_env_exit=0)
+
+    # Create fake upstream/luban-lite inside the sdk for the Luban Lite root resolution
+    upstream = submodule_path / "upstream" / "luban-lite"
+    upstream.mkdir(parents=True)
+    _write_file(upstream / "README.md", "fake luban lite\n")
+
+    result = subprocess.run(
+        [
+            str(CHECK_ENV_SCRIPT),
+            "--repo-root", str(repo),
+            "--target", "host_rtos_demo",
+        ],
+        check=False, text=True, capture_output=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "=== check_env ===" in result.stdout
+    assert f"sdk_root={submodule_path}" in result.stdout
+
+
+def test_install_env_calls_sdk_script(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=0)
+
+    repo = tmp_path / "repo"
+    _prepare_repo_with_sdk_and_upstream(repo, sdk_repo)
+    sdk_root = tmp_path / "sdks"
+    submodule_path = repo / "third_party" / "sdk" / "fake-sdk"
+    _create_fake_sdk_repo_with_env(submodule_path, check_env_exit=0)
+
+    # Create fake upstream/luban-lite
+    upstream = submodule_path / "upstream" / "luban-lite"
+    upstream.mkdir(parents=True)
+    _write_file(upstream / "README.md", "fake luban lite\n")
+
+    result = subprocess.run(
+        [
+            str(INSTALL_ENV_SCRIPT),
+            "--repo-root", str(repo),
+            "--target", "host_rtos_demo",
+            "--yes",
+        ],
+        check=False, text=True, capture_output=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "=== install_env ===" in result.stdout
+    assert f"sdk_root={submodule_path}" in result.stdout
+
+
+def test_build_firmware_fails_when_check_env_fails(tmp_path):
+    """When check_env returns non-zero, build-firmware should stop before exporting."""
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=10)
+
+    repo = tmp_path / "repo"
+    _prepare_repo_with_sdk_and_upstream(repo, sdk_repo)
+    sdk_root = tmp_path / "sdks"
+    submodule_path = repo / "third_party" / "sdk" / "fake-sdk"
+    _create_fake_sdk_repo_with_env(submodule_path, check_env_exit=10)
+
+    # Create fake upstream/luban-lite
+    upstream = submodule_path / "upstream" / "luban-lite"
+    upstream.mkdir(parents=True)
+    _write_file(upstream / "README.md", "fake luban lite\n")
+
+    result = subprocess.run(
+        [
+            str(CHECK_ENV_SCRIPT),
+            "--repo-root", str(repo),
+            "--target", "host_rtos_demo",
+        ],
+        check=False, text=True, capture_output=True,
+    )
+    assert result.returncode == 10, f"expect exit 10, got {result.returncode}: {result.stdout}"
+    assert "=== check_env ===" in result.stdout
