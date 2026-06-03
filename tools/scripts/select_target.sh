@@ -107,8 +107,8 @@ label_for() {
 
 list_values() {
     field=$1
-    index=$(field_index "$field")
-    awk -F '\t' -v index="$index" '{ print $index }' "$FILTERED_FILE" | sort -u
+    field_no=$(field_index "$field")
+    awk -F '\t' -v field_no="$field_no" '{ print $field_no }' "$FILTERED_FILE" | sort -u
 }
 
 value_count() {
@@ -157,9 +157,9 @@ choose_from_file() {
 apply_filter() {
     field=$1
     value=$2
-    index=$(field_index "$field")
+    field_no=$(field_index "$field")
     next_file=$WORK_DIR/filtered.next.tsv
-    awk -F '\t' -v OFS='\t' -v index="$index" -v value="$value" '$index == value { print }' \
+    awk -F '\t' -v OFS='\t' -v field_no="$field_no" -v value="$value" '$field_no == value { print }' \
         "$FILTERED_FILE" > "$next_file"
     mv "$next_file" "$FILTERED_FILE"
 }
