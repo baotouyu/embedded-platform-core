@@ -15,7 +15,7 @@ targets/<target>.yaml
 
 `export-target` 已经把 target 的 `platform`、`sdk` 和 `toolchain` 元数据写入 `manifest.json`。但 `build-firmware` 目前只把 `out/ep/<target>` 路径传给 SDK，并没有校验这个导出包是否真的匹配当前 target。
 
-后续适配多个芯片、多个板子后，最容易出错的是拿错导出包：例如当前构建 D121，但传入的是其他芯片或其他板级 target 的 `out/ep`。这种错误如果直接进入 SDK 构建，问题会变得难查。
+后续适配多个芯片、多个板子后，最容易出错的是拿错导出包：例如当前构建 D12x，但传入的是其他芯片或其他板级 target 的 `out/ep`。这种错误如果直接进入 SDK 构建，问题会变得难查。
 
 ## 目标
 
@@ -104,7 +104,7 @@ toolchain.source
 如果字段缺失或不一致，脚本用中文报错，例如：
 
 ```text
-EP 导出包校验失败：manifest platform.chip 为 d122，target 描述为 d121
+EP 导出包校验失败：manifest platform.chip 为 d122，target 描述为 d12x
 ```
 
 ## JSON 读取策略
@@ -137,8 +137,8 @@ EP 导出包校验失败：manifest platform.chip 为 d122，target 描述为 d1
 ```sh
 ./build.sh configure
 cmake --build build --target ep_app_core_export
-./build.sh export-target artinchip_d121_lubanlite_demo --clean
-./build.sh validate-ep-package artinchip_d121_lubanlite_demo
+./build.sh export-target artinchip_d12x_lubanlite_demo --clean
+./build.sh validate-ep-package artinchip_d12x_lubanlite_demo
 ./build.sh test
 ```
 

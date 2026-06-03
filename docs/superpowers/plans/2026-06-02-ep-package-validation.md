@@ -779,8 +779,8 @@ Run:
 ```bash
 ./build.sh configure
 cmake --build build --target ep_app_core_export
-./build.sh export-target artinchip_d121_lubanlite_demo --clean
-./build.sh validate-ep-package artinchip_d121_lubanlite_demo
+./build.sh export-target artinchip_d12x_lubanlite_demo --clean
+./build.sh validate-ep-package artinchip_d12x_lubanlite_demo
 ```
 
 Expected:

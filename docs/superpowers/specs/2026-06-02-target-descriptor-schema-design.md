@@ -23,7 +23,7 @@ target 描述文件
 - 明确平台、厂商、SDK、芯片、板子和输出产物之间的关系。
 - 让主工程构建脚本只读取稳定字段，不散落芯片名判断。
 - 支持 SDK 仓库放在主工程外部，由 `sdk.name`、`sdk.repo` 和 `sdk.ref` 管理来源。
-- 为后续真实 target，例如 `artinchip_d121_lubanlite_demo`，预留字段。
+- 为后续真实 target，例如 `artinchip_d12x_lubanlite_demo`，预留字段。
 
 ## 不做什么
 
@@ -48,13 +48,13 @@ targets/<target>.yaml
 第一版规范使用以下结构：
 
 ```yaml
-target: artinchip_d121_lubanlite_demo
+target: artinchip_d12x_lubanlite_demo
 
 platform:
   family: rtos
   vendor: artinchip
   sdk_family: luban-lite
-  chip: d121
+  chip: d12x
   board: demo
   kernel: rt-thread
 
@@ -67,11 +67,11 @@ toolchain:
   source: sdk
 
 sdk_config:
-  defconfig: d121_demo_rt-thread_ep_app_defconfig
+  defconfig: d12x_demo_rt-thread_ep_app_defconfig
 
 output:
-  ep_package: out/ep/artinchip_d121_lubanlite_demo
-  firmware: out/firmware/artinchip_d121_lubanlite_demo
+  ep_package: out/ep/artinchip_d12x_lubanlite_demo
+  firmware: out/firmware/artinchip_d12x_lubanlite_demo
 ```
 
 现有平铺字段：
@@ -95,7 +95,7 @@ kernel:
 | `platform.family` | 是 | 平台大类，例如 `host`、`linux`、`rtos`。 |
 | `platform.vendor` | 是 | 厂商或平台来源，例如 `host`、`artinchip`、`allwinner`。 |
 | `platform.sdk_family` | 是 | SDK 家族，例如 `demo`、`luban-lite`、`tina`。 |
-| `platform.chip` | 是 | 芯片或芯片系列，例如 `host`、`d121`、`d12x`。 |
+| `platform.chip` | 是 | 芯片或芯片系列，例如 `host`、`d12x`、`d13x`。 |
 | `platform.board` | 是 | 板子或产品硬件版本，例如 `demo`、`demo68-nor`、`product-v1`。 |
 | `platform.kernel` | 是 | 内核或运行环境，例如 `none`、`linux`、`rt-thread`。 |
 | `sdk.name` | RTOS 必填 | 外部 SDK 仓库本地目录名。 |
@@ -117,7 +117,7 @@ target 名建议使用：
 示例：
 
 ```text
-artinchip_d121_lubanlite_demo
+artinchip_d12x_lubanlite_demo
 artinchip_d12x_lubanlite_demo68_nor
 allwinner_t113_linux_product_v1
 host_rtos_demo
@@ -188,7 +188,7 @@ scripts/build_firmware.sh --target <target> --ep-package <path> --out <path>
 
 第二阶段增加真实占位 target：
 
-1. 新增 `targets/artinchip_d121_lubanlite_demo.yaml`。
+1. 新增 `targets/artinchip_d12x_lubanlite_demo.yaml`。
 2. 先指向 `sdk-artinchip-luban-lite`。
 3. 暂时仍使用 SDK stub 构建入口。
 4. 验证 `prepare-sdk` 和 `build-firmware` 可以按新 target 走完整链路。
@@ -218,7 +218,7 @@ scripts/build_firmware.sh --target <target> --ep-package <path> --out <path>
 
 target 描述规范稳定后，下一步可以做：
 
-- 新增 `artinchip_d121_lubanlite_demo` 占位 target。
+- 新增 `artinchip_d12x_lubanlite_demo` 占位 target。
 - 给 `targets/` 增加统一校验脚本，例如 `./build.sh validate-targets`。
 - 把 target 信息写入 `out/ep/<target>/manifest.json`。
 - 让 SDK 构建输出 `build_manifest.txt` 或 `build_manifest.json` 时记录 target、SDK ref、EP commit 和构建模式。

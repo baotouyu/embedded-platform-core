@@ -49,18 +49,18 @@ def test_select_target_filters_targets_by_hierarchical_choices(tmp_path):
     repo = tmp_path / "repo"
     _write_target(
         repo,
-        "artinchip_d121_demo68",
+        "artinchip_d12x_demo68",
         vendor="artinchip",
         sdk_family="luban-lite",
-        chip="d121",
+        chip="d12x",
         board="demo68-nor",
     )
     _write_target(
         repo,
-        "artinchip_d121_custom",
+        "artinchip_d12x_custom",
         vendor="artinchip",
         sdk_family="luban-lite",
-        chip="d121",
+        chip="d12x",
         board="custom-board",
     )
     _write_target(
@@ -81,7 +81,7 @@ def test_select_target_filters_targets_by_hierarchical_choices(tmp_path):
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout == "target=artinchip_d121_demo68\naction=show-target\n"
+    assert result.stdout == "target=artinchip_d12x_demo68\naction=show-target\n"
     assert "已选平台类型：rtos" not in result.stderr
     assert "选择厂商" in result.stderr
     assert "选择板级方案" in result.stderr
@@ -113,5 +113,5 @@ def test_build_script_interactive_can_preview_selected_target():
     assert "3) export-target - 导出EP静态库包" in result.stderr
     assert "4) build-firmware - 编译固件" in result.stderr
     assert "5) full - 导出EP包、准备SDK并编译固件" in result.stderr
-    assert "已选择 target：artinchip_d121_lubanlite_demo68_nor" in result.stdout
+    assert "已选择 target：artinchip_d12x_lubanlite_demo68_nor" in result.stdout
     assert "已选择动作：show-target" in result.stdout
