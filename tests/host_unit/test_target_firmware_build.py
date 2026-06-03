@@ -27,6 +27,53 @@ def _write_file(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def _write_fake_sdk_toolchain(path: Path) -> None:
+    _write_file(
+        path / "upstream" / "luban-lite" / "toolchain" / "bin" / "riscv64-unknown-elf-gcc",
+        """#!/bin/sh
+set -eu
+
+out=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -o)
+            out=$2
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+[ -n "$out" ] || exit 2
+printf 'fake riscv object\\n' > "$out"
+""",
+    )
+    (path / "upstream" / "luban-lite" / "toolchain" / "bin" / "riscv64-unknown-elf-gcc").chmod(0o755)
+    _write_file(
+        path / "upstream" / "luban-lite" / "toolchain" / "bin" / "riscv64-unknown-elf-ar",
+        """#!/bin/sh
+set -eu
+
+archive=
+for arg in "$@"; do
+    case "$arg" in
+        *.a)
+            archive=$arg
+            break
+            ;;
+    esac
+done
+
+[ -n "$archive" ] || exit 2
+mkdir -p "$(dirname "$archive")"
+printf 'fake riscv archive\\n' > "$archive"
+""",
+    )
+    (path / "upstream" / "luban-lite" / "toolchain" / "bin" / "riscv64-unknown-elf-ar").chmod(0o755)
+
+
 def _prepare_minimal_repo(root: Path, sdk_repo: Path, with_firmware_output: bool = True) -> None:
     firmware_line = "  firmware: out/firmware/host_rtos_demo\n" if with_firmware_output else ""
     _write_file(
@@ -54,6 +101,23 @@ output:
 {firmware_line}""",
     )
     _write_file(root / "build" / "libep_app_core_export.a", "fake archive\n")
+    for source in [
+        "core/src/ep_framework.c",
+        "app/main.c",
+        "components/config/src/ep_config.c",
+        "components/file/src/ep_file.c",
+        "components/event/src/ep_event.c",
+        "components/timer/src/ep_timer.c",
+        "components/log/src/ep_log.c",
+        "platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c",
+        "platforms/rtos/demo_family/startup/app_start.c",
+        "platforms/rtos/demo_family/hal_port/ep_rtos_hal_stub.c",
+        "platforms/rtos/demo_family/component_port/ep_rtos_component_stub.c",
+        "third_party/external/EasyLogger/easylogger/src/elog.c",
+        "third_party/external/EasyLogger/easylogger/src/elog_utils.c",
+        "third_party/external/EasyLogger/easylogger/port/elog_port.c",
+    ]:
+        _write_file(root / source, f"/* {source} */\n")
     for header in [
         "core/include/ep_framework.h",
         "app/include/app_main.h",
@@ -67,6 +131,7 @@ output:
         "osal/include/ep_osal_time.h",
         "hal/include/ep_hal_gpio.h",
         "platforms/include/ep_platform_capability.h",
+        "third_party/external/EasyLogger/easylogger/inc/elog.h",
     ]:
         _write_file(root / header, f"/* {header} */\n")
 
@@ -76,6 +141,7 @@ output:
         "prepare_target_sdk.sh",
         "check_target_env.sh",
         "export_target.sh",
+        "export_sdk_ep_package.sh",
         "export_ep_package.sh",
         "validate_ep_package.sh",
     ]:
@@ -153,6 +219,7 @@ printf 'sdk_root=%s\\n' "$SDK_ROOT"
 """,
     )
     (path / "scripts" / "check_env.sh").chmod(0o755)
+    _write_fake_sdk_toolchain(path)
     if with_build_entry:
         build_script = path / "scripts" / "build_firmware.sh"
         _write_file(
@@ -292,6 +359,9 @@ def test_build_target_firmware_runs_ep_export_and_sdk_build(tmp_path):
     ep_package = repo / "out" / "ep" / "host_rtos_demo"
     firmware = repo / "out" / "firmware" / "host_rtos_demo"
     assert (ep_package / "lib" / "libep_app_core.a").is_file()
+    assert (ep_package / "lib" / "libep_app_core.a").read_text(
+        encoding="utf-8"
+    ) == "fake riscv archive\n"
     assert (firmware / "firmware.bin").read_text(encoding="utf-8") == "fake firmware\n"
 
     args_text = (firmware / "build_args.txt").read_text(encoding="utf-8")
@@ -303,6 +373,16 @@ def test_build_target_firmware_runs_ep_export_and_sdk_build(tmp_path):
     assert "SDK 准备完成" in result.stdout
     assert "EP 导出包校验通过" in result.stdout
     assert "固件已生成" in result.stdout
+
+
+def test_sdk_ep_export_uses_rtthread_osal_and_excludes_lvgl_ui():
+    script = (REPO_ROOT / "tools" / "scripts" / "export_sdk_ep_package.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert "platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c" in script
+    assert "components/ui/src/ep_ui.c" not in script
+    assert "ep_thirdparty_lvgl" not in script
 
 
 def test_build_target_firmware_allows_relative_sibling_sdk_root(tmp_path):
@@ -388,13 +468,14 @@ def test_build_target_firmware_fails_before_sdk_build_when_ep_package_mismatches
     _prepare_minimal_repo(repo, sdk_repo)
     sdk_root = tmp_path / "sdks"
 
-    export_script = repo / "tools" / "scripts" / "export_target.sh"
+    export_script = repo / "tools" / "scripts" / "export_sdk_ep_package.sh"
     export_script.write_text(
         """#!/bin/sh
 set -eu
 
 REPO_ROOT=
 TARGET=
+OUTPUT_DIR=
 CLEAN=0
 
 while [ "$#" -gt 0 ]; do
@@ -405,6 +486,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         --target)
             TARGET=$2
+            shift 2
+            ;;
+        --output-dir)
+            OUTPUT_DIR=$2
             shift 2
             ;;
         --clean)
@@ -419,8 +504,14 @@ done
 
 [ -n "$REPO_ROOT" ] || exit 2
 [ -n "$TARGET" ] || exit 2
+[ -n "$OUTPUT_DIR" ] || exit 2
 
-PACKAGE_ROOT="$REPO_ROOT/out/ep/$TARGET"
+case "$OUTPUT_DIR" in
+    /*) ;;
+    *) OUTPUT_DIR="$REPO_ROOT/$OUTPUT_DIR" ;;
+esac
+
+PACKAGE_ROOT="$OUTPUT_DIR/$TARGET"
 if [ "$CLEAN" -eq 1 ]; then
     rm -rf "$PACKAGE_ROOT"
 fi
@@ -651,6 +742,7 @@ def _create_fake_sdk_repo_with_env(path: Path, check_env_exit: int = 0) -> None:
         "printf 'fake firmware\\n' > \"$OUT/firmware.bin\"\n",
     )
     (path / "scripts" / "build_firmware.sh").chmod(0o755)
+    _write_fake_sdk_toolchain(path)
     _run_git(["add", "."], path)
     _run_git(["commit", "-m", "init fake sdk"], path)
 
@@ -781,7 +873,7 @@ def test_check_env_calls_sdk_script(tmp_path):
 
     # Create fake upstream/luban-lite inside the sdk for the Luban Lite root resolution
     upstream = submodule_path / "upstream" / "luban-lite"
-    upstream.mkdir(parents=True)
+    upstream.mkdir(parents=True, exist_ok=True)
     _write_file(upstream / "README.md", "fake luban lite\n")
 
     result = subprocess.run(
@@ -809,7 +901,7 @@ def test_install_env_calls_sdk_script(tmp_path):
 
     # Create fake upstream/luban-lite
     upstream = submodule_path / "upstream" / "luban-lite"
-    upstream.mkdir(parents=True)
+    upstream.mkdir(parents=True, exist_ok=True)
     _write_file(upstream / "README.md", "fake luban lite\n")
 
     result = subprocess.run(
@@ -839,7 +931,7 @@ def test_build_firmware_fails_when_check_env_fails(tmp_path):
 
     # Create fake upstream/luban-lite
     upstream = submodule_path / "upstream" / "luban-lite"
-    upstream.mkdir(parents=True)
+    upstream.mkdir(parents=True, exist_ok=True)
     _write_file(upstream / "README.md", "fake luban lite\n")
 
     result = subprocess.run(

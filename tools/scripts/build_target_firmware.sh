@@ -72,10 +72,12 @@ TARGET_FILE=$REPO_ROOT/targets/$TARGET.yaml
 td_validate_declared_target "$TARGET_FILE" "$TARGET"
 
 sdk_name=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "name")")
+toolchain_source=$(td_trim "$(td_read_section_value "$TARGET_FILE" "toolchain" "source")")
 ep_package=$(td_trim "$(td_read_section_value "$TARGET_FILE" "output" "ep_package")")
 firmware_output=$(td_trim "$(td_read_section_value "$TARGET_FILE" "output" "firmware")")
 
 td_require_value "$sdk_name" "target 描述缺少 sdk.name：$TARGET_FILE"
+td_require_value "$toolchain_source" "target 描述缺少 toolchain.source：$TARGET_FILE"
 td_require_value "$ep_package" "target 描述缺少 output.ep_package：$TARGET_FILE"
 td_require_value "$firmware_output" "target 描述缺少 output.firmware：$TARGET_FILE"
 
@@ -100,10 +102,21 @@ SDK_PREPARE_SCRIPT=$SDK_DIR/scripts/prepare.sh
     "$SDK_PREPARE_SCRIPT" --target "$TARGET"
 )
 
-if [ "$CLEAN" -eq 1 ]; then
-    "$REPO_ROOT/tools/scripts/export_target.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --clean
+if [ "$toolchain_source" = "sdk" ]; then
+    ep_output_parent=${EP_PACKAGE_DIR%/*}
+    SDK_EXPORT_SCRIPT=$REPO_ROOT/tools/scripts/export_sdk_ep_package.sh
+    [ -x "$SDK_EXPORT_SCRIPT" ] || die "主工程缺少 SDK 目标导出入口：$SDK_EXPORT_SCRIPT"
+    if [ "$CLEAN" -eq 1 ]; then
+        "$SDK_EXPORT_SCRIPT" --repo-root "$REPO_ROOT" --target "$TARGET" --target-file "$TARGET_FILE" --sdk-dir "$SDK_DIR" --output-dir "$ep_output_parent" --clean
+    else
+        "$SDK_EXPORT_SCRIPT" --repo-root "$REPO_ROOT" --target "$TARGET" --target-file "$TARGET_FILE" --sdk-dir "$SDK_DIR" --output-dir "$ep_output_parent"
+    fi
 else
-    "$REPO_ROOT/tools/scripts/export_target.sh" --repo-root "$REPO_ROOT" --target "$TARGET"
+    if [ "$CLEAN" -eq 1 ]; then
+        "$REPO_ROOT/tools/scripts/export_target.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --clean
+    else
+        "$REPO_ROOT/tools/scripts/export_target.sh" --repo-root "$REPO_ROOT" --target "$TARGET"
+    fi
 fi
 
 "$REPO_ROOT/tools/scripts/validate_ep_package.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --ep-package "$EP_PACKAGE_DIR"

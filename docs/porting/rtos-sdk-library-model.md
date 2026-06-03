@@ -521,12 +521,13 @@ out/firmware/host_rtos_demo/
 
 当前 `targets/` 下四个 ArtInChip D12x target（`artinchip_d12x_lubanlite_demo68_*` 和 `artinchip_d12x_lubanlite_hmi_nor`，属于 D12x 系列）已经完成以下能力：
 
-- **EP 静态库包导出**：`export-target` 能从主工程编译产出 `libep_app_core_export.a` 并写入 `out/ep/<target>/`
-- **Luban-Lite ep_app 接入包生成**：SDK adapter 的 `scripts/build_firmware.sh` 能为每个 target 生成对应的 Luban-Lite 应用目录结构（`application/rt-thread/ep_app/`），包含 `main.c` 和 `SConscript`
+- **SDK 工具链 EP 静态库包导出**：`build-firmware` 遇到 `toolchain.source=sdk` 时，会调用 `tools/scripts/export_sdk_ep_package.sh`，使用 Luban-Lite SDK 自带 RISC-V 工具链和 `rtconfig.py` 编译主工程代码，输出 `out/ep/<target>/lib/libep_app_core.a`
+- **Luban-Lite ep_app 接入包生成**：SDK adapter 的 `scripts/build_firmware.sh` 能为每个 target 生成对应的 Luban-Lite 应用目录结构（`application/rt-thread/ep_app/`），包含 `ep_app_main.c`、`SConscript`、头文件和静态库
+- **Luban-Lite 真实构建**：SDK adapter 会执行 `source tools/onestep.sh`、`lunch <defconfig>` 和 `_make_boot_and_app`，链接 `libep_app_core.a` 后输出 `d12x.elf`、`d12x.bin`、`d12x.map`
 - **EP 导出包校验**：`validate-ep-package` 会在 `build-firmware` 流程中自动执行，校验 `manifest.json` 的 target 元数据与 `targets/<target>.yaml` 一致
 - **SDK adapter 一板一 env**：每个 target 对应 `sdk-artinchip-luban-lite` 中的一个独立 env，env 名与 target 名对应，包含独立的 board 配置和 defconfig
 
-当前 `host_rtos_demo` 的 `build_manifest.txt` 中记录 `mode=stub`，D12x/Luban-Lite target 则记录 `mode=integration-skeleton`。两者都表示 EP 静态库导出和 SDK adapter 的目录结构已经打通，已生成 ep_app 接入包，但尚未调用真实 Luban-Lite scons 编译、链接和打包流程。后续接真实芯片时，优先在 SDK 仓库内部替换 `scripts/build_firmware.sh` 的实现，主工程命令和参数保持不变。
+当前 `host_rtos_demo` 的 `build_manifest.txt` 中记录 `mode=stub`。D12x/Luban-Lite target 记录 `mode=real-sdk-build`，表示已经调用真实 Luban-Lite scons 编译、链接和打包流程。完整日志写入 `out/firmware/<target>/build.log`，固件产物收集到 `out/firmware/<target>/`。
 
 ## 干净克隆验证
 
@@ -543,7 +544,7 @@ git submodule status
 ./build.sh build-firmware artinchip_d12x_lubanlite_demo68_nor --clean
 ```
 
-`build-firmware` 会消费 `build/libep_app_core_export.a`，所以干净克隆后必须先执行 `configure` 和 `build`。如果只运行 `validate-targets`，不会生成静态库产物。
+对 `toolchain.source=host` 的 target，`build-firmware` 仍会消费 `build/libep_app_core_export.a`，所以干净克隆后必须先执行 `configure` 和 `build`。对 D12x/Luban-Lite 这类 `toolchain.source=sdk` target，`build-firmware` 会直接使用 SDK 工具链重新编译 EP 静态库，避免把主机 x86 archive 链进 RISC-V 固件。
 
 ## Luban-Lite 接入方式
 
@@ -562,11 +563,13 @@ git submodule status
 
 ```text
 application/rt-thread/ep_app/
-  main.c
+  src/ep_app_main.c
   SConscript
+  include/
+  lib/libep_app_core.a
 ```
 
-`main.c` 调用主工程入口：
+`src/ep_app_main.c` 调用主工程入口：
 
 ```c
 #include "ep_framework.h"
@@ -580,8 +583,9 @@ int main(void)
 ### 当前接入范围
 
 - 只接入 RT-Thread helloworld 配置，不接入 baremetal_bootloader
-- defconfig 从官方 `helloworld` defconfig 派生，应用入口切换为 `ep_app`
-- SDK adapter 的 `scripts/build_firmware.sh` 负责根据 target 名选择对应 env、生成 Luban-Lite 应用目录结构
+- defconfig 从官方 `helloworld` defconfig 派生，构建期间临时桥接 `application/rt-thread/helloworld/main.c` 到 `ep_lubanlite_app_main()`
+- SDK adapter 的 `scripts/build_firmware.sh` 会临时让 `helloworld/SConscript` 加载同级外的 `../ep_app/SConscript`，按 Luban-Lite 的 `LIBS`/`LIBPATH` 模式链接 `libep_app_core.a`
+- 构建结束后自动恢复原厂 `main.c`、`SConscript` 和打包阶段改动的 `bootloader.bin`，同时把 `application/rt-thread/ep_app/` 加入本地 Git ignore
 
 ### 后续扩展
 
@@ -600,14 +604,14 @@ int main(void)
 | EP 导出包校验（`validate-ep-package`） | 已完成 |
 | SDK adapter 一板一 env 目录结构 | 已完成 |
 | `build-firmware` stub 模式（host_rtos_demo） | 已完成 |
-| `build-firmware` integration-skeleton 模式（D12x/Luban-Lite，已生成 ep_app 接入包） | 已完成 |
-| Luban-Lite 真实 scons 编译固件 | 尚未接入 |
-| toolchain 下载和 SDK 依赖初始化 | 尚未接入 |
+| `build-firmware` real-sdk-build 模式（D12x/Luban-Lite） | 已完成 |
+| Luban-Lite 真实 scons 编译固件 | 已完成 |
+| toolchain 下载和 SDK 依赖初始化 | 已完成 |
 | 真实板级烧录和冒烟测试 | 尚未接入 |
 
 ## 下一步设计
 
-下一阶段将 `build-firmware` 从 stub 模式升级为真实 Luban-Lite 编译。以下是三个待实现的环节：
+下一阶段不再是接入真实编译，而是把真实板级验证补齐。以下是后续要继续完善的环节：
 
 ### inspect-sdk
 
@@ -630,24 +634,12 @@ int main(void)
 
 设计目标：新机器上执行一次 `bootstrap-sdk` 后，`build-firmware` 可以直接运行。
 
-### build-firmware（真实模式）
-
-替换当前的 stub `scripts/build_firmware.sh`，接入真实 Luban-Lite scons 编译：
-
-- 将主工程导出的 `libep_app_core_export.a` 和头文件链接到 Luban-Lite ep_app 目录
-- 调用 `scons --apply-defconfig=<defconfig>` 配置
-- 调用 `scons` 编译生成 `.elf`、`.bin`、`.map`
-- 将产物收集到 `out/firmware/<target>/`
-- 生成 `build_manifest.json`（mode=real，包含编译时间、工具链版本、scons 日志摘要）
-
-设计目标：主工程命令不变（`./build.sh build-firmware <target> --clean`），内部链路从 stub 切换为真实编译。
-
 ### 推荐推进顺序
 
-1. 先在 SDK 仓库实现 `inspect-sdk` 和 `bootstrap-sdk`
-2. 在 SDK 仓库实现 `scripts/build_firmware.sh` 的真实模式
-3. 主工程侧 `build-firmware` 调用链路无需修改
-4. 第一个真实芯片只选一个 target 跑通（建议 `demo68_nor`），不同时适配所有芯片
+1. 先用 `demo68_nor` 固件做真实板级启动验证
+2. 根据串口日志确认 `ep_framework_start()`、事件线程和定时器线程是否按预期运行
+3. 再补烧录脚本和冒烟测试入口
+4. 最后扩展到 mmc、nand、hmi_nor 等其他 D12x target
 
 ## 禁止事项
 
