@@ -9,10 +9,11 @@ BUILD_DIR=$REPO_ROOT/build
 print_help() {
     cat <<EOF
 用法:
-  ./build.sh <命令> [参数]
+  ./build.sh [命令] [参数]
 
 命令:
   help          显示帮助
+  interactive   交互选择 target 和动作
   configure    生成 CMake 构建目录
   build        编译当前构建目录
   test         运行 host 单元测试和 API 契约测试
@@ -27,7 +28,9 @@ print_help() {
   all          依次执行 configure、build、test、package-host --clean
 
 示例:
+  ./build.sh
   ./build.sh help
+  ./build.sh interactive
   ./build.sh configure
   ./build.sh build
   ./build.sh test
@@ -108,12 +111,48 @@ run_validate_ep_package() {
     "$REPO_ROOT/tools/scripts/validate_ep_package.sh" --target "$target" "$@"
 }
 
+run_interactive() {
+    selection=$("$REPO_ROOT/tools/scripts/select_target.sh" --verbose)
+    target=$(printf '%s\n' "$selection" | sed -n 's/^target=//p')
+    action=$(printf '%s\n' "$selection" | sed -n 's/^action=//p')
+
+    if [ -z "$target" ] || [ -z "$action" ]; then
+        printf '交互选择结果无效\n' >&2
+        exit 1
+    fi
+
+    case "$action" in
+        show-target)
+            printf '已选择 target：%s\n' "$target"
+            printf '已选择动作：%s\n' "$action"
+            ;;
+        prepare-sdk)
+            run_prepare_sdk "$target"
+            ;;
+        export-target)
+            run_export_target "$target"
+            ;;
+        build-firmware)
+            run_build_firmware "$target"
+            ;;
+        full)
+            run_export_target "$target"
+            run_prepare_sdk "$target"
+            run_build_firmware "$target"
+            ;;
+        *)
+            printf '未知交互动作：%s\n' "$action" >&2
+            exit 2
+            ;;
+    esac
+}
+
 run_clean() {
     rm -rf "$BUILD_DIR" "$REPO_ROOT/out/packages/host_macos"
     printf '%s\n' "已清理 build 和 out/packages/host_macos"
 }
 
-command=${1:-help}
+command=${1:-interactive}
 if [ "$#" -gt 0 ]; then
     shift
 fi
@@ -121,6 +160,9 @@ fi
 case "$command" in
     help|-h|--help)
         print_help
+        ;;
+    interactive)
+        run_interactive
         ;;
     configure)
         run_configure

@@ -468,7 +468,7 @@ git submodule status
 ./build.sh validate-targets
 ./build.sh configure
 ./build.sh build
-./build.sh build-firmware artinchip_d121_lubanlite_demo --clean
+./build.sh build-firmware artinchip_d121_lubanlite_demo68_nor --clean
 ```
 
 `build-firmware` 会消费 `build/libep_app_core_export.a`，所以干净克隆后必须先执行 `configure` 和 `build`。如果只运行 `validate-targets`，不会生成静态库产物。
