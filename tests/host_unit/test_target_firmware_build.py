@@ -74,6 +74,7 @@ output:
         "target_descriptor.sh",
         "target_sdk_resolver.sh",
         "prepare_target_sdk.sh",
+        "check_target_env.sh",
         "export_target.sh",
         "export_ep_package.sh",
         "validate_ep_package.sh",
@@ -119,6 +120,39 @@ printf 'prepared=%s\\n' "$TARGET" > prepared.txt
 """,
     )
     (path / "scripts" / "prepare.sh").chmod(0o755)
+    _write_file(
+        path / "scripts" / "check_env.sh",
+        """#!/bin/sh
+set -eu
+
+TARGET=
+SDK_ROOT=
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --target)
+            TARGET=$2
+            shift 2
+            ;;
+        --sdk-root)
+            SDK_ROOT=$2
+            shift 2
+            ;;
+        *)
+            printf '未知参数：%s\\n' "$1" >&2
+            exit 2
+            ;;
+    esac
+done
+
+[ -n "$TARGET" ] || exit 2
+[ -n "$SDK_ROOT" ] || exit 2
+printf 'SDK 环境检查通过\\n'
+printf 'target=%s\\n' "$TARGET"
+printf 'sdk_root=%s\\n' "$SDK_ROOT"
+""",
+    )
+    (path / "scripts" / "check_env.sh").chmod(0o755)
     if with_build_entry:
         build_script = path / "scripts" / "build_firmware.sh"
         _write_file(
@@ -621,6 +655,16 @@ def _create_fake_sdk_repo_with_env(path: Path, check_env_exit: int = 0) -> None:
     _run_git(["commit", "-m", "init fake sdk"], path)
 
 
+def _copy_build_script(root: Path) -> None:
+    build_copy = root / "build.sh"
+    build_copy.write_text(BUILD_SCRIPT.read_text(encoding="utf-8"), encoding="utf-8")
+    build_copy.chmod(0o755)
+    firmware_script_copy = root / "tools" / "scripts" / "build_target_firmware.sh"
+    firmware_script_copy.parent.mkdir(parents=True, exist_ok=True)
+    firmware_script_copy.write_text(BUILD_FIRMWARE_SCRIPT.read_text(encoding="utf-8"), encoding="utf-8")
+    firmware_script_copy.chmod(0o755)
+
+
 def _prepare_repo_with_sdk_and_upstream(
     root: Path, sdk_repo: Path, *, target_name: str = "host_rtos_demo"
 ) -> Path:
@@ -722,6 +766,7 @@ output:
     assert result.returncode == 0, result.stderr
     assert "check-env - 检查 SDK 环境" in result.stderr
     assert "install-env - 安装/修复 SDK 环境" in result.stderr
+    assert "build-firmware - 准备SDK、检查环境并编译固件" in result.stderr
 
 
 def test_check_env_calls_sdk_script(tmp_path):
@@ -729,7 +774,7 @@ def test_check_env_calls_sdk_script(tmp_path):
     _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=0)
 
     repo = tmp_path / "repo"
-    _prepare_repo_with_sdk_and_upstream(repo, sdk_repo)
+    _prepare_minimal_repo(repo, sdk_repo)
     sdk_root = tmp_path / "sdks"
     submodule_path = repo / "third_party" / "sdk" / "fake-sdk"
     _create_fake_sdk_repo_with_env(submodule_path, check_env_exit=0)
@@ -807,3 +852,28 @@ def test_build_firmware_fails_when_check_env_fails(tmp_path):
     )
     assert result.returncode == 10, f"expect exit 10, got {result.returncode}: {result.stdout}"
     assert "=== check_env ===" in result.stdout
+
+
+def test_build_script_build_firmware_prepares_sdk_before_check_env(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=0)
+
+    repo = tmp_path / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+    _copy_build_script(repo)
+    sdk_root = tmp_path / "sdks"
+
+    result = subprocess.run(
+        [str(repo / "build.sh"), "build-firmware", "host_rtos_demo", "--clean"],
+        check=False,
+        text=True,
+        capture_output=True,
+        cwd=repo,
+        env={**os.environ, "EP_SDK_ROOT": str(sdk_root)},
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (sdk_root / "fake-sdk" / ".git").is_dir()
+    assert "SDK 已准备" in result.stdout
+    assert "=== check_env ===" in result.stdout
+    assert (repo / "out" / "firmware" / "host_rtos_demo" / "firmware.bin").is_file()

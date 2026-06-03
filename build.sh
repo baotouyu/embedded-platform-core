@@ -98,14 +98,6 @@ run_build_firmware() {
         exit 2
     fi
     shift
-    # Check environment first
-    check_result=0
-    "$REPO_ROOT/tools/scripts/check_target_env.sh" --target "$target" || check_result=$?
-    if [ "$check_result" -ne 0 ]; then
-        printf '\n环境检查失败（exit=%s）。请先运行 install-env 安装依赖。\n' "$check_result" >&2
-        printf '  ./build.sh install-env %s\n' "$target" >&2
-        exit "$check_result"
-    fi
     "$REPO_ROOT/tools/scripts/build_target_firmware.sh" --target "$target" "$@"
 }
 
@@ -174,9 +166,9 @@ run_interactive() {
             run_install_env "$target"
             ;;
         full)
+            run_prepare_sdk "$target"
             run_check_env "$target"
             run_export_target "$target"
-            run_prepare_sdk "$target"
             run_build_firmware "$target"
             ;;
         *)

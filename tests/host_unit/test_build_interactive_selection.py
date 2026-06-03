@@ -91,8 +91,8 @@ def test_select_target_filters_targets_by_hierarchical_choices(tmp_path):
     assert "3) install-env - 安装/修复 SDK 环境" in result.stderr
     assert "4) prepare-sdk - 准备外部SDK" in result.stderr
     assert "5) export-target - 导出EP静态库包" in result.stderr
-    assert "6) build-firmware - 编译固件" in result.stderr
-    assert "7) full - 导出EP包、准备SDK并编译固件" in result.stderr
+    assert "6) build-firmware - 准备SDK、检查环境并编译固件" in result.stderr
+    assert "7) full - 准备SDK、检查环境、导出EP包并编译固件" in result.stderr
 
 
 def test_build_script_interactive_can_preview_selected_target():
@@ -118,7 +118,7 @@ def test_build_script_interactive_can_preview_selected_target():
     assert "3) install-env - 安装/修复 SDK 环境" in result.stderr
     assert "4) prepare-sdk - 准备外部SDK" in result.stderr
     assert "5) export-target - 导出EP静态库包" in result.stderr
-    assert "6) build-firmware - 编译固件" in result.stderr
-    assert "7) full - 导出EP包、准备SDK并编译固件" in result.stderr
+    assert "6) build-firmware - 准备SDK、检查环境并编译固件" in result.stderr
+    assert "7) full - 准备SDK、检查环境、导出EP包并编译固件" in result.stderr
     assert "已选择 target：artinchip_d12x_lubanlite_demo68_nor" in result.stdout
     assert "已选择动作：show-target" in result.stdout
