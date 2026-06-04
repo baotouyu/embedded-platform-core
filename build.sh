@@ -25,6 +25,7 @@ print_help() {
   check-env   检查 SDK 环境是否就绪
   install-env 安装/修复 SDK 环境依赖
   validate-targets 校验 targets/*.yaml 描述文件
+  sync-sdk-pins  同步 SDK submodule 指针和 targets/*.yaml 中的 sdk.ref
   validate-ep-package 校验 EP 导出包 manifest 是否匹配 target
   clean        清理 build 和 host/macOS 发布包
   all          依次执行 configure、build、test、package-host --clean
@@ -123,6 +124,10 @@ run_install_env() {
 
 run_validate_targets() {
     "$REPO_ROOT/tools/scripts/validate_targets.sh" "$@"
+}
+
+run_sync_sdk_pins() {
+    "$REPO_ROOT/tools/scripts/sync_sdk_pins.sh" "$@"
 }
 
 run_validate_ep_package() {
@@ -227,6 +232,9 @@ case "$command" in
         ;;
     validate-targets)
         run_validate_targets "$@"
+        ;;
+    sync-sdk-pins)
+        run_sync_sdk_pins "$@"
         ;;
     validate-ep-package)
         run_validate_ep_package "$@"
