@@ -102,6 +102,7 @@ def test_artinchip_d12x_lubanlite_targets_cover_rt_thread_board_defconfigs():
         "demo68-mmc": "d12x_demo68-mmc_rt-thread_helloworld_defconfig",
         "demo68-nand": "d12x_demo68-nand_rt-thread_helloworld_defconfig",
         "demo68-nor": "d12x_demo68-nor_rt-thread_helloworld_defconfig",
+        "KI-141103-480p": "d12x_KI-141103-480p_rt-thread_helloworld_defconfig",
         "hmi-nor": "d12x_hmi-nor_rt-thread_helloworld_defconfig",
     }
     assert all("baremetal_bootloader" not in defconfig for defconfig in actual.values())

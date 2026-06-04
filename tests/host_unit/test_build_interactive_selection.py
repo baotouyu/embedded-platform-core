@@ -98,7 +98,7 @@ def test_select_target_filters_targets_by_hierarchical_choices(tmp_path):
 def test_build_script_interactive_can_preview_selected_target():
     result = subprocess.run(
         [str(BUILD_SCRIPT), "interactive"],
-        input="1\n3\n1\n",
+        input="1\n4\n1\n",
         check=False,
         text=True,
         capture_output=True,
@@ -108,10 +108,11 @@ def test_build_script_interactive_can_preview_selected_target():
     assert "已选平台类型：rtos" in result.stderr
     assert "已选SDK：luban-lite" in result.stderr
     assert "选择板级方案" in result.stderr
-    assert "1) demo68-mmc" in result.stderr
-    assert "2) demo68-nand" in result.stderr
-    assert "3) demo68-nor" in result.stderr
-    assert "4) hmi-nor" in result.stderr
+    assert "1) KI-141103-480p" in result.stderr
+    assert "2) demo68-mmc" in result.stderr
+    assert "3) demo68-nand" in result.stderr
+    assert "4) demo68-nor" in result.stderr
+    assert "5) hmi-nor" in result.stderr
     assert "已选板级方案：demo68-nor" in result.stderr
     assert "1) show-target - 只显示选择结果" in result.stderr
     assert "2) check-env - 检查 SDK 环境" in result.stderr

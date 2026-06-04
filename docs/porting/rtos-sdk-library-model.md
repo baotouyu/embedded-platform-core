@@ -241,6 +241,7 @@ targets/
   artinchip_d12x_lubanlite_demo68_mmc.yaml
   artinchip_d12x_lubanlite_demo68_nand.yaml
   artinchip_d12x_lubanlite_demo68_nor.yaml
+  artinchip_d12x_lubanlite_ki_141103_480p.yaml
   artinchip_d12x_lubanlite_hmi_nor.yaml
   host_rtos_demo.yaml                      ← 本地 stub 联调 target
 ```
@@ -441,9 +442,9 @@ scripts/flash.sh
 
 ```text
 prepare-sdk
+  -> SDK scripts/prepare.sh
   -> check-env（自动，在 build-firmware/full 前执行）
   -> SDK scripts/check_env.sh
-  -> SDK scripts/prepare.sh
   -> export-target
   -> SDK scripts/build_firmware.sh
 ```
@@ -519,7 +520,7 @@ out/firmware/host_rtos_demo/
 
 ### 真实 D12x 系列 target 的当前状态
 
-当前 `targets/` 下四个 ArtInChip D12x target（`artinchip_d12x_lubanlite_demo68_*` 和 `artinchip_d12x_lubanlite_hmi_nor`，属于 D12x 系列）已经完成以下能力：
+当前 `targets/` 下五个 ArtInChip D12x target（`artinchip_d12x_lubanlite_demo68_*`、`artinchip_d12x_lubanlite_ki_141103_480p` 和 `artinchip_d12x_lubanlite_hmi_nor`，属于 D12x 系列）已经完成以下能力：
 
 - **SDK 工具链 EP 静态库包导出**：`build-firmware` 遇到 `toolchain.source=sdk` 时，会调用 `tools/scripts/export_sdk_ep_package.sh`，使用 Luban-Lite SDK 自带 RISC-V 工具链和 `rtconfig.py` 编译主工程代码，输出 `out/ep/<target>/lib/libep_app_core.a`
 - **Luban-Lite ep_app 接入包生成**：SDK adapter 的 `scripts/build_firmware.sh` 能为每个 target 生成对应的 Luban-Lite 应用目录结构（`application/rt-thread/ep_app/`），包含 `ep_app_main.c`、`SConscript`、头文件和静态库
@@ -557,6 +558,7 @@ git submodule status
 | `artinchip_d12x_lubanlite_demo68_mmc` | `artinchip_d12x_lubanlite_demo68_mmc` | `d12x_demo68-mmc_rt-thread_helloworld_defconfig` |
 | `artinchip_d12x_lubanlite_demo68_nand` | `artinchip_d12x_lubanlite_demo68_nand` | `d12x_demo68-nand_rt-thread_helloworld_defconfig` |
 | `artinchip_d12x_lubanlite_demo68_nor` | `artinchip_d12x_lubanlite_demo68_nor` | `d12x_demo68-nor_rt-thread_helloworld_defconfig` |
+| `artinchip_d12x_lubanlite_ki_141103_480p` | `artinchip_d12x_lubanlite_ki_141103_480p` | `d12x_KI-141103-480p_rt-thread_helloworld_defconfig` |
 | `artinchip_d12x_lubanlite_hmi_nor` | `artinchip_d12x_lubanlite_hmi_nor` | `d12x_hmi-nor_rt-thread_helloworld_defconfig` |
 
 每个 env 包含：

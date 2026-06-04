@@ -674,7 +674,8 @@ def _create_fake_sdk_repo_with_env(path: Path, check_env_exit: int = 0) -> None:
         "[ -n \"$TARGET\" ] || exit 2\n"
         "printf 'SDK 准备完成\\n'\n"
         "printf 'target=%s\\n' \"$TARGET\"\n"
-        "printf 'status=stub\\n'\n",
+        "printf 'status=stub\\n'\n"
+        "printf 'prepared target=%s\\n' \"$TARGET\" > prepared.txt\n",
     )
     (path / "scripts" / "prepare.sh").chmod(0o755)
     _write_file(
@@ -889,6 +890,46 @@ def test_check_env_calls_sdk_script(tmp_path):
     assert f"sdk_root={submodule_path}" in result.stdout
 
 
+def test_check_env_prepares_sdk_before_sdk_check(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=0)
+
+    repo = tmp_path / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+    submodule_path = repo / "third_party" / "sdk" / "fake-sdk"
+    _create_fake_sdk_repo_with_env(submodule_path, check_env_exit=0)
+    _write_file(
+        submodule_path / "scripts" / "check_env.sh",
+        "#!/bin/sh\nset -eu\n"
+        "TARGET=\nSDK_ROOT=\n"
+        "while [ \"$#\" -gt 0 ]; do\n"
+        "  case \"$1\" in\n"
+        "    --target) TARGET=$2; shift 2 ;;\n"
+        "    --sdk-root) SDK_ROOT=$2; shift 2 ;;\n"
+        "    *) shift ;;\n"
+        "  esac\n"
+        "done\n"
+        "[ -f prepared.txt ] || { printf 'prepare missing\\n' >&2; exit 12; }\n"
+        "printf '=== check_env ===\\n'\n"
+        "printf 'target=%s\\n' \"$TARGET\"\n"
+        "printf 'sdk_root=%s\\n' \"$SDK_ROOT\"\n",
+    )
+    (submodule_path / "scripts" / "check_env.sh").chmod(0o755)
+
+    result = subprocess.run(
+        [
+            str(CHECK_ENV_SCRIPT),
+            "--repo-root", str(repo),
+            "--target", "host_rtos_demo",
+        ],
+        check=False, text=True, capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "SDK 准备完成" in result.stdout
+    assert "=== check_env ===" in result.stdout
+
+
 def test_install_env_calls_sdk_script(tmp_path):
     sdk_repo = tmp_path / "fake-sdk-src"
     _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=0)
@@ -916,6 +957,48 @@ def test_install_env_calls_sdk_script(tmp_path):
     assert result.returncode == 0, result.stderr
     assert "=== install_env ===" in result.stdout
     assert f"sdk_root={submodule_path}" in result.stdout
+
+
+def test_install_env_prepares_sdk_before_sdk_install(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo_with_env(sdk_repo, check_env_exit=0)
+
+    repo = tmp_path / "repo"
+    _prepare_repo_with_sdk_and_upstream(repo, sdk_repo)
+    submodule_path = repo / "third_party" / "sdk" / "fake-sdk"
+    _create_fake_sdk_repo_with_env(submodule_path, check_env_exit=0)
+    _write_file(
+        submodule_path / "scripts" / "install_env.sh",
+        "#!/bin/sh\nset -eu\n"
+        "TARGET=\nSDK_ROOT=\n"
+        "while [ \"$#\" -gt 0 ]; do\n"
+        "  case \"$1\" in\n"
+        "    --target) TARGET=$2; shift 2 ;;\n"
+        "    --sdk-root) SDK_ROOT=$2; shift 2 ;;\n"
+        "    --yes|--dry-run) shift ;;\n"
+        "    *) shift ;;\n"
+        "  esac\n"
+        "done\n"
+        "[ -f prepared.txt ] || { printf 'prepare missing\\n' >&2; exit 12; }\n"
+        "printf '=== install_env ===\\n'\n"
+        "printf 'target=%s\\n' \"$TARGET\"\n"
+        "printf 'sdk_root=%s\\n' \"$SDK_ROOT\"\n",
+    )
+    (submodule_path / "scripts" / "install_env.sh").chmod(0o755)
+
+    result = subprocess.run(
+        [
+            str(INSTALL_ENV_SCRIPT),
+            "--repo-root", str(repo),
+            "--target", "host_rtos_demo",
+            "--yes",
+        ],
+        check=False, text=True, capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "SDK 准备完成" in result.stdout
+    assert "=== install_env ===" in result.stdout
 
 
 def test_build_firmware_fails_when_check_env_fails(tmp_path):

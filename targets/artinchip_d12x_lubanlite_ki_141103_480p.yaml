@@ -1,11 +1,11 @@
-target: artinchip_d12x_lubanlite_hmi_nor
+target: artinchip_d12x_lubanlite_ki_141103_480p
 
 platform:
   family: rtos
   vendor: artinchip
   sdk_family: luban-lite
   chip: d12x
-  board: hmi-nor
+  board: KI-141103-480p
   kernel: rt-thread
 
 sdk:
@@ -17,8 +17,8 @@ toolchain:
   source: sdk
 
 sdk_config:
-  defconfig: d12x_hmi-nor_rt-thread_helloworld_defconfig
+  defconfig: d12x_KI-141103-480p_rt-thread_helloworld_defconfig
 
 output:
-  ep_package: out/ep/artinchip_d12x_lubanlite_hmi_nor
-  firmware: out/firmware/artinchip_d12x_lubanlite_hmi_nor
+  ep_package: out/ep/artinchip_d12x_lubanlite_ki_141103_480p
+  firmware: out/firmware/artinchip_d12x_lubanlite_ki_141103_480p

@@ -87,7 +87,16 @@ fi
 sdk_name=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "name")")
 td_require_value "$sdk_name" "target 描述缺少 sdk.name：$TARGET_FILE"
 
+"$REPO_ROOT/tools/scripts/prepare_target_sdk.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --sdk-root "$SDK_ROOT"
+
 SDK_DIR=$(sdk_resolve_dir "$REPO_ROOT" "$sdk_name" "$SDK_ROOT")
+
+SDK_PREPARE_SCRIPT=$SDK_DIR/scripts/prepare.sh
+[ -x "$SDK_PREPARE_SCRIPT" ] || die "SDK 缺少准备入口：$SDK_PREPARE_SCRIPT"
+(
+    cd "$SDK_DIR"
+    "$SDK_PREPARE_SCRIPT" --target "$TARGET"
+)
 
 INSTALL_ENV_SCRIPT=$SDK_DIR/scripts/install_env.sh
 [ -x "$INSTALL_ENV_SCRIPT" ] || die "SDK 缺少环境安装入口：$INSTALL_ENV_SCRIPT"

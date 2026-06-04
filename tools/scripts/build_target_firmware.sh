@@ -85,8 +85,6 @@ SDK_DIR=$(sdk_resolve_dir "$REPO_ROOT" "$sdk_name" "$SDK_ROOT")
 EP_PACKAGE_DIR=$(sdk_resolve_path "$ep_package" "$REPO_ROOT")
 FIRMWARE_DIR=$(sdk_resolve_path "$firmware_output" "$REPO_ROOT")
 
-"$REPO_ROOT/tools/scripts/prepare_target_sdk.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --sdk-root "$SDK_ROOT"
-
 check_result=0
 "$REPO_ROOT/tools/scripts/check_target_env.sh" --repo-root "$REPO_ROOT" --target "$TARGET" --sdk-root "$SDK_ROOT" || check_result=$?
 if [ "$check_result" -ne 0 ]; then
@@ -94,13 +92,6 @@ if [ "$check_result" -ne 0 ]; then
     printf '  ./build.sh install-env %s\n' "$TARGET" >&2
     exit "$check_result"
 fi
-
-SDK_PREPARE_SCRIPT=$SDK_DIR/scripts/prepare.sh
-[ -x "$SDK_PREPARE_SCRIPT" ] || die "SDK 缺少准备入口：$SDK_PREPARE_SCRIPT"
-(
-    cd "$SDK_DIR"
-    "$SDK_PREPARE_SCRIPT" --target "$TARGET"
-)
 
 if [ "$toolchain_source" = "sdk" ]; then
     ep_output_parent=${EP_PACKAGE_DIR%/*}
