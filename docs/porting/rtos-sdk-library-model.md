@@ -524,7 +524,7 @@ out/firmware/host_rtos_demo/
 
 - **SDK 工具链 EP 静态库包导出**：`build-firmware` 遇到 `toolchain.source=sdk` 时，会调用 `tools/scripts/export_sdk_ep_package.sh`，使用 Luban-Lite SDK 自带 RISC-V 工具链和 `rtconfig.py` 编译主工程代码，输出 `out/ep/<target>/lib/libep_app_core.a`
 - **Luban-Lite ep_app 接入包生成**：SDK adapter 的 `scripts/build_firmware.sh` 能为每个 target 生成对应的 Luban-Lite 应用目录结构（`application/rt-thread/ep_app/`），包含 `ep_app_main.c`、`SConscript`、头文件和静态库
-- **Luban-Lite 真实构建**：SDK adapter 会执行 `source tools/onestep.sh`、`lunch <defconfig>` 和 `_make_boot_and_app`，链接 `libep_app_core.a` 后输出 `d12x.elf`、`d12x.bin`、`d12x.map`
+- **Luban-Lite 真实构建**：SDK adapter 会执行 `source tools/onestep.sh`、`lunch <defconfig>` 和 `makebootandapp`，链接 `libep_app_core.a` 后输出 `d12x.elf`、`d12x.bin`、`d12x.map`
 - **EP 导出包校验**：`validate-ep-package` 会在 `build-firmware` 流程中自动执行，校验 `manifest.json` 的 target 元数据与 `targets/<target>.yaml` 一致
 - **SDK adapter 一板一 env**：每个 target 对应 `sdk-artinchip-luban-lite` 中的一个独立 env，env 名与 target 名对应，包含独立的 board 配置和 defconfig
 
@@ -571,12 +571,12 @@ application/rt-thread/ep_app/
   lib/libep_app_core.a
 ```
 
-`src/ep_app_main.c` 调用主工程入口：
+`ep_app_main.c` 提供 Luban-Lite 到主工程 framework 的入口：
 
 ```c
 #include "ep_framework.h"
 
-int main(void)
+int ep_lubanlite_app_main(void)
 {
     return ep_framework_start();
 }
@@ -609,11 +609,13 @@ int main(void)
 | `build-firmware` real-sdk-build 模式（D12x/Luban-Lite） | 已完成 |
 | Luban-Lite 真实 scons 编译固件 | 已完成 |
 | toolchain 下载和 SDK 依赖初始化 | 已完成 |
-| 真实板级烧录和冒烟测试 | 尚未接入 |
+| KI-141103-480p 真实板级烧录和冒烟测试 | 已完成基础验证，详见 `docs/porting/ki-141103-480p-smoke-test.md` |
 
 ## 下一步设计
 
-下一阶段不再是接入真实编译，而是把真实板级验证补齐。以下是后续要继续完善的环节：
+下一阶段不再是接入真实编译，而是把 Luban-Lite 兼容层契约补齐，再按 OSAL、HAL、设备映射逐步实现真实 port。兼容层总览见 `docs/porting/luban-lite-compatibility-overview.md`。
+
+以下是后续要继续完善的环节：
 
 ### inspect-sdk
 

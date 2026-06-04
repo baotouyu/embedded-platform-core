@@ -176,3 +176,7 @@ config/profiles/<platform>.cfg
 RTOS SDK 静态库接入模型见：
 
 - `docs/porting/rtos-sdk-library-model.md`
+
+Luban-Lite 兼容层、OSAL、HAL、设备映射和 KI 板冒烟测试见：
+
+- `docs/porting/README.md`
