@@ -3,7 +3,13 @@
 #include "ep_osal_mutex.h"
 #include "ep_osal_time.h"
 
+#if defined(RT_USING_CONSOLE)
+#include <rtthread.h>
+#endif
 #include <stdio.h>
+#include <string.h>
+
+#define ELOG_RT_CONSOLE_CHUNK_SIZE 96u
 
 static ep_mutex_t *g_elog_output_lock;
 static char g_elog_time[24];
@@ -27,8 +33,26 @@ void elog_port_deinit(void)
 
 void elog_port_output(const char *log, size_t size)
 {
+#if defined(RT_USING_CONSOLE)
+    size_t offset = 0u;
+
+    while (offset < size) {
+        char chunk[ELOG_RT_CONSOLE_CHUNK_SIZE + 1u];
+        size_t chunk_size = size - offset;
+
+        if (chunk_size > ELOG_RT_CONSOLE_CHUNK_SIZE) {
+            chunk_size = ELOG_RT_CONSOLE_CHUNK_SIZE;
+        }
+
+        (void)memcpy(chunk, log + offset, chunk_size);
+        chunk[chunk_size] = '\0';
+        rt_kprintf("%s", chunk);
+        offset += chunk_size;
+    }
+#else
     (void)fwrite(log, 1u, size, stdout);
     (void)fflush(stdout);
+#endif
 }
 
 void elog_port_output_lock(void)

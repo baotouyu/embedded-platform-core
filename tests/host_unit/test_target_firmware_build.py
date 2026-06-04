@@ -385,6 +385,60 @@ def test_sdk_ep_export_uses_rtthread_osal_and_excludes_lvgl_ui():
     assert "ep_thirdparty_lvgl" not in script
 
 
+def test_sdk_ep_export_re_lunches_when_rtconfig_is_for_another_defconfig(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo(sdk_repo)
+
+    repo = tmp_path / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8")
+        + "\nsdk_config:\n  defconfig: d12x_demo68-nor_rt-thread_helloworld_defconfig\n",
+        encoding="utf-8",
+    )
+    sdk_dir = repo / "third_party" / "sdk" / "fake-sdk"
+    _write_fake_sdk_toolchain(sdk_dir)
+
+    luban_root = sdk_dir / "upstream" / "luban-lite"
+    _write_file(
+        luban_root / "rtconfig.h",
+        '#define PRJ_DEFCONFIG_FILENAME "d12x_KI-141103-480p_baremetal_bootloader_defconfig"\n',
+    )
+    _write_file(
+        luban_root / "tools" / "onestep.sh",
+        """#!/bin/sh
+lunch() {
+    printf '%s\\n' "$1" > rtconfig-lunched.txt
+    printf '#define PRJ_DEFCONFIG_FILENAME "%s"\\n' "$1" > rtconfig.h
+}
+""",
+    )
+    (luban_root / "tools" / "onestep.sh").chmod(0o755)
+
+    result = subprocess.run(
+        [
+            str(repo / "tools" / "scripts" / "export_sdk_ep_package.sh"),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--sdk-dir",
+            str(sdk_dir),
+            "--clean",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert (
+        luban_root / "rtconfig-lunched.txt"
+    ).read_text(encoding="utf-8") == "d12x_demo68-nor_rt-thread_helloworld_defconfig\n"
+    assert "配置 Luban-Lite：d12x_demo68-nor_rt-thread_helloworld_defconfig" in result.stdout
+
+
 def test_build_target_firmware_allows_relative_sibling_sdk_root(tmp_path):
     sdk_repo = tmp_path / "fake-sdk-src"
     _create_fake_sdk_repo(sdk_repo)
