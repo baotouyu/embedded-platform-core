@@ -177,6 +177,8 @@ platforms/include/ep_platform_capability.h
 | `rtc_bus` | I2C | I2C | I2C1，PD4/PD5 | RTC 所在 I2C 总线。 |
 | `beep` | OTHER | PWM | PWM1 channel 1，PC7 | 2.7 kHz 蜂鸣器。 |
 | `beep_pwm` | GPIO 或 OTHER | PWM | PWM1 channel 1，PC7 | PWM 输出通道。 |
+| `lcd_sleep_gpio` | GPIO | GPIO | PD3 | LCD sleep 控制脚；当前 18-bit RGB LD 配置未占用 PD3 作为数据线。 |
+| `panel_enable_gpio` | GPIO | GPIO | PE13 | 面板 enable 控制脚。 |
 | `display` | DISPLAY | DISPLAY | RGB 800x480 | LCD 显示。 |
 | `touch` | TOUCH | TOUCH | GT911，800x480 | 触摸输入。 |
 | `sdcard` | STORAGE | FILESYSTEM | SDMC1 | SD 卡存储。 |
