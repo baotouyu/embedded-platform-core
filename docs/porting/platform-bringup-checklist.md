@@ -2,6 +2,8 @@
 
 本文作为新增真实平台时的执行清单。每个平台可以按这份清单逐步补齐，不要求一次做完全部能力。
 
+当前 D12x + Luban-Lite + KI-141103-480p 已经完成基础 bring-up。这份清单后续主要用于接新 SDK、新芯片或新板子时复用。
+
 ## 适用平台
 
 当前预期会覆盖：
@@ -17,12 +19,40 @@
 
 RTOS 平台先确认 SDK 家族、芯片、板子和 target 名称。例如匠芯创 Luban-Lite 使用一个 SDK 家族仓库 `sdk-artinchip-luban-lite`，再用 target 区分 `d12x/demo68-nor`、`d13x/demo88-nor` 等具体目标。
 
+当前 KI 板主工程 target：
+
+```text
+targets/artinchip_d12x_lubanlite_ki_141103_480p.yaml
+```
+
+当前 SDK adapter env：
+
+```text
+third_party/sdk/sdk-artinchip-luban-lite/targets/artinchip_d12x_lubanlite_ki_141103_480p.env
+```
+
 2. 新建平台目录。
 
 ```text
 platforms/rtos/artinchip/luban_lite/
 platforms/linux/tina/
 ```
+
+当前代码仍使用早期 RTOS 验证目录：
+
+```text
+platforms/rtos/demo_family/
+```
+
+其中真实 RT-Thread port 已经放在：
+
+```text
+platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c
+platforms/rtos/demo_family/hal_port/
+platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c
+```
+
+后续如果目录需要按厂商 SDK 家族细分，再从 `demo_family` 迁移到正式目录；当前不为了改名阻塞业务开发。
 
 3. 新增 `CMakeLists.txt`。
 
@@ -75,6 +105,15 @@ platforms/<family>/<platform>/startup/
 
 4. 启动入口不直接写业务 UI 页面、菜谱逻辑或设备业务。
 
+当前 Luban-Lite 启动链路：
+
+```text
+third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thread/helloworld/main.c
+  -> third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thread/ep_app/ep_app_main.c
+    -> core/src/ep_framework.c
+      -> app/main.c
+```
+
 ## 第三阶段：OSAL
 
 1. 确认平台需要实现哪些 OSAL 能力。
@@ -94,6 +133,14 @@ platforms/<family>/<platform>/startup/
 
 4. 公共组件只包含 `osal/include/` 里的头文件。
 
+当前 RT-Thread OSAL 已实现：
+
+```text
+platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c
+```
+
+覆盖内存、时间、sleep、线程 create/join、mutex、sem、queue。`ep_thread_join()` 只等待线程自然退出，不提供强制 stop。
+
 ## 第四阶段：HAL
 
 1. 确认平台需要哪些 HAL 能力。
@@ -112,6 +159,22 @@ ADC
 3. 没有真实硬件需求前，可以继续保持 stub。
 
 4. 真实驱动接入后，需要补目标板冒烟测试。
+
+当前 KI 板已经接入的真实 HAL port：
+
+| 能力 | 代码路径 | 逻辑设备 |
+| --- | --- | --- |
+| UART | `platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtthread.c` | `console_uart`、`power_uart` |
+| PWM | `platforms/rtos/demo_family/hal_port/ep_rtos_hal_pwm_rtthread.c` | `beep_pwm` |
+| GPIO | `platforms/rtos/demo_family/hal_port/ep_rtos_hal_gpio_rtthread.c` | `lcd_sleep_gpio`、`panel_enable_gpio` |
+| I2C | `platforms/rtos/demo_family/hal_port/ep_rtos_hal_i2c_rtthread.c` | `rtc_bus` |
+| RTC | `platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtc_pcf8563.c` | `rtc` |
+
+当前暂不推进：
+
+- SPI：业务暂时不用，保留公共头文件，按需再补真实 port。
+- ADC：业务暂时不用，保留公共头文件，按需再补真实 port。
+- display/touch：由各芯片 LVGL display/input port 负责，不在 EP HAL 中二次封装。
 
 ## 第五阶段：平台能力表
 
@@ -143,6 +206,8 @@ ADC
 显示刷新和触摸输入优先由该芯片 SDK 自带的 LVGL display/input port 负责。EP 只维护 LVGL 生命周期和平台能力记录，不在 HAL 层二次封装 display/touch。
 
 3. 应用和组件通过 `ep_platform_has_capability()` 查询能力，不直接判断平台名。
+
+能力表用于描述平台可用能力，不等同于“EP 必须为每个能力封一套 HAL”。当前 display/touch 可以作为平台能力存在，但具体刷新和输入仍由 LVGL port 承担。
 
 ## 第六阶段：平台路径
 
@@ -253,5 +318,13 @@ out/firmware/<target>/
 7. 再检查资源路径是否能访问。
 
 8. 最后再做 UI、触摸、硬件驱动等更复杂验证。
+
+对当前 KI 板，基础判定已经完成：
+
+- 镜像能构建和烧录。
+- `app/main.c` 的 `EP_LOGI` 能从 UART1 控制台打印。
+- UART/PWM/GPIO/I2C/RTC 真实 port 已接入。
+- LCD/触摸由 Luban-Lite/LVGL port 验证。
+- SD 卡文件系统使用 SDK 已提供能力；业务需要文件时按平台文件系统 API 读写。
 
 每个平台最终都应该有自己的冒烟测试说明。真实目标板测试可能依赖串口、烧录器或专用 runner，不要求一开始接入 GitHub CI。

@@ -7,11 +7,15 @@
 RTOS target 的最终镜像不由主工程直接链接。主工程负责生成 EP 应用核心静态库，Luban-Lite SDK 负责最终链接、打包和镜像输出。
 
 ```text
-embedded-platform-core
+<repo-root>
+  -> targets/<target>.yaml
   -> out/ep/<target>/lib/libep_app_core.a
-  -> sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thread/ep_app/
+  -> third_party/sdk/sdk-artinchip-luban-lite/targets/<target>.env
+  -> third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thread/ep_app/
+  -> third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/tools/onestep.sh
   -> Luban-Lite SCons
-  -> output/<project_config>/images/*.img
+  -> third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/output/<project_config>/images/*.img
+  -> out/firmware/<target>/
 ```
 
 不能把边界反过来：
@@ -49,6 +53,23 @@ sdk_config:
   defconfig: d12x_KI-141103-480p_rt-thread_helloworld_defconfig
 ```
 
+SDK adapter 侧 env 文件：
+
+```text
+third_party/sdk/sdk-artinchip-luban-lite/targets/artinchip_d12x_lubanlite_ki_141103_480p.env
+```
+
+关键字段：
+
+```sh
+TARGET_NAME=artinchip_d12x_lubanlite_ki_141103_480p
+CHIP=d12x
+BOARD=KI-141103-480p
+KERNEL=rt-thread
+DEFCONFIG=d12x_KI-141103-480p_rt-thread_helloworld_defconfig
+SDK_APP_STAGING_DIR=application/rt-thread/ep_app
+```
+
 ## 构建命令
 
 在 Linux 或 Docker Ubuntu 20.04 环境中执行：
@@ -66,7 +87,7 @@ sdk_config:
 Docker 内测试时要使用普通用户，避免生成 root 权限文件：
 
 ```bash
-docker exec -u yuwei -w /home/yuwei/samba/yuwei_work/project/embedded-platform-core 184d93cbb90f \
+docker exec -u yuwei -w <repo-root> <container> \
   bash -lc './build.sh build-firmware artinchip_d12x_lubanlite_ki_141103_480p'
 ```
 
@@ -85,17 +106,21 @@ Fatal error: can't create ... Permission denied
 `build-firmware` 对 Luban-Lite target 的主要流程是：
 
 ```text
-读取 targets/<target>.yaml
-检查 SDK 环境
-使用 SDK 工具链构建 EP 静态库
-导出 out/ep/<target>/
-校验 EP package manifest
-复制 ep_app 到 Luban-Lite SDK
-进入 upstream/luban-lite
-source tools/onestep.sh
-lunch <defconfig>
-调用 makebootandapp
-收集镜像和日志
+./build.sh build-firmware <target>
+  -> tools/scripts/build_target_firmware.sh
+    -> 读取 targets/<target>.yaml
+    -> tools/scripts/check_target_env.sh 检查 SDK 环境
+    -> 使用 SDK 工具链构建 EP 静态库
+    -> tools/scripts/export_target.sh 导出 out/ep/<target>/
+    -> tools/scripts/validate_ep_package.sh 校验 manifest
+    -> third_party/sdk/sdk-artinchip-luban-lite/scripts/build_firmware.sh
+      -> 读取 third_party/sdk/sdk-artinchip-luban-lite/targets/<target>.env
+      -> 复制 ep_app 到 Luban-Lite SDK
+      -> 进入 upstream/luban-lite
+      -> source tools/onestep.sh
+      -> lunch <defconfig>
+      -> 调用 makebootandapp
+      -> 收集镜像和日志到 out/firmware/<target>/
 ```
 
 注意：
@@ -139,15 +164,18 @@ application/rt-thread/ep_app/
 
 ```text
 Luban-Lite application/rt-thread/helloworld/main.c
-  -> ep_lubanlite_app_main()
-    -> ep_framework_start()
-      -> ep_platform_boot()
-      -> ep_framework_init()
+  -> application/rt-thread/ep_app/ep_app_main.c
+    -> ep_lubanlite_app_main()
+      -> core/src/ep_framework.c: ep_framework_start()
+        -> ep_platform_boot()
+        -> ep_framework_init()
         -> ep_log_init()
         -> ep_config_init()
         -> ep_event_init()
         -> ep_timer_init()
-      -> app_main()
+        -> ep_device_init()
+        -> ep_platform_register_default_devices()
+      -> app/main.c: app_main()
 ```
 
 `app/main.c` 中的日志如果能在串口看到，说明：
@@ -187,6 +215,20 @@ out/firmware/artinchip_d12x_lubanlite_ki_141103_480p/
 ```text
 out/firmware/artinchip_d12x_lubanlite_ki_141103_480p/build.log
 ```
+
+该目录通常包含：
+
+```text
+out/firmware/artinchip_d12x_lubanlite_ki_141103_480p/
+  build.log
+  build_manifest.txt
+  d12x.bin
+  d12x.elf
+  d12x.map
+  *.img
+```
+
+烧录时优先使用 Luban-Lite 输出的整包镜像 `*.img`。调试链接问题时看 `d12x.elf`、`d12x.map` 和 `build.log`。
 
 ## 工具链位置
 

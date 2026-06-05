@@ -63,14 +63,22 @@ platforms/include/ep_platform_paths.h
 
 `platforms/host/posix/` 是本机调试平台，目前负责 macOS host 程序和 SDL2/LVGL demo。没有实际公共代码时，不保留 `platforms/host/common/`、`platforms/linux/common/` 或 `platforms/rtos/common/` 空目录。
 
-`platforms/linux/demo_family/` 和 `platforms/rtos/demo_family/` 是早期占位平台，用来验证 Linux/RTOS 平台边界和 CMake 接入方式。真实芯片适配时，应按 SDK 家族新增具体平台目录，例如：
+`platforms/linux/demo_family/` 是 Linux 平台边界占位。`platforms/rtos/demo_family/` 最初也是 RTOS 边界占位，现在已经承载当前 Luban-Lite/KI 板真实 RT-Thread port，包括：
+
+```text
+platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c
+platforms/rtos/demo_family/hal_port/
+platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c
+```
+
+后续真实芯片适配如果需要长期维护，应按 SDK 家族新增具体平台目录，例如：
 
 ```text
 platforms/rtos/artinchip/luban_lite/
 platforms/linux/allwinner/<chip>/
 ```
 
-RTOS 具体芯片、板子、内核和 defconfig 不靠平台目录堆深层级表达，而是通过后续的 `targets/<target>.yaml` 描述。相关规则见 `docs/porting/rtos-sdk-library-model.md`。
+当前不为了改目录名阻塞业务开发。RTOS 具体芯片、板子、内核和 defconfig 不靠平台目录堆深层级表达，而是通过 `targets/<target>.yaml` 描述。相关规则见 `docs/porting/rtos-sdk-library-model.md`。
 
 ## 组件目录
 

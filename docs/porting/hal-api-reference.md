@@ -1,8 +1,10 @@
 # HAL API 参考
 
-HAL 是硬件访问兼容层，用于隔离 GPIO、UART、I2C、SPI、PWM、ADC 等底层驱动差异。应用层不应该直接调用 RT-Thread device API、Luban-Lite BSP API 或板级 pinmux。
+HAL 是硬件访问兼容层，用于隔离 GPIO、UART、I2C、SPI、PWM、ADC、RTC 等底层驱动差异。应用层不应该直接调用 RT-Thread device API、Luban-Lite BSP API 或板级 pinmux。
 
-当前 HAL 头文件已经定义公共 API，但真实 RT-Thread/Luban-Lite HAL port 仍在补齐阶段。本文同时记录接口契约和当前实现状态。
+当前 HAL 公共头文件在 `hal/include/`。RT-Thread/Luban-Lite 真实 port 在 `platforms/rtos/demo_family/hal_port/`。本文同时记录接口契约、参数含义、返回值和当前实现状态。
+
+当前 KI-141103-480p 已经接入 UART、PWM、GPIO、I2C、RTC。SPI 和 ADC 目前业务暂时不用，保留公共接口，等真实需求出现再补 port。display/touch 不规划 EP HAL，由各芯片自己的 LVGL display/input port 负责。
 
 ## 通用约定
 
@@ -29,6 +31,18 @@ typedef struct ep_rtc ep_rtc_t;
 ```
 
 调用方只能通过 HAL API 使用句柄，不能访问内部字段。除 `ep_uart_close()` 外，当前 API 尚未统一定义 close/release 函数，后续实现动态设备管理前应先补齐生命周期接口。
+
+公共头文件按功能拆分，不存在一个总入口头文件：
+
+| 能力 | 业务应包含的头文件 |
+| --- | --- |
+| GPIO | `hal/include/ep_hal_gpio.h` |
+| UART | `hal/include/ep_hal_uart.h` |
+| I2C | `hal/include/ep_hal_i2c.h` |
+| SPI | `hal/include/ep_hal_spi.h` |
+| PWM | `hal/include/ep_hal_pwm.h` |
+| ADC | `hal/include/ep_hal_adc.h` |
+| RTC | `hal/include/ep_hal_rtc.h` |
 
 ## 设备名约定
 
@@ -563,9 +577,9 @@ duty_ns   = 185185
 | GPIO | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `lcd_sleep_gpio` 和 `panel_enable_gpio`，基于 RT-Thread pin API。 |
 | UART | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `console_uart` 和 `power_uart`，基于 RT-Thread device。 |
 | I2C | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `rtc_bus`，基于 RT-Thread I2C bus `i2c1`。 |
-| SPI | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
+| SPI | 已定义 | 当前业务暂时不用，RT-Thread/Luban-Lite 真实 port 暂缓。 |
 | PWM | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `beep_pwm`，基于 RT-Thread PWM device `"pwm"` channel 1。 |
-| ADC | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
+| ADC | 已定义 | 当前业务暂时不用，RT-Thread/Luban-Lite 真实 port 暂缓。 |
 | RTC | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `rtc`，基于 PCF8563 + I2C1，地址 0x51。 |
 | Display | 不规划 EP HAL | 当前由各芯片 SDK 的 LVGL display port 或 framebuffer / panel 驱动负责。 |
 | Touch | 不规划 EP HAL | 当前由各芯片 SDK 的 LVGL input port 或触摸驱动负责。 |

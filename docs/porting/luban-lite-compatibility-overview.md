@@ -5,13 +5,15 @@
 ## 分层关系
 
 ```text
-app/main.c 和业务模块
-  -> framework / components
-    -> OSAL: 内存、时间、线程、锁、信号量、队列
-    -> HAL: GPIO、UART、I2C、SPI、PWM、ADC
-    -> device registry: 逻辑设备名、设备状态、能力归属
-      -> RT-Thread / Luban-Lite 驱动 / 板级配置
-        -> KI-141103-480p 硬件
+app/main.c 和后续业务模块
+  -> core/src/ep_framework.c
+    -> components/: log/config/event/timer/device/file/ui
+      -> OSAL: osal/include/
+      -> HAL: hal/include/
+      -> device registry: components/device/include/ep_device.h
+        -> platforms/rtos/demo_family/*_port/
+          -> RT-Thread / Luban-Lite 驱动 / 板级配置
+            -> KI-141103-480p 硬件
 ```
 
 应用层只能调用 `ep_*` 接口。应用层不应该直接包含：
@@ -25,11 +27,13 @@ app/main.c 和业务模块
 
 主工程负责：
 
-- 应用层和公共业务逻辑。
-- framework 生命周期。
-- OSAL、HAL、components 的公共接口。
+- 应用层和公共业务逻辑，当前入口是 `app/main.c`。
+- framework 生命周期，当前实现在 `core/src/ep_framework.c`。
+- OSAL 公共接口，当前头文件在 `osal/include/`。
+- HAL 公共接口，当前头文件在 `hal/include/`。
+- 设备注册表公共接口，当前头文件在 `components/device/include/ep_device.h`。
 - host 和真实平台可复用的组件实现。
-- target 描述文件。
+- target 描述文件，例如 `targets/artinchip_d12x_lubanlite_ki_141103_480p.yaml`。
 - 生成 `libep_app_core.a`、头文件和 manifest。
 
 主工程不负责：
@@ -54,13 +58,16 @@ app/main.c 和业务模块
 当前 Luban-Lite 入口逻辑为：
 
 ```text
-Luban-Lite helloworld main
-  -> ep_lubanlite_app_main()
-    -> ep_framework_start()
-      -> ep_platform_boot()
-      -> ep_framework_init()
-      -> app_main()
+third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thread/helloworld/main.c
+  -> third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thread/ep_app/ep_app_main.c
+    -> ep_lubanlite_app_main()
+      -> core/src/ep_framework.c: ep_framework_start()
+        -> ep_platform_boot()
+        -> ep_framework_init()
+        -> app/main.c: app_main()
 ```
+
+`application/rt-thread/ep_app/` 是构建时 staging 目录，由 `third_party/sdk/sdk-artinchip-luban-lite/scripts/build_firmware.sh` 复制生成，不作为主工程业务源码维护。
 
 ## 当前已跑通的 KI 板基线
 
@@ -80,17 +87,45 @@ Luban-Lite helloworld main
 | 默认逻辑设备注册 | `console_uart`、`power_uart`、`beep_pwm`、`rtc_bus`、`rtc`、`lcd_sleep_gpio`、`panel_enable_gpio` |
 | SD 卡 | SDMC1，boot 阶段单线 SD |
 
-## 兼容层推进顺序
+## 现在写业务时该用什么
 
-建议后续按以下顺序推进：
+业务代码优先从 `app/main.c` 拆模块，不直接落到 SDK 目录。当前建议使用的公共接口如下：
 
-1. 固定接口契约：参数、返回值、生命周期、阻塞语义。
-2. RT-Thread OSAL 已支持 thread create/join；join 只等待线程入口自然返回，不提供强制 stop。
-3. 需要停止后台线程时，通过 stop 标志、事件或队列消息让线程自行退出后再 join。
-4. 为 KI 板继续补真实 HAL port，UART 已有 `console_uart` / `power_uart`，PWM 已有 `beep_pwm`，GPIO 已有 `lcd_sleep_gpio` / `panel_enable_gpio`，I2C 已有 `rtc_bus`，RTC 已有 `rtc -> PCF8563`。
-5. LCD flush、触摸输入和 LVGL driver 由各芯片 SDK 或对应平台 LVGL port 负责，EP 不再另封 display/touch HAL。
-6. 后续按需求继续补 SPI、ADC、SD 卡文件系统、电源板 UART 协议等真实设备能力。
-7. 为每个真实设备补 Docker 构建验证和板级冒烟测试记录。
+| 能力 | 业务应包含的头文件 | 当前状态 |
+| --- | --- | --- |
+| 日志 | `components/log/include/ep_log.h` | 已接入 EasyLogger 和 RT-Thread console。 |
+| 时间和 sleep | `osal/include/ep_osal_time.h` | 已接入 RT-Thread tick 和 sleep。 |
+| 内存 | `osal/include/ep_osal_mem.h` | 已接入 `rt_malloc/rt_free`。 |
+| 线程 | `osal/include/ep_osal_thread.h` | 已支持 create/join，join 等待线程自然退出。 |
+| mutex | `osal/include/ep_osal_mutex.h` | 已接入 RT-Thread mutex。 |
+| semaphore | `osal/include/ep_osal_sem.h` | 已接入 RT-Thread semaphore。 |
+| queue | `osal/include/ep_osal_queue.h` | 已接入 RT-Thread message queue。 |
+| UART | `hal/include/ep_hal_uart.h` | `console_uart`、`power_uart` 已可用。 |
+| PWM | `hal/include/ep_hal_pwm.h` | `beep_pwm` 已可用，默认 2700 Hz 蜂鸣器。 |
+| GPIO | `hal/include/ep_hal_gpio.h` | `lcd_sleep_gpio`、`panel_enable_gpio` 已可用。 |
+| I2C | `hal/include/ep_hal_i2c.h` | `rtc_bus` 已可用。 |
+| RTC | `hal/include/ep_hal_rtc.h` | `rtc -> PCF8563` 已可用。 |
+| 文件读写 | SDK/RT-Thread 文件系统 API | SD 卡文件系统由 SDK 负责，业务可按平台已提供的 `open/read/write` 路线使用。 |
+| UI | LVGL API | 每个芯片使用自己的 LVGL port；EP 只管理公共 UI 生命周期，不封 display/touch HAL。 |
+
+## 当前推进结论
+
+当前平台适配可以认为完成了“能写业务”的基础条件：
+
+1. `./build.sh build-firmware artinchip_d12x_lubanlite_ki_141103_480p` 能进入 Luban-Lite 真实构建。
+2. `app/main.c` 已经链接进最终镜像，`EP_LOGI` 能从串口打印。
+3. OSAL 基础能力已经覆盖常用业务线程、同步和消息队列场景。
+4. KI 板当前需要的 UART/PWM/GPIO/I2C/RTC 已有真实 HAL port。
+5. display/touch 交给平台 LVGL port，避免 EP 重复封一层低价值 API。
+6. SD 卡文件系统能力由 Luban-Lite/RT-Thread 提供，业务层需要文件读写时直接按平台文件系统能力使用。
+7. SPI、ADC 当前不作为主线任务，等业务确实用到再补对应 port 和冒烟测试。
+8. 电源板 UART2 的硬件通道已经打开，协议层后续在业务模块或专用组件里实现。
+
+线程停止约定：
+
+- `ep_thread_join()` 只等待线程入口自然返回。
+- 当前没有强制 stop API，也不使用 `rt_thread_delete()` 强杀业务线程。
+- 需要停止后台线程时，通过 stop 标志、事件或队列消息通知线程自行退出，然后再 join。
 
 详细 API 说明见：
 

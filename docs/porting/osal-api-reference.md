@@ -2,6 +2,31 @@
 
 OSAL 是操作系统兼容层，用于隔离 POSIX、RT-Thread、Linux 用户态和后续其他系统之间的差异。应用层和公共组件只能包含 `osal/include/` 下的头文件，不直接调用 `pthread`、RT-Thread IPC 或厂商 SDK OS API。
 
+当前公共头文件按功能拆分：
+
+| 能力 | 业务应包含的头文件 |
+| --- | --- |
+| 错误码 | `osal/include/ep_osal_err.h` |
+| 内存 | `osal/include/ep_osal_mem.h` |
+| 时间和 sleep | `osal/include/ep_osal_time.h` |
+| 线程 | `osal/include/ep_osal_thread.h` |
+| 互斥锁 | `osal/include/ep_osal_mutex.h` |
+| 信号量 | `osal/include/ep_osal_sem.h` |
+| 队列 | `osal/include/ep_osal_queue.h` |
+| 不透明类型 | `osal/include/ep_osal_types.h` |
+
+当前 RT-Thread/Luban-Lite 真实实现：
+
+```text
+platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c
+```
+
+host/POSIX 实现在：
+
+```text
+platforms/host/posix/osal_port/
+```
+
 ## 通用返回值
 
 OSAL 使用 `ep_err_e`，定义在 `osal/include/ep_osal_err.h`。
