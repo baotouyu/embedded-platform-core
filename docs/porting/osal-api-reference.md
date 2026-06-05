@@ -100,7 +100,7 @@ ep_time_now_ms -> rt_tick_get_millisecond
 
 - 该时间用于超时、定时器和耗时统计。
 - 不表示真实日历时间。
-- 真实 RTC 时间后续应通过单独 RTC API 或设备兼容层提供。
+- 真实日历时间应通过 HAL RTC API，例如 `ep_rtc_get_time()` 读取。
 
 ### `void ep_sleep_ms(unsigned int timeout_ms)`
 
