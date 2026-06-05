@@ -116,7 +116,7 @@ Run:
 
 Expected: target validation succeeds.
 
-- [ ] **Step 2: Commit main docs**
+- [x] **Step 2: Commit main docs**
 
 Run:
 
