@@ -25,7 +25,7 @@
 | 业务代码能不能直接调用 RT-Thread 或 Luban-Lite API？ | `luban-lite-compatibility-overview.md` |
 | `build.sh` 怎么调用 SDK 生成固件？ | `luban-lite-build-and-link.md` |
 | `ep_malloc`、`ep_thread_create`、`ep_queue_send` 怎么用？ | `osal-api-reference.md` |
-| `ep_uart_open`、`ep_pwm_set`、`ep_i2c_read` 怎么用？ | `hal-api-reference.md` |
+| `ep_uart_open`、`ep_pwm_*`、`ep_i2c_read` 怎么用？ | `hal-api-reference.md` |
 | `power_uart`、`beep_pwm`、`rtc` 这些逻辑设备名对应什么硬件？ | `device-compatibility-reference.md` |
 | 板子烧录后怎么确认外设正常？ | `ki-141103-480p-smoke-test.md` |
 

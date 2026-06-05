@@ -61,7 +61,10 @@ HEADER_SNIPPETS = {
         ep_pwm_t *pwm = 0;
         int (*open_fn)(ep_pwm_t **, const char *) = ep_pwm_open;
         int (*set_fn)(ep_pwm_t *, unsigned int, unsigned int) = ep_pwm_set;
-        return (pwm == 0 && open_fn && set_fn) ? 0 : 1;
+        int (*enable_fn)(ep_pwm_t *) = ep_pwm_enable;
+        int (*disable_fn)(ep_pwm_t *) = ep_pwm_disable;
+        int (*close_fn)(ep_pwm_t *) = ep_pwm_close;
+        return (pwm == 0 && open_fn && set_fn && enable_fn && disable_fn && close_fn) ? 0 : 1;
     """,
     "ep_hal_adc.h": """
         ep_adc_t *adc = 0;
