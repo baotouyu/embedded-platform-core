@@ -10,6 +10,8 @@ target_include_directories(ep_core
     ${CMAKE_SOURCE_DIR}/osal/include
     ${CMAKE_SOURCE_DIR}/components/log/include
     ${CMAKE_SOURCE_DIR}/components/config/include
+    ${CMAKE_SOURCE_DIR}/components/device/include
     ${CMAKE_SOURCE_DIR}/components/event/include
     ${CMAKE_SOURCE_DIR}/components/timer/include
+    ${CMAKE_SOURCE_DIR}/platforms/include
 )

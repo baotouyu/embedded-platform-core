@@ -65,7 +65,7 @@ def test_host_device_registry_registers_and_finds_devices(tmp_path):
                 ep_device_t *touch = 0;
                 ep_device_t *found = 0;
                 int i;
-                char names[9][16];
+                char names[17][16];
 
                 display_desc.name = "display0";
                 display_desc.type = EP_DEVICE_TYPE_DISPLAY;
@@ -161,7 +161,7 @@ def test_host_device_registry_registers_and_finds_devices(tmp_path):
                     return 19;
                 }
 
-                for (i = 0; i < 9; ++i) {
+                for (i = 0; i < 17; ++i) {
                     ep_device_desc_t desc;
                     (void)snprintf(names[i], sizeof(names[i]), "other%d", i);
                     desc.name = names[i];
@@ -170,7 +170,7 @@ def test_host_device_registry_registers_and_finds_devices(tmp_path):
                     desc.capability = EP_PLATFORM_CAPABILITY_COUNT;
                     desc.context = 0;
 
-                    if (i < 6) {
+                    if (i < 14) {
                         if (ep_device_register(&desc, &found) != EP_OK) {
                             return 30 + i;
                         }

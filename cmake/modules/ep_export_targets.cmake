@@ -11,6 +11,7 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/startup/app_start.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/osal_port/ep_rtos_osal_stub.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/hal_port/ep_rtos_hal_stub.c
+  ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/component_port/ep_rtos_component_stub.c
   ${CMAKE_SOURCE_DIR}/third_party/external/EasyLogger/easylogger/src/elog.c
   ${CMAKE_SOURCE_DIR}/third_party/external/EasyLogger/easylogger/src/elog_utils.c

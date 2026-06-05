@@ -77,6 +77,7 @@ Luban-Lite helloworld main
 | LCD | RGB 800x480 |
 | 触摸 | GT911，800x480 坐标范围 |
 | 蜂鸣器 | PWM1，PC7，默认 2700 Hz |
+| 默认逻辑设备注册 | `console_uart`、`power_uart`、`beep_pwm`、`rtc_bus`、`lcd_sleep_gpio`、`panel_enable_gpio` |
 | SD 卡 | SDMC1，boot 阶段单线 SD |
 
 ## 兼容层推进顺序
@@ -86,7 +87,7 @@ Luban-Lite helloworld main
 1. 固定接口契约：参数、返回值、生命周期、阻塞语义。
 2. 收敛 RT-Thread OSAL 剩余生命周期语义，当前主要是 thread join/stop 这类接口边界。
 3. 为 KI 板继续补真实 HAL port，UART 已有 `console_uart` / `power_uart`，PWM 已有 `beep_pwm`，GPIO 已有 `lcd_sleep_gpio` / `panel_enable_gpio`，I2C 已有 `rtc_bus`。
-4. 注册逻辑设备名，把板级设备映射从 app 中隔离出去。
+4. 继续补 RTC 高层公共 API，把 PCF8563 寄存器协议从业务层隔离出去。
 5. 为每个真实设备补 Docker 构建验证和板级冒烟测试记录。
 
 详细 API 说明见：
