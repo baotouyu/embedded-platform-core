@@ -317,7 +317,7 @@ def test_rtos_sdk_document_describes_build_firmware_entry():
     assert "target 校验" in text
     assert "EP 导出包校验" in text
     assert "两仓库本地联调" in text
-    assert "EP_SDK_ROOT=/Users/yuwei/Documents/KitchenIdea/项目/C08" in text
+    assert "EP_SDK_ROOT=<workspace-parent>" in text
     assert "host_rtos_demo" in text
     assert "manifest.json" in text
     assert "platform:" in text

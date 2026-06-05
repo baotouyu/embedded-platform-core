@@ -2,6 +2,19 @@
 
 本目录是平台移植、兼容层 API 和真实板级适配记录的源头。GitHub Wiki 只作为阅读入口和阶段性总结，详细接口语义以本目录为准。
 
+## 先看结论
+
+当前 D12x + Luban-Lite + KI-141103-480p 平台基础适配已经完成，可以开始写业务代码。业务入口在 `app/main.c`，最终会通过 `libep_app_core.a` 链接进 Luban-Lite 镜像。
+
+当前已经确认的边界：
+
+- OSAL、HAL 和设备兼容层是业务代码访问系统和硬件的入口。
+- UART、PWM、GPIO、I2C、RTC 已有 RT-Thread/Luban-Lite 真实 port。
+- display/touch 不在 EP HAL 中二次封装，由每个芯片自己的 LVGL display/input port 负责。
+- SD 卡文件系统使用 Luban-Lite/RT-Thread 已提供的文件系统能力，业务需要时按 SDK 的 `open/read/write` 方式读写。
+- SPI、ADC 当前业务暂时不用，保持公共接口，等真实需求出现再补 port。
+- 电源板 UART2 硬件通道已打开，协议后续按业务协议单独实现。
+
 ## 推荐阅读顺序
 
 第一次看平台移植文档时，建议按下面顺序阅读：
@@ -18,16 +31,39 @@
 | 8 | `device-compatibility-reference.md` | 查逻辑设备名、设备注册表、平台能力和 KI 板设备映射。 |
 | 9 | `ki-141103-480p-smoke-test.md` | 最后按板级冒烟手册验证镜像、串口、RTC、LCD、触摸、蜂鸣器和 SD 卡。 |
 
+## 关键文件路径
+
+| 内容 | 路径 |
+| --- | --- |
+| 业务入口 | `app/main.c` |
+| 业务入口头文件 | `app/include/app_main.h` |
+| framework 生命周期 | `core/src/ep_framework.c`、`core/include/ep_framework.h` |
+| OSAL 公共头文件 | `osal/include/` |
+| HAL 公共头文件 | `hal/include/` |
+| 设备注册表公共头文件 | `components/device/include/ep_device.h` |
+| RT-Thread OSAL port | `platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c` |
+| RT-Thread HAL port | `platforms/rtos/demo_family/hal_port/` |
+| RTOS 默认逻辑设备 | `platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c` |
+| 主工程 target | `targets/artinchip_d12x_lubanlite_ki_141103_480p.yaml` |
+| SDK target env | `third_party/sdk/sdk-artinchip-luban-lite/targets/artinchip_d12x_lubanlite_ki_141103_480p.env` |
+| SDK 构建脚本 | `third_party/sdk/sdk-artinchip-luban-lite/scripts/build_firmware.sh` |
+| SDK staging 目录 | `third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thread/ep_app/` |
+| RT-Thread defconfig | `third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/target/configs/d12x_KI-141103-480p_rt-thread_helloworld_defconfig` |
+| bootloader defconfig | `third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/target/configs/d12x_KI-141103-480p_baremetal_bootloader_defconfig` |
+| 固件输出目录 | `out/firmware/artinchip_d12x_lubanlite_ki_141103_480p/` |
+
 ## 按问题查文档
 
 | 问题 | 应看文档 |
 | --- | --- |
+| 现在能不能开始写业务代码？ | `luban-lite-compatibility-overview.md`、`device-compatibility-reference.md` |
 | 业务代码能不能直接调用 RT-Thread 或 Luban-Lite API？ | `luban-lite-compatibility-overview.md` |
 | `build.sh` 怎么调用 SDK 生成固件？ | `luban-lite-build-and-link.md` |
 | `ep_malloc`、`ep_thread_create`、`ep_queue_send` 怎么用？ | `osal-api-reference.md` |
 | `ep_uart_open`、`ep_pwm_*`、`ep_i2c_read` 怎么用？ | `hal-api-reference.md` |
 | `power_uart`、`beep_pwm`、`rtc` 这些逻辑设备名对应什么硬件？ | `device-compatibility-reference.md` |
 | 板子烧录后怎么确认外设正常？ | `ki-141103-480p-smoke-test.md` |
+| display/touch 应该在哪里适配？ | `luban-lite-compatibility-overview.md`、`hal-api-reference.md` |
 
 ## 维护规则
 

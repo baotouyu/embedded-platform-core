@@ -23,6 +23,20 @@
 | LCD sleep GPIO | PD3 |
 | panel enable GPIO | PE13 |
 
+关键源码和配置路径：
+
+| 内容 | 路径 |
+| --- | --- |
+| 业务入口 | `app/main.c` |
+| framework 启动 | `core/src/ep_framework.c` |
+| RTOS OSAL | `platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c` |
+| RTOS HAL | `platforms/rtos/demo_family/hal_port/` |
+| 默认逻辑设备 | `platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c` |
+| target 描述 | `targets/artinchip_d12x_lubanlite_ki_141103_480p.yaml` |
+| SDK env | `third_party/sdk/sdk-artinchip-luban-lite/targets/artinchip_d12x_lubanlite_ki_141103_480p.env` |
+| RT-Thread defconfig | `third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/target/configs/d12x_KI-141103-480p_rt-thread_helloworld_defconfig` |
+| bootloader defconfig | `third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/target/configs/d12x_KI-141103-480p_baremetal_bootloader_defconfig` |
+
 ## 编译
 
 ```bash
@@ -38,7 +52,7 @@
 Docker 内执行时使用普通用户：
 
 ```bash
-docker exec -u yuwei -w /home/yuwei/samba/yuwei_work/project/embedded-platform-core 184d93cbb90f \
+docker exec -u yuwei -w <repo-root> <container> \
   bash -lc './build.sh build-firmware artinchip_d12x_lubanlite_ki_141103_480p'
 ```
 
@@ -273,6 +287,8 @@ SDMC1
 boot 阶段单线 SD
 ```
 
+SD 卡驱动和文件系统归 Luban-Lite/RT-Thread SDK 维护，不在 EP HAL 中另封一套 SD API。业务需要读写文件时，按当前平台已经提供的文件系统能力使用 `open/read/write` 等接口。
+
 启动时如果看到：
 
 ```text
@@ -291,7 +307,7 @@ E/DFS: mount fs[elm] on /sdcard failed.
 list_device
 ```
 
-确认 SDMC 设备是否存在。后续可补格式化、挂载、读写文件的 MSH 冒烟步骤。
+确认 SDMC 设备是否存在。若业务确实依赖 SD 卡文件，再按 SDK 的 MSH 命令或应用代码验证文件创建、写入、读取和关闭。
 
 ## app 接入测试
 
@@ -313,6 +329,21 @@ list_device
 ## 当前已知限制
 
 - `ep_device_init()` 已自动纳入 framework 初始化，并注册当前 KI 板默认逻辑设备。
-- SPI、ADC 等 HAL 真实 RT-Thread/Luban-Lite port 仍待按需求补齐。
+- SPI、ADC 当前业务暂时不用，HAL 公共接口保留，真实 RT-Thread/Luban-Lite port 按需再补。
 - display、touch 由 Luban-Lite / LVGL 平台 port 管理，EP 不再另封公共高层 API。
-- SD 卡文件系统挂载需要按实际卡和分区继续验证。
+- SD 卡文件系统由 Luban-Lite/RT-Thread SDK 维护，EP 当前不单独封装 SD HAL 或文件系统层。
+- 电源板 UART2 硬件通道已打开，具体协议后续按业务协议实现。
+
+## 平台适配完成判定
+
+当前 KI-141103-480p 可以认为已经完成基础平台适配：
+
+1. 固件可通过 `./build.sh build-firmware artinchip_d12x_lubanlite_ki_141103_480p` 构建。
+2. 镜像可烧录并进入 Luban-Lite/RT-Thread。
+3. UART1 控制台可打印启动日志和 `app/main.c` 的 `EP_LOGI`。
+4. `app/main.c` 已通过 `libep_app_core.a` 链接进最终镜像。
+5. RT-Thread OSAL 已支持业务常用的时间、内存、线程、mutex、sem、queue。
+6. KI 板当前需要的 UART/PWM/GPIO/I2C/RTC 已有真实 HAL port。
+7. LCD 和触摸已经由 Luban-Lite/LVGL 平台 port 验证，不进入 EP HAL 主线。
+
+下一步重点不是继续补无用外设，而是开始整理业务应用结构：把 `app/main.c` 拆成业务模块、页面流程、设备协议和数据管理等平台无关代码。

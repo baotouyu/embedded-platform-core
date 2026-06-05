@@ -10,6 +10,19 @@
 components/device/include/ep_device.h
 ```
 
+当前 RTOS/KI 默认设备注册实现：
+
+```text
+platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c
+```
+
+`ep_framework_init()` 会在 `core/src/ep_framework.c` 中自动调用：
+
+```text
+ep_device_init()
+ep_platform_register_default_devices()
+```
+
 ### 设备类型
 
 ```c
@@ -180,9 +193,9 @@ platforms/include/ep_platform_capability.h
 
 应用层应该通过 `ep_platform_has_capability()` 判断平台能力，而不是写死平台名。
 
-## KI-141103-480p 逻辑设备映射
+## KI-141103-480p 默认逻辑设备映射
 
-当前 KI 板推荐的逻辑设备名如下：
+当前 `ep_platform_register_default_devices()` 会注册以下逻辑设备：
 
 | 逻辑设备名 | 类型 | 能力 | 当前真实映射 | 用途 |
 | --- | --- | --- | --- | --- |
@@ -190,15 +203,21 @@ platforms/include/ep_platform_capability.h
 | `power_uart` | UART | UART | UART2，PA4/PA5 | 电源板通信。 |
 | `rtc` | SENSOR | RTC | PCF8563，I2C1，PD4/PD5，地址 0x51 | 实时时钟，当前 RT-Thread RTC HAL 已映射。 |
 | `rtc_bus` | I2C | I2C | I2C1，PD4/PD5 | RTC 所在 I2C 总线，当前 RT-Thread I2C HAL 已映射。 |
-| `beep` | OTHER | PWM | PWM1 channel 1，PC7 | 2.7 kHz 蜂鸣器。 |
-| `beep_pwm` | GPIO 或 OTHER | PWM | PWM1 channel 1，PC7 | PWM 输出通道。 |
+| `beep_pwm` | OTHER | PWM | PWM1 channel 1，PC7 | 2.7 kHz 蜂鸣器 PWM 输出通道。 |
 | `lcd_sleep_gpio` | GPIO | GPIO | PD3 | LCD sleep 控制脚；当前 18-bit RGB LD 配置未占用 PD3 作为数据线。 |
 | `panel_enable_gpio` | GPIO | GPIO | PE13 | 面板 enable 控制脚。 |
-| `display` | DISPLAY | DISPLAY | RGB 800x480 | LCD 显示。 |
-| `touch` | TOUCH | TOUCH | GT911，800x480 | 触摸输入。 |
-| `sdcard` | STORAGE | FILESYSTEM | SDMC1 | SD 卡存储。 |
 
 其中 pinmux、pull、drive strength、LCD timing、GT911 坐标范围等继续由 Luban-Lite SDK 板级配置维护。业务代码只能使用逻辑设备名和公共接口。
+
+以下能力不作为当前默认逻辑设备注册：
+
+| 能力 | 当前归属 |
+| --- | --- |
+| display | RGB panel、framebuffer 和 LVGL display port 由 Luban-Lite/LVGL 平台侧维护。 |
+| touch | GT911 驱动和 LVGL input port 由 Luban-Lite/LVGL 平台侧维护。 |
+| sdcard | SDMC1 和文件系统由 Luban-Lite/RT-Thread SDK 维护，业务需要文件时按平台文件系统 `open/read/write` 路线使用。 |
+| SPI | 当前业务暂时不用，暂不注册默认逻辑设备。 |
+| ADC | 当前业务暂时不用，暂不注册默认逻辑设备。 |
 
 ## 当前建议的初始化顺序
 
@@ -229,4 +248,4 @@ app_main()
 - 设备名常量头文件，避免字符串散落。
 - 设备到 HAL 句柄的标准 context 类型。
 
-display、touch 当前只作为平台能力和逻辑设备信息记录，不再规划 EP 高层设备 API。各芯片自己的 LVGL display/input port 负责显示刷新和触摸输入，业务 UI 直接使用 LVGL API。
+display、touch 当前只作为平台能力认知，不再规划 EP 高层设备 API。各芯片自己的 LVGL display/input port 负责显示刷新和触摸输入，业务 UI 直接使用 LVGL API。
