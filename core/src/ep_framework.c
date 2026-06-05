@@ -2,6 +2,7 @@
 #include "app_main.h"
 #include "ep_log.h"
 #include "ep_config.h"
+#include "ep_device.h"
 #include "ep_event.h"
 #include "ep_timer.h"
 #include "ep_osal_err.h"
@@ -58,7 +59,17 @@ int ep_framework_init(void)
         return rc;
     }
 
-    return ep_timer_init();
+    rc = ep_timer_init();
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = ep_device_init();
+    if (rc != 0) {
+        return rc;
+    }
+
+    return ep_platform_register_default_devices();
 }
 
 int ep_framework_start(void)

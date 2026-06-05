@@ -74,7 +74,22 @@ typedef struct {
 当前状态：
 
 - 该函数会标记注册表可用。
-- 当前 `ep_framework_init()` 还没有自动调用 `ep_device_init()`；后续应把它纳入 framework 初始化顺序。
+- 当前 `ep_framework_init()` 已自动调用 `ep_device_init()`，随后调用平台侧 `ep_platform_register_default_devices()` 注册默认逻辑设备。
+
+### `int ep_platform_register_default_devices(void)`
+
+注册当前平台默认逻辑设备。
+
+返回值：
+
+- `EP_OK`：注册成功，或平台没有默认逻辑设备需要注册。
+- 其他 `EP_ERR_*`：注册失败，`ep_framework_init()` 会向上返回该错误。
+
+当前实现：
+
+- core 只声明并调用该函数，不提供 weak 默认实现。
+- host/posix 和 linux/demo_family 提供空实现。
+- rtos/demo_family 提供 KI 板默认逻辑设备强实现，确保 `libep_app_core.a` 链接最终镜像时会拉入默认设备注册代码。
 
 ### `int ep_device_register(const ep_device_desc_t *desc, ep_device_t **device)`
 
@@ -94,7 +109,7 @@ typedef struct {
 
 当前限制：
 
-- 最大设备数为 8。
+- 最大设备数为 16。
 - 不支持注销设备。
 - 不支持动态更新状态。
 
@@ -195,14 +210,14 @@ ep_config_init()
 ep_event_init()
 ep_timer_init()
 ep_device_init()
-平台设备注册
+ep_platform_register_default_devices()
 app_main()
 ```
 
 当前代码状态：
 
-- `ep_framework_init()` 已初始化 log、config、event、timer。
-- `ep_device_init()` 尚未纳入 framework 自动初始化。
+- `ep_framework_init()` 已初始化 log、config、event、timer、device registry。
+- RTOS/demo_family 平台已注册 `console_uart`、`power_uart`、`beep_pwm`、`rtc_bus`、`lcd_sleep_gpio`、`panel_enable_gpio`。
 - KI 板真实硬件由 Luban-Lite defconfig 和 RT-Thread 驱动先行初始化。
 
 ## 后续补齐项

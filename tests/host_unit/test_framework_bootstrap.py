@@ -24,6 +24,7 @@ def test_framework_bootstrap_symbols_exist():
     assert '#include "ep_log.h"' in source
     assert '#include "elog.h"' not in source
     assert '#include "ep_config.h"' in source
+    assert '#include "ep_device.h"' in source
     assert '#include "ep_event.h"' in source
     assert '#include "ep_timer.h"' in source
     assert '#include "ep_osal_err.h"' in source
@@ -43,7 +44,10 @@ def test_framework_bootstrap_symbols_exist():
     assert "if (rc == EP_ERR_UNSUPPORTED)" in source
     assert "rc = ep_event_init();" in source
     assert "return ep_event_init();" not in source
-    assert "return ep_timer_init();" in source
+    assert "return ep_timer_init();" not in source
+    assert "rc = ep_device_init();" in source
+    assert "return ep_platform_register_default_devices();" in source
+    assert "__attribute__((weak)) int ep_platform_register_default_devices" not in source
     assert "EP_LOGI(" not in source
     assert "EP_LOGE(" not in source
     assert source.index("ep_log_init()") < source.index("ep_config_init()")
@@ -52,11 +56,15 @@ def test_framework_bootstrap_symbols_exist():
     assert source.index("ep_framework_load_default_config()") < source.index("ep_framework_apply_log_config()")
     assert source.index("ep_framework_apply_log_config()") < source.index("ep_event_init()")
     assert source.index("ep_event_init()") < source.index("ep_timer_init()")
+    assert source.index("ep_timer_init()") < source.index("ep_device_init()")
+    assert source.index("ep_device_init()") < source.index("ep_platform_register_default_devices()")
     assert "${CMAKE_SOURCE_DIR}/osal/include" in cmake
     assert "${CMAKE_SOURCE_DIR}/components/log/include" in cmake
     assert "${CMAKE_SOURCE_DIR}/components/config/include" in cmake
+    assert "${CMAKE_SOURCE_DIR}/components/device/include" in cmake
     assert "${CMAKE_SOURCE_DIR}/components/event/include" in cmake
     assert "${CMAKE_SOURCE_DIR}/components/timer/include" in cmake
+    assert "${CMAKE_SOURCE_DIR}/platforms/include" in cmake
 
 
 def test_framework_bootstrap_cmake_smoke(tmp_path):
@@ -109,6 +117,11 @@ def test_framework_init_loads_default_host_config(tmp_path):
             return 0;
         }
 
+        int ep_platform_register_default_devices(void)
+        {
+            return EP_OK;
+        }
+
         int main(void)
         {
             const char *device_name;
@@ -150,6 +163,10 @@ def test_framework_init_loads_default_host_config(tmp_path):
             "-I",
             str(repo_root / "osal/include"),
             "-I",
+            str(repo_root / "platforms/include"),
+            "-I",
+            str(repo_root / "components/device/include"),
+            "-I",
             str(repo_root / "components/log/include"),
             "-I",
             str(repo_root / "components/config/include"),
@@ -163,6 +180,7 @@ def test_framework_init_loads_default_host_config(tmp_path):
             str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
             str(source),
             str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/device/src/ep_device.c"),
             str(repo_root / "components/log/src/ep_log.c"),
             str(repo_root / "components/config/src/ep_config.c"),
             str(repo_root / "components/event/src/ep_event.c"),
@@ -203,6 +221,141 @@ def test_framework_init_loads_default_host_config(tmp_path):
     )
 
 
+def test_framework_init_initializes_device_registry_and_calls_platform_defaults(tmp_path):
+    assert COMPILER, "Expected clang or cc to be available"
+
+    repo_root = Path(__file__).resolve().parents[2]
+    source = tmp_path / "framework_device_defaults_smoke.c"
+    executable = tmp_path / "framework_device_defaults_smoke"
+
+    source.write_text(
+        """
+        #include "ep_framework.h"
+        #include "ep_device.h"
+        #include "ep_osal_err.h"
+
+        int app_main(void)
+        {
+            return 0;
+        }
+
+        int ep_platform_boot(void)
+        {
+            return 0;
+        }
+
+        int ep_platform_register_default_devices(void)
+        {
+            ep_device_desc_t desc;
+
+            desc.name = "test_default_uart";
+            desc.type = EP_DEVICE_TYPE_UART;
+            desc.state = EP_DEVICE_STATE_ONLINE;
+            desc.capability = EP_PLATFORM_CAPABILITY_UART;
+            desc.context = 0;
+
+            return ep_device_register(&desc, 0);
+        }
+
+        int main(void)
+        {
+            ep_device_t *device;
+
+            if (ep_framework_init() != EP_OK) {
+                return 1;
+            }
+
+            device = ep_device_find("test_default_uart");
+            if (device == 0) {
+                return 2;
+            }
+
+            if (ep_device_type(device) != EP_DEVICE_TYPE_UART) {
+                return 3;
+            }
+
+            if (ep_device_capability(device) != EP_PLATFORM_CAPABILITY_UART) {
+                return 4;
+            }
+
+            return 0;
+        }
+        """.strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    compile_result = subprocess.run(
+        [
+            COMPILER,
+            "-std=c11",
+            "-Wall",
+            "-Wextra",
+            "-I",
+            str(repo_root / "core/include"),
+            "-I",
+            str(repo_root / "app/include"),
+            "-I",
+            str(repo_root / "osal/include"),
+            "-I",
+            str(repo_root / "platforms/include"),
+            "-I",
+            str(repo_root / "components/device/include"),
+            "-I",
+            str(repo_root / "components/log/include"),
+            "-I",
+            str(repo_root / "components/config/include"),
+            "-I",
+            str(repo_root / "components/event/include"),
+            "-I",
+            str(repo_root / "components/timer/include"),
+            "-I",
+            str(repo_root / "components/file/include"),
+            "-I",
+            str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
+            str(source),
+            str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/device/src/ep_device.c"),
+            str(repo_root / "components/log/src/ep_log.c"),
+            str(repo_root / "components/config/src/ep_config.c"),
+            str(repo_root / "components/event/src/ep_event.c"),
+            str(repo_root / "components/timer/src/ep_timer.c"),
+            str(repo_root / "components/file/src/ep_file.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/src/elog.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/src/elog_utils.c"),
+            str(repo_root / "third_party/external/EasyLogger/easylogger/port/elog_port.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_queue.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_mutex.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_thread.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_time.c"),
+            str(repo_root / "platforms/host/posix/osal_port/ep_host_osal_mem.c"),
+            "-pthread",
+            "-o",
+            str(executable),
+        ],
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+        check=False,
+    )
+
+    assert compile_result.returncode == 0, compile_result.stderr
+
+    run_result = subprocess.run(
+        [str(executable)],
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+        check=False,
+    )
+
+    assert run_result.returncode == 0, (
+        f"framework device defaults smoke failed with {run_result.returncode}\n"
+        f"stdout:\n{run_result.stdout}\n"
+        f"stderr:\n{run_result.stderr}"
+    )
+
+
 def test_framework_init_ignores_missing_default_config(tmp_path):
     assert COMPILER, "Expected clang or cc to be available"
 
@@ -223,6 +376,11 @@ def test_framework_init_ignores_missing_default_config(tmp_path):
         int ep_platform_boot(void)
         {
             return 0;
+        }
+
+        int ep_platform_register_default_devices(void)
+        {
+            return EP_OK;
         }
 
         int main(void)
@@ -247,6 +405,10 @@ def test_framework_init_ignores_missing_default_config(tmp_path):
             "-I",
             str(repo_root / "osal/include"),
             "-I",
+            str(repo_root / "platforms/include"),
+            "-I",
+            str(repo_root / "components/device/include"),
+            "-I",
             str(repo_root / "components/log/include"),
             "-I",
             str(repo_root / "components/config/include"),
@@ -260,6 +422,7 @@ def test_framework_init_ignores_missing_default_config(tmp_path):
             str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
             str(source),
             str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/device/src/ep_device.c"),
             str(repo_root / "components/log/src/ep_log.c"),
             str(repo_root / "components/config/src/ep_config.c"),
             str(repo_root / "components/event/src/ep_event.c"),
@@ -326,6 +489,11 @@ def test_framework_init_fails_on_invalid_default_config(tmp_path):
             return 0;
         }
 
+        int ep_platform_register_default_devices(void)
+        {
+            return EP_OK;
+        }
+
         int main(void)
         {
             return ep_framework_init() == EP_ERR_INVAL ? 0 : 1;
@@ -348,6 +516,10 @@ def test_framework_init_fails_on_invalid_default_config(tmp_path):
             "-I",
             str(repo_root / "osal/include"),
             "-I",
+            str(repo_root / "platforms/include"),
+            "-I",
+            str(repo_root / "components/device/include"),
+            "-I",
             str(repo_root / "components/log/include"),
             "-I",
             str(repo_root / "components/config/include"),
@@ -361,6 +533,7 @@ def test_framework_init_fails_on_invalid_default_config(tmp_path):
             str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
             str(source),
             str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/device/src/ep_device.c"),
             str(repo_root / "components/log/src/ep_log.c"),
             str(repo_root / "components/config/src/ep_config.c"),
             str(repo_root / "components/event/src/ep_event.c"),
@@ -428,6 +601,11 @@ def test_framework_init_applies_log_level_from_config_file(tmp_path):
             return 0;
         }
 
+        int ep_platform_register_default_devices(void)
+        {
+            return EP_OK;
+        }
+
         int main(void)
         {
             if (ep_framework_init() != EP_OK) {
@@ -466,6 +644,10 @@ def test_framework_init_applies_log_level_from_config_file(tmp_path):
             "-I",
             str(repo_root / "osal/include"),
             "-I",
+            str(repo_root / "platforms/include"),
+            "-I",
+            str(repo_root / "components/device/include"),
+            "-I",
             str(repo_root / "components/log/include"),
             "-I",
             str(repo_root / "components/config/include"),
@@ -479,6 +661,7 @@ def test_framework_init_applies_log_level_from_config_file(tmp_path):
             str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
             str(source),
             str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/device/src/ep_device.c"),
             str(repo_root / "components/log/src/ep_log.c"),
             str(repo_root / "components/config/src/ep_config.c"),
             str(repo_root / "components/event/src/ep_event.c"),
@@ -547,6 +730,11 @@ def test_framework_init_fails_on_invalid_log_level_config(tmp_path):
             return 0;
         }
 
+        int ep_platform_register_default_devices(void)
+        {
+            return EP_OK;
+        }
+
         int main(void)
         {
             return ep_framework_init() == EP_ERR_INVAL ? 0 : 1;
@@ -569,6 +757,10 @@ def test_framework_init_fails_on_invalid_log_level_config(tmp_path):
             "-I",
             str(repo_root / "osal/include"),
             "-I",
+            str(repo_root / "platforms/include"),
+            "-I",
+            str(repo_root / "components/device/include"),
+            "-I",
             str(repo_root / "components/log/include"),
             "-I",
             str(repo_root / "components/config/include"),
@@ -582,6 +774,7 @@ def test_framework_init_fails_on_invalid_log_level_config(tmp_path):
             str(repo_root / "third_party/external/EasyLogger/easylogger/inc"),
             str(source),
             str(repo_root / "core/src/ep_framework.c"),
+            str(repo_root / "components/device/src/ep_device.c"),
             str(repo_root / "components/log/src/ep_log.c"),
             str(repo_root / "components/config/src/ep_config.c"),
             str(repo_root / "components/event/src/ep_event.c"),

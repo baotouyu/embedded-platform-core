@@ -29,6 +29,10 @@ def test_platform_executables_link_framework_components():
     assert "ep_components_log" in linux_cmake
     assert "ep_components_config" in host_cmake
     assert "ep_components_config" in linux_cmake
+    assert "ep_components_device" in host_cmake
+    assert "ep_components_device" in linux_cmake
+    assert "component_port/ep_host_default_devices.c" in host_cmake
+    assert "component_port/ep_linux_default_devices.c" in linux_cmake
     assert "ep_components_event" in timer_cmake
     assert "PUBLIC" in timer_cmake
 

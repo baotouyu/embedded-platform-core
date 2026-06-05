@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#define EP_DEVICE_MAX_DEVICES 8u
+#define EP_DEVICE_MAX_DEVICES 16u
 #define EP_DEVICE_NAME_MAX_LEN 32u
 
 struct ep_device {

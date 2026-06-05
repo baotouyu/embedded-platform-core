@@ -12,6 +12,7 @@ add_executable(ep_platform_host_posix
   osal_port/ep_host_osal_sem.c
   osal_port/ep_host_osal_queue.c
   hal_port/ep_host_hal_stub.c
+  component_port/ep_host_default_devices.c
   component_port/ep_host_component_stub.c
 )
 
@@ -28,6 +29,7 @@ target_link_libraries(ep_platform_host_posix
     ep_components_timer
     ep_components_log
     ep_components_config
+    ep_components_device
     ep_platform_api
     Threads::Threads
 )
