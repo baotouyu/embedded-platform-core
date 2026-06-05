@@ -130,6 +130,20 @@ typedef struct ep_adc ep_adc_t;
 | `console_uart` | 调试控制台，当前 KI 板对应 UART1。 |
 | `power_uart` | 电源板通信，当前 KI 板对应 UART2。 |
 
+当前 RT-Thread/Luban-Lite port 映射：
+
+```text
+console_uart -> uart1
+power_uart   -> uart2
+```
+
+打开时使用 RT-Thread device 框架：
+
+```text
+rt_device_find(...)
+rt_device_open(..., RT_DEVICE_OFLAG_RDWR | RT_DEVICE_FLAG_INT_RX | RT_DEVICE_FLAG_STREAM)
+```
+
 ### `int ep_uart_write(ep_uart_t *uart, const void *buf, size_t len)`
 
 写串口数据。
@@ -148,6 +162,8 @@ typedef struct ep_adc ep_adc_t;
 - `EP_ERR_UNSUPPORTED`：底层不支持。
 
 当前接口不返回实际写入字节数。需要部分写语义时，应新增接口或扩展返回约定，不能在业务层猜测。
+
+当前 RT-Thread/Luban-Lite port 要求 `rt_device_write()` 返回完整长度才视为 `EP_OK`，否则返回 `EP_ERR_BUSY`。
 
 ### `int ep_uart_read(ep_uart_t *uart, void *buf, size_t len, unsigned int timeout_ms)`
 
@@ -168,6 +184,15 @@ typedef struct ep_adc ep_adc_t;
 - `EP_ERR_UNSUPPORTED`：底层不支持。
 
 当前接口不返回实际读取字节数。后续如果电源板协议需要变长帧，建议新增带 `out_len` 的读取接口。
+
+当前 RT-Thread/Luban-Lite port 读取语义：
+
+```text
+timeout_ms == 0 -> rt_device_read 读一次，不足 len 返回 EP_ERR_TIMEOUT
+timeout_ms > 0  -> 每 1 ms 轮询一次，直到读满 len 或超时
+```
+
+如果底层每次只返回部分数据，port 会按缓冲区偏移累计，直到累计长度达到 `len`。
 
 ### `int ep_uart_close(ep_uart_t *uart)`
 
@@ -382,7 +407,7 @@ duty_ns   = 185185
 | 能力 | 公共头文件 | 当前状态 |
 | --- | --- | --- |
 | GPIO | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
-| UART | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
+| UART | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `console_uart` 和 `power_uart`，基于 RT-Thread device。 |
 | I2C | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | SPI | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | PWM | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现；API 还缺 enable/disable。 |
