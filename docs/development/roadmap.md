@@ -124,8 +124,9 @@
 
 2. 全志 Linux：
    - 新增 `platforms/linux/tina/`。
-   - 对接 Linux 文件系统、显示、触摸和输入输出。
+   - 对接 Linux 文件系统和输入输出。
    - 接入单独仓库维护的 LVGL 静态库。
+   - 显示和触摸由 Tina/Linux 平台自己的 LVGL display/input port 负责，不在 EP HAL 中二次封装。
    - 做最小启动和冒烟测试。
 
 真实平台适配开始前，host 平台仍然作为主要验证环境。

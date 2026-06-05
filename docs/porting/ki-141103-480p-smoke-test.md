@@ -314,5 +314,5 @@ list_device
 
 - `ep_device_init()` 已自动纳入 framework 初始化，并注册当前 KI 板默认逻辑设备。
 - SPI、ADC 等 HAL 真实 RT-Thread/Luban-Lite port 仍待按需求补齐。
-- display、touch 目前由 Luban-Lite 驱动直接管理，还没有 EP 公共高层 API。
+- display、touch 由 Luban-Lite / LVGL 平台 port 管理，EP 不再另封公共高层 API。
 - SD 卡文件系统挂载需要按实际卡和分区继续验证。
