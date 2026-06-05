@@ -47,6 +47,11 @@ int ep_platform_register_default_devices(void)
         return rc;
     }
 
+    rc = ep_register_default_device("rtc", EP_DEVICE_TYPE_SENSOR, EP_PLATFORM_CAPABILITY_RTC);
+    if (rc != EP_OK) {
+        return rc;
+    }
+
     rc = ep_register_default_device("lcd_sleep_gpio", EP_DEVICE_TYPE_GPIO, EP_PLATFORM_CAPABILITY_GPIO);
     if (rc != EP_OK) {
         return rc;

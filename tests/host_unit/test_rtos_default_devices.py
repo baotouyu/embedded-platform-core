@@ -18,6 +18,7 @@ def test_rtos_default_devices_are_wired_into_platform_target():
     assert "platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c" in export_cmake
     assert "components/device/src/ep_device.c" in export_script
     assert "platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c" in export_script
+    assert "platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtc_pcf8563.c" in export_script
 
 
 def test_rtos_default_devices_register_ki_logical_devices(tmp_path):
@@ -80,6 +81,14 @@ def test_rtos_default_devices_register_ki_logical_devices(tmp_path):
                     return 7;
                 }
 
+                device = ep_device_find("rtc");
+                if (device == 0 ||
+                    ep_device_type(device) != EP_DEVICE_TYPE_SENSOR ||
+                    ep_device_capability(device) != EP_PLATFORM_CAPABILITY_RTC ||
+                    ep_device_state(device) != EP_DEVICE_STATE_ONLINE) {
+                    return 12;
+                }
+
                 device = ep_device_find("lcd_sleep_gpio");
                 if (device == 0 ||
                     ep_device_type(device) != EP_DEVICE_TYPE_GPIO ||
@@ -106,6 +115,11 @@ def test_rtos_default_devices_register_ki_logical_devices(tmp_path):
                     ep_device_find_by_type(EP_DEVICE_TYPE_GPIO, 1) == 0 ||
                     ep_device_find_by_type(EP_DEVICE_TYPE_GPIO, 2) != 0) {
                     return 11;
+                }
+
+                if (ep_device_find_by_type(EP_DEVICE_TYPE_SENSOR, 0) == 0 ||
+                    ep_device_find_by_type(EP_DEVICE_TYPE_SENSOR, 1) != 0) {
+                    return 13;
                 }
 
                 return 0;

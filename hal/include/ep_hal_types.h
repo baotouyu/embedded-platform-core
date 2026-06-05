@@ -7,5 +7,6 @@ typedef struct ep_i2c ep_i2c_t;
 typedef struct ep_spi ep_spi_t;
 typedef struct ep_pwm ep_pwm_t;
 typedef struct ep_adc ep_adc_t;
+typedef struct ep_rtc ep_rtc_t;
 
 #endif

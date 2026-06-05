@@ -25,6 +25,7 @@ typedef struct ep_i2c ep_i2c_t;
 typedef struct ep_spi ep_spi_t;
 typedef struct ep_pwm ep_pwm_t;
 typedef struct ep_adc ep_adc_t;
+typedef struct ep_rtc ep_rtc_t;
 ```
 
 调用方只能通过 HAL API 使用句柄，不能访问内部字段。除 `ep_uart_close()` 外，当前 API 尚未统一定义 close/release 函数，后续实现动态设备管理前应先补齐生命周期接口。
@@ -38,6 +39,7 @@ typedef struct ep_adc ep_adc_t;
 | `console_uart` | UART1，PA2/PA3 |
 | `power_uart` | UART2，PA4/PA5 |
 | `rtc_bus` | I2C1，PD4/PD5 |
+| `rtc` | PCF8563，I2C1，PD4/PD5，地址 0x51 |
 | `beep_pwm` | PWM1，PC7，channel 1 |
 | `lcd_sleep_gpio` | PD3 |
 | `panel_enable_gpio` | PE13 |
@@ -287,6 +289,100 @@ rtc_bus -> rt_i2c_bus_device_find("i2c1")
 
 - 当前 API 没有寄存器地址参数。寄存器读写可以由业务协议层先写寄存器地址再读，或后续补 `ep_i2c_mem_read/write`。
 
+## RTC
+
+### 时间结构
+
+```c
+typedef struct {
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t minute;
+    uint8_t second;
+    uint8_t weekday;
+} ep_rtc_time_t;
+```
+
+| 字段 | 含义 |
+| --- | --- |
+| `year` | 完整年份。当前 PCF8563 port 支持 `2000-2099`。 |
+| `month` | 月，`1-12`。 |
+| `day` | 日，`1-31`。当前公共接口不校验大小月和闰年。 |
+| `hour` | 时，`0-23`。 |
+| `minute` | 分，`0-59`。 |
+| `second` | 秒，`0-59`。 |
+| `weekday` | 星期，`0-6`，约定 `0` 为周日。 |
+
+### `int ep_rtc_open(ep_rtc_t **rtc, const char *name)`
+
+打开 RTC 设备。
+
+| 参数 | 含义 |
+| --- | --- |
+| `rtc` | 输出 RTC 句柄。 |
+| `name` | RTC 逻辑名或平台名。 |
+
+返回值：
+
+- `EP_OK`：打开成功。
+- `EP_ERR_INVAL`：参数非法。
+- `EP_ERR_BUSY`：资源不足。
+- `EP_ERR_UNSUPPORTED`：平台不支持该 RTC。
+
+当前 RT-Thread/Luban-Lite RTC 真实 port 已实现：
+
+```text
+rtc     -> PCF8563，I2C1，地址 0x51
+pcf8563 -> PCF8563，I2C1，地址 0x51
+```
+
+业务代码应优先使用逻辑名 `rtc`。
+
+### `int ep_rtc_get_time(ep_rtc_t *rtc, ep_rtc_time_t *time)`
+
+读取 RTC 日历时间。
+
+| 参数 | 含义 |
+| --- | --- |
+| `rtc` | RTC 句柄。 |
+| `time` | 输出时间。 |
+
+返回值：
+
+- `EP_OK`：读取成功。
+- `EP_ERR_INVAL`：参数非法。
+- `EP_ERR_UNSUPPORTED`：底层 I2C 读失败、PCF8563 VL bit 表示时间无效，或读出的字段超出公共范围。
+
+当前 PCF8563 port 会先写寄存器地址 `0x02`，再连续读取秒、分、时、日、星期、月、年 7 个寄存器，并在 port 内完成 BCD 转换。业务层不应直接处理 PCF8563 寄存器。
+
+### `int ep_rtc_set_time(ep_rtc_t *rtc, const ep_rtc_time_t *time)`
+
+设置 RTC 日历时间。
+
+| 参数 | 含义 |
+| --- | --- |
+| `rtc` | RTC 句柄。 |
+| `time` | 待写入时间。 |
+
+返回值：
+
+- `EP_OK`：写入成功。
+- `EP_ERR_INVAL`：参数非法或字段超出支持范围。
+- `EP_ERR_UNSUPPORTED`：底层 I2C 写失败。
+
+当前 PCF8563 port 支持年份 `2000-2099`，并从寄存器 `0x02` 开始连续写 7 个时间寄存器。
+
+### `int ep_rtc_close(ep_rtc_t *rtc)`
+
+关闭 RTC 句柄并释放平台资源。调用方关闭后不能继续使用该句柄。
+
+返回值：
+
+- `EP_OK`：关闭成功。
+- `EP_ERR_INVAL`：参数非法。
+
 ## SPI
 
 ### `int ep_spi_open(ep_spi_t **bus, const char *name)`
@@ -470,7 +566,7 @@ duty_ns   = 185185
 | SPI | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | PWM | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `beep_pwm`，基于 RT-Thread PWM device `"pwm"` channel 1。 |
 | ADC | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
-| RTC | 未定义公共 HAL | 当前由 Luban-Lite/RT-Thread 驱动直接启动 PCF8563。 |
+| RTC | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `rtc`，基于 PCF8563 + I2C1，地址 0x51。 |
 | Display | 未定义公共 HAL | 当前由 Luban-Lite framebuffer / panel 驱动负责。 |
 | Touch | 未定义公共 HAL | 当前由 Luban-Lite GT911 驱动负责。 |
 
