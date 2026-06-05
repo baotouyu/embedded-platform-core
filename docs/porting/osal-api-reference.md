@@ -266,7 +266,7 @@ rt_mutex_take(..., RT_WAITING_FOREVER)
 当前状态：
 
 - host POSIX 已有实现。
-- RT-Thread port 当前尚未实现该接口。
+- RT-Thread port 已映射到 `rt_sem_create()`。
 
 ### `int ep_sem_wait(ep_sem_t *sem, unsigned int timeout_ms)`
 
@@ -284,6 +284,13 @@ rt_mutex_take(..., RT_WAITING_FOREVER)
 - `EP_ERR_INVAL`：参数非法。
 - `EP_ERR_UNSUPPORTED`：当前平台不支持。
 
+当前 RT-Thread 映射：
+
+```text
+timeout_ms == 0 -> rt_sem_take(..., RT_WAITING_NO)
+timeout_ms > 0  -> rt_sem_take(..., rt_tick_from_millisecond(timeout_ms))
+```
+
 ### `int ep_sem_post(ep_sem_t *sem)`
 
 释放信号量。
@@ -298,6 +305,12 @@ rt_mutex_take(..., RT_WAITING_FOREVER)
 - `EP_ERR_INVAL`：参数非法。
 - `EP_ERR_BUSY`：计数达到上限或底层资源忙。
 - `EP_ERR_UNSUPPORTED`：当前平台不支持。
+
+当前 RT-Thread 映射：
+
+```text
+ep_sem_post -> rt_sem_release
+```
 
 ## 队列
 
@@ -383,4 +396,4 @@ timeout_ms > 0  -> rt_mq_recv(..., rt_tick_from_millisecond(timeout_ms))
 | 线程 join | 未支持 | 返回 `EP_ERR_UNSUPPORTED`。 |
 | mutex | 已实现 | FIFO RT-Thread mutex。 |
 | queue | 已实现 | RT-Thread message queue。 |
-| sem | 待实现 | 头文件已定义，RT-Thread port 尚未补。 |
+| sem | 已实现 | RT-Thread semaphore，`rt_sem_create/take/release`。 |
