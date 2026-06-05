@@ -88,8 +88,9 @@ Luban-Lite helloworld main
 2. RT-Thread OSAL 已支持 thread create/join；join 只等待线程入口自然返回，不提供强制 stop。
 3. 需要停止后台线程时，通过 stop 标志、事件或队列消息让线程自行退出后再 join。
 4. 为 KI 板继续补真实 HAL port，UART 已有 `console_uart` / `power_uart`，PWM 已有 `beep_pwm`，GPIO 已有 `lcd_sleep_gpio` / `panel_enable_gpio`，I2C 已有 `rtc_bus`，RTC 已有 `rtc -> PCF8563`。
-5. 继续按需求补 display、touch 等高层公共 API。
-6. 为每个真实设备补 Docker 构建验证和板级冒烟测试记录。
+5. LCD flush、触摸输入和 LVGL driver 由各芯片 SDK 或对应平台 LVGL port 负责，EP 不再另封 display/touch HAL。
+6. 后续按需求继续补 SPI、ADC、SD 卡文件系统、电源板 UART 协议等真实设备能力。
+7. 为每个真实设备补 Docker 构建验证和板级冒烟测试记录。
 
 详细 API 说明见：
 

@@ -567,7 +567,7 @@ duty_ns   = 185185
 | PWM | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `beep_pwm`，基于 RT-Thread PWM device `"pwm"` channel 1。 |
 | ADC | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | RTC | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `rtc`，基于 PCF8563 + I2C1，地址 0x51。 |
-| Display | 未定义公共 HAL | 当前由 Luban-Lite framebuffer / panel 驱动负责。 |
-| Touch | 未定义公共 HAL | 当前由 Luban-Lite GT911 驱动负责。 |
+| Display | 不规划 EP HAL | 当前由各芯片 SDK 的 LVGL display port 或 framebuffer / panel 驱动负责。 |
+| Touch | 不规划 EP HAL | 当前由各芯片 SDK 的 LVGL input port 或触摸驱动负责。 |
 
-后续补真实驱动时，应同时补 host fake 或单测，确保 API 语义稳定。
+后续补 SPI、ADC 等真实驱动时，应同时补 host fake 或单测，确保 API 语义稳定。display/touch 不在 EP HAL 中二次封装，业务 UI 直接使用 LVGL。

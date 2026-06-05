@@ -140,6 +140,8 @@ ADC
 网络
 ```
 
+显示刷新和触摸输入优先由该芯片 SDK 自带的 LVGL display/input port 负责。EP 只维护 LVGL 生命周期和平台能力记录，不在 HAL 层二次封装 display/touch。
+
 3. 应用和组件通过 `ep_platform_has_capability()` 查询能力，不直接判断平台名。
 
 ## 第六阶段：平台路径

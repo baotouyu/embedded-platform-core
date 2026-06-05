@@ -228,4 +228,5 @@ app_main()
 - 更多设备槽位或动态注册策略。
 - 设备名常量头文件，避免字符串散落。
 - 设备到 HAL 句柄的标准 context 类型。
-- display、touch 等高层设备 API。
+
+display、touch 当前只作为平台能力和逻辑设备信息记录，不再规划 EP 高层设备 API。各芯片自己的 LVGL display/input port 负责显示刷新和触摸输入，业务 UI 直接使用 LVGL API。
