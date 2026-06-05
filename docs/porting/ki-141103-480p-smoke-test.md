@@ -253,7 +253,7 @@ PA4/PA5
 - 读取电源板响应。
 - 打印十六进制收发日志。
 
-在公共 HAL 未补齐前，可以先通过 RT-Thread/Luban-Lite 自带串口命令或临时测试代码验证引脚和波特率。
+当前 EP UART HAL 已能把 `power_uart` 映射到 RT-Thread 设备 `uart2`。在电源板协议接入前，可以先用临时 EP HAL 冒烟代码验证引脚、波特率和收发方向。
 
 ## SD 卡测试
 

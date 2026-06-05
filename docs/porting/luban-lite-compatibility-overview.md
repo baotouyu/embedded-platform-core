@@ -85,7 +85,7 @@ Luban-Lite helloworld main
 
 1. 固定接口契约：参数、返回值、生命周期、阻塞语义。
 2. 收敛 RT-Thread OSAL 剩余生命周期语义，当前主要是 thread join/stop 这类接口边界。
-3. 为 KI 板补真实 HAL port，先覆盖业务会用到的 UART、GPIO、PWM、I2C。
+3. 为 KI 板继续补真实 HAL port，UART 已有 `console_uart` / `power_uart`，下一步覆盖 GPIO、PWM、I2C。
 4. 注册逻辑设备名，把板级设备映射从 app 中隔离出去。
 5. 为每个真实设备补 Docker 构建验证和板级冒烟测试记录。
 
