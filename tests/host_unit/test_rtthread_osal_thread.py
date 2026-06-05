@@ -8,64 +8,130 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 COMPILER = shutil.which("clang") or shutil.which("cc")
 
 
-def test_rtthread_osal_semaphore_maps_to_rt_sem_api(tmp_path):
+def test_rtthread_osal_thread_join_waits_for_entry_completion(tmp_path):
     assert COMPILER, "Expected clang or cc to be available"
 
-    source = tmp_path / "rtthread_osal_sem_smoke.c"
-    executable = tmp_path / "rtthread_osal_sem_smoke"
+    source = tmp_path / "rtthread_osal_thread_smoke.c"
+    executable = tmp_path / "rtthread_osal_thread_smoke"
     source.write_text(
         textwrap.dedent(
             """
             #include "ep_osal_err.h"
-            #include "ep_osal_sem.h"
+            #include "ep_osal_thread.h"
+
+            extern int fake_thread_create_count;
+            extern int fake_thread_startup_count;
+            extern int fake_thread_delete_count;
+            extern int fake_thread_entry_ran;
+            extern int fake_thread_startup_should_fail;
+            extern int fake_self_is_created_thread;
+            extern unsigned int fake_thread_stack_size;
+            extern unsigned int fake_thread_priority;
+            extern unsigned int fake_thread_tick;
+            extern unsigned int fake_sem_create_initial;
+            extern int fake_sem_take_count;
+            extern int fake_sem_delete_count;
+            extern int fake_active_allocations;
+
+            static void *worker_entry(void *arg)
+            {
+                int *value = (int *)arg;
+
+                *value += 1;
+                return (void *)0x1234;
+            }
 
             int main(void)
             {
-                ep_sem_t *sem = 0;
+                ep_thread_t *thread = 0;
+                int value = 41;
 
-                if (ep_sem_create(0, 1) == EP_OK) {
+                if (ep_thread_create(0, "bad", worker_entry, &value) == EP_OK) {
                     return 1;
                 }
 
-                if (ep_sem_wait(0, 0) == EP_OK) {
+                if (ep_thread_create(&thread, "bad", 0, &value) == EP_OK) {
                     return 2;
                 }
 
-                if (ep_sem_post(0) == EP_OK) {
+                if (ep_thread_join(0) == EP_OK) {
                     return 3;
                 }
 
-                sem = (ep_sem_t *)1;
-                if (ep_sem_create(&sem, 0xFFFFFFFFu) == EP_OK) {
-                    return 10;
-                }
-
-                if (sem != 0) {
-                    return 11;
-                }
-
-                if (ep_sem_create(&sem, 1) != EP_OK) {
+                if (ep_thread_create(&thread, "ep-worker", worker_entry, &value) != EP_OK) {
                     return 4;
                 }
 
-                if (ep_sem_wait(sem, 0) != EP_OK) {
+                if (thread == 0) {
                     return 5;
                 }
 
-                if (ep_sem_wait(sem, 0) != EP_ERR_TIMEOUT) {
+                if (fake_thread_create_count != 1 || fake_thread_startup_count != 1) {
                     return 6;
                 }
 
-                if (ep_sem_wait(sem, 5) != EP_ERR_TIMEOUT) {
+                if (fake_thread_stack_size != 4096u || fake_thread_priority != 20u || fake_thread_tick != 10u) {
                     return 7;
                 }
 
-                if (ep_sem_post(sem) != EP_OK) {
+                if (fake_sem_create_initial != 0u) {
                     return 8;
                 }
 
-                if (ep_sem_wait(sem, 0) != EP_OK) {
+                if (fake_thread_entry_ran != 1 || value != 42) {
                     return 9;
+                }
+
+                if (ep_thread_join(thread) != EP_OK) {
+                    return 10;
+                }
+
+                if (fake_sem_take_count != 1 || fake_sem_delete_count != 1) {
+                    return 11;
+                }
+
+                if (fake_active_allocations != 0) {
+                    return 12;
+                }
+
+                fake_thread_startup_should_fail = 1;
+                if (ep_thread_create(&thread, "startup-fail", worker_entry, &value) != EP_ERR_UNSUPPORTED) {
+                    return 13;
+                }
+
+                if (fake_thread_delete_count != 1 || fake_sem_delete_count != 2) {
+                    return 14;
+                }
+
+                if (fake_active_allocations != 0) {
+                    return 15;
+                }
+
+                fake_thread_startup_should_fail = 0;
+                if (ep_thread_create(&thread, "self-join", worker_entry, &value) != EP_OK) {
+                    return 16;
+                }
+
+                fake_self_is_created_thread = 1;
+                if (ep_thread_join(thread) != EP_ERR_INVAL) {
+                    return 17;
+                }
+
+                if (fake_sem_take_count != 1 || fake_sem_delete_count != 2) {
+                    return 18;
+                }
+
+                fake_self_is_created_thread = 0;
+                if (ep_thread_join(thread) != EP_OK) {
+                    return 19;
+                }
+
+                if (fake_sem_take_count != 2 || fake_sem_delete_count != 3) {
+                    return 20;
+                }
+
+                if (fake_active_allocations != 0) {
+                    return 21;
                 }
 
                 return 0;
@@ -90,6 +156,7 @@ def test_rtthread_osal_semaphore_maps_to_rt_sem_api(tmp_path):
             typedef int rt_int32_t;
             typedef size_t rt_size_t;
             typedef unsigned int rt_uint32_t;
+            typedef unsigned int rt_uint8_t;
 
             #define RT_EOK 0
             #define RT_ETIMEOUT 2
@@ -110,7 +177,7 @@ def test_rtthread_osal_semaphore_maps_to_rt_sem_api(tmp_path):
             uint64_t rt_tick_get_millisecond(void);
             rt_err_t rt_thread_mdelay(rt_int32_t timeout_ms);
             rt_int32_t rt_tick_from_millisecond(rt_int32_t timeout_ms);
-            rt_thread_t rt_thread_create(const char *name, void (*entry)(void *), void *parameter, rt_uint32_t stack_size, rt_uint32_t priority, rt_uint32_t tick);
+            rt_thread_t rt_thread_create(const char *name, void (*entry)(void *), void *parameter, rt_uint32_t stack_size, rt_uint8_t priority, rt_uint32_t tick);
             rt_err_t rt_thread_startup(rt_thread_t thread);
             rt_err_t rt_thread_delete(rt_thread_t thread);
             rt_thread_t rt_thread_self(void);
@@ -141,18 +208,44 @@ def test_rtthread_osal_semaphore_maps_to_rt_sem_api(tmp_path):
 
             #include <stdlib.h>
 
-            struct fake_thread { int unused; };
+            struct fake_thread {
+                void (*entry)(void *);
+                void *parameter;
+            };
+
             struct fake_mutex { int unused; };
             struct fake_mq { int unused; };
             struct fake_sem { unsigned int count; };
 
+            int fake_thread_create_count;
+            int fake_thread_startup_count;
+            int fake_thread_delete_count;
+            int fake_thread_entry_ran;
+            int fake_thread_startup_should_fail;
+            int fake_self_is_created_thread;
+            static rt_thread_t fake_last_created_thread;
+            unsigned int fake_thread_stack_size;
+            unsigned int fake_thread_priority;
+            unsigned int fake_thread_tick;
+            unsigned int fake_sem_create_initial = 999u;
+            int fake_sem_take_count;
+            int fake_sem_delete_count;
+            int fake_active_allocations;
+
             void *rt_malloc(rt_size_t size)
             {
-                return malloc(size);
+                void *ptr = malloc(size);
+                if (ptr != 0) {
+                    ++fake_active_allocations;
+                }
+                return ptr;
             }
 
             void rt_free(void *ptr)
             {
+                if (ptr != 0) {
+                    --fake_active_allocations;
+                }
                 free(ptr);
             }
 
@@ -172,32 +265,63 @@ def test_rtthread_osal_semaphore_maps_to_rt_sem_api(tmp_path):
                 return timeout_ms;
             }
 
-            rt_thread_t rt_thread_create(const char *name, void (*entry)(void *), void *parameter, rt_uint32_t stack_size, rt_uint32_t priority, rt_uint32_t tick)
+            rt_thread_t rt_thread_create(const char *name,
+                                         void (*entry)(void *),
+                                         void *parameter,
+                                         rt_uint32_t stack_size,
+                                         rt_uint8_t priority,
+                                         rt_uint32_t tick)
             {
+                struct fake_thread *thread;
+
                 (void)name;
-                (void)entry;
-                (void)parameter;
-                (void)stack_size;
-                (void)priority;
-                (void)tick;
-                return (rt_thread_t)1;
+
+                thread = (struct fake_thread *)malloc(sizeof(*thread));
+                if (thread == 0) {
+                    return RT_NULL;
+                }
+
+                thread->entry = entry;
+                thread->parameter = parameter;
+                fake_thread_stack_size = stack_size;
+                fake_thread_priority = priority;
+                fake_thread_tick = tick;
+                fake_last_created_thread = thread;
+                ++fake_thread_create_count;
+                return thread;
             }
 
             rt_err_t rt_thread_startup(rt_thread_t thread)
             {
-                (void)thread;
+                ++fake_thread_startup_count;
+                if (thread == RT_NULL || thread->entry == 0) {
+                    return -RT_ETIMEOUT;
+                }
+
+                if (fake_thread_startup_should_fail) {
+                    return -RT_ETIMEOUT;
+                }
+
+                thread->entry(thread->parameter);
+                ++fake_thread_entry_ran;
+                free(thread);
                 return RT_EOK;
             }
 
             rt_err_t rt_thread_delete(rt_thread_t thread)
             {
-                (void)thread;
+                if (thread == RT_NULL) {
+                    return -RT_ETIMEOUT;
+                }
+
+                ++fake_thread_delete_count;
+                free(thread);
                 return RT_EOK;
             }
 
             rt_thread_t rt_thread_self(void)
             {
-                return RT_NULL;
+                return fake_self_is_created_thread ? fake_last_created_thread : RT_NULL;
             }
 
             rt_mutex_t rt_mutex_create(const char *name, rt_uint32_t flag)
@@ -262,32 +386,27 @@ def test_rtthread_osal_semaphore_maps_to_rt_sem_api(tmp_path):
                 (void)name;
                 (void)flag;
 
-                if (value == 0xFFFFFFFFu) {
-                    return RT_NULL;
-                }
-
                 sem = (struct fake_sem *)malloc(sizeof(*sem));
                 if (sem == 0) {
                     return RT_NULL;
                 }
 
                 sem->count = value;
+                fake_sem_create_initial = value;
                 return sem;
             }
 
             rt_err_t rt_sem_take(rt_sem_t sem, rt_int32_t timeout)
             {
-                if (sem == RT_NULL) {
+                (void)timeout;
+
+                if (sem == RT_NULL || sem->count == 0u) {
                     return -RT_ETIMEOUT;
                 }
 
-                if (sem->count > 0u) {
-                    --sem->count;
-                    return RT_EOK;
-                }
-
-                (void)timeout;
-                return -RT_ETIMEOUT;
+                --sem->count;
+                ++fake_sem_take_count;
+                return RT_EOK;
             }
 
             rt_err_t rt_sem_release(rt_sem_t sem)
@@ -306,6 +425,7 @@ def test_rtthread_osal_semaphore_maps_to_rt_sem_api(tmp_path):
                     return -RT_ETIMEOUT;
                 }
 
+                ++fake_sem_delete_count;
                 free(sem);
                 return RT_EOK;
             }

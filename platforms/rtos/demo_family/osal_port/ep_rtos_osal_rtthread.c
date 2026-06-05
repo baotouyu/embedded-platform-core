@@ -10,6 +10,7 @@
 
 struct ep_thread {
     rt_thread_t handle;
+    rt_sem_t done;
     ep_thread_entry_t entry;
     void *arg;
 };
@@ -71,6 +72,10 @@ static void ep_thread_trampoline(void *parameter)
     if (thread != 0 && thread->entry != 0) {
         (void)thread->entry(thread->arg);
     }
+
+    if (thread != 0 && thread->done != RT_NULL) {
+        (void)rt_sem_release(thread->done);
+    }
 }
 
 int ep_thread_create(ep_thread_t **thread, const char *name, ep_thread_entry_t entry, void *arg)
@@ -89,14 +94,22 @@ int ep_thread_create(ep_thread_t **thread, const char *name, ep_thread_entry_t e
 
     new_thread->entry = entry;
     new_thread->arg = arg;
+    new_thread->done = rt_sem_create("epj", 0, RT_IPC_FLAG_FIFO);
+    if (new_thread->done == RT_NULL) {
+        ep_free(new_thread);
+        return EP_ERR_BUSY;
+    }
 
     handle = rt_thread_create(name != 0 ? name : "ep", ep_thread_trampoline, new_thread, 4096, 20, 10);
     if (handle == RT_NULL) {
+        (void)rt_sem_delete(new_thread->done);
         ep_free(new_thread);
         return EP_ERR_BUSY;
     }
 
     if (rt_thread_startup(handle) != RT_EOK) {
+        (void)rt_thread_delete(handle);
+        (void)rt_sem_delete(new_thread->done);
         ep_free(new_thread);
         return EP_ERR_UNSUPPORTED;
     }
@@ -108,11 +121,28 @@ int ep_thread_create(ep_thread_t **thread, const char *name, ep_thread_entry_t e
 
 int ep_thread_join(ep_thread_t *thread)
 {
+    int rc;
+
     if (thread == 0) {
         return EP_ERR_INVAL;
     }
 
-    return EP_ERR_UNSUPPORTED;
+    if (rt_thread_self() == thread->handle) {
+        return EP_ERR_INVAL;
+    }
+
+    rc = ep_rt_err_to_ep(rt_sem_take(thread->done, RT_WAITING_FOREVER));
+    if (rc != EP_OK) {
+        return rc;
+    }
+
+    rc = ep_rt_err_to_ep(rt_sem_delete(thread->done));
+    if (rc != EP_OK) {
+        return rc;
+    }
+
+    ep_free(thread);
+    return EP_OK;
 }
 
 int ep_mutex_create(ep_mutex_t **mutex)
