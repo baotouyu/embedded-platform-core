@@ -111,6 +111,7 @@ output:
         "components/log/src/ep_log.c",
         "platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c",
         "platforms/rtos/demo_family/startup/app_start.c",
+        "platforms/rtos/demo_family/hal_port/ep_rtos_hal_gpio_rtthread.c",
         "platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtthread.c",
         "platforms/rtos/demo_family/hal_port/ep_rtos_hal_pwm_rtthread.c",
         "platforms/rtos/demo_family/component_port/ep_rtos_component_stub.c",
@@ -382,6 +383,7 @@ def test_sdk_ep_export_uses_rtthread_osal_and_excludes_lvgl_ui():
     )
 
     assert "platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c" in script
+    assert "platforms/rtos/demo_family/hal_port/ep_rtos_hal_gpio_rtthread.c" in script
     assert "platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtthread.c" in script
     assert "platforms/rtos/demo_family/hal_port/ep_rtos_hal_pwm_rtthread.c" in script
     assert "platforms/rtos/demo_family/hal_port/ep_rtos_hal_stub.c" not in script

@@ -39,6 +39,8 @@ typedef struct ep_adc ep_adc_t;
 | `power_uart` | UART2，PA4/PA5 |
 | `rtc_bus` | I2C1，PD4/PD5 |
 | `beep_pwm` | PWM1，PC7，channel 1 |
+| `lcd_sleep_gpio` | PD3 |
+| `panel_enable_gpio` | PE13 |
 
 如果某个平台暂时还没有逻辑名映射，可以在平台 HAL port 内兼容底层设备名，例如 `uart1`、`uart2`、`i2c1`、`pwm`。业务代码仍应逐步迁移到逻辑名。
 
@@ -59,6 +61,15 @@ typedef struct ep_adc ep_adc_t;
 - `EP_ERR_INVAL`：`gpio` 为空或 `name` 无效。
 - `EP_ERR_BUSY`：GPIO 已被占用或资源不足。
 - `EP_ERR_UNSUPPORTED`：当前平台不支持该 GPIO。
+
+当前 RT-Thread/Luban-Lite GPIO 真实 port 已实现以下逻辑名：
+
+```text
+lcd_sleep_gpio    -> rt_pin_get("PD.3")
+panel_enable_gpio -> rt_pin_get("PE.13")
+```
+
+当前也兼容直接传入已登记的底层 pin 名称 `PD.3` 和 `PE.13`。业务代码应优先使用逻辑名；新增 GPIO 应先登记逻辑名，再暴露给业务层。
 
 ### `int ep_gpio_set_direction(ep_gpio_t *gpio, ep_gpio_dir_e dir)`
 
@@ -451,7 +462,7 @@ duty_ns   = 185185
 
 | 能力 | 公共头文件 | 当前状态 |
 | --- | --- | --- |
-| GPIO | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
+| GPIO | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `lcd_sleep_gpio` 和 `panel_enable_gpio`，基于 RT-Thread pin API。 |
 | UART | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `console_uart` 和 `power_uart`，基于 RT-Thread device。 |
 | I2C | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | SPI | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |

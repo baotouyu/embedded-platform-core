@@ -18,6 +18,8 @@
 | console | UART1，PA2/PA3，115200 |
 | power UART | UART2，PA4/PA5 |
 | beep | PWM1，PC7，2700 Hz |
+| LCD sleep GPIO | PD3 |
+| panel enable GPIO | PE13 |
 
 ## 编译
 
