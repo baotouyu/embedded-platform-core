@@ -237,11 +237,13 @@ timeout_ms > 0  -> 每 1 ms 轮询一次，直到读满 len 或超时
 - `EP_ERR_BUSY`：设备忙或资源不足。
 - `EP_ERR_UNSUPPORTED`：平台不支持该 I2C 总线。
 
-KI 板当前建议：
+当前 RT-Thread/Luban-Lite I2C 真实 port 已实现以下逻辑名：
 
 ```text
-rtc_bus -> i2c1
+rtc_bus -> rt_i2c_bus_device_find("i2c1")
 ```
+
+当前也兼容直接传入底层总线名 `i2c1`。业务代码应优先使用逻辑名；新增 I2C 设备应先登记逻辑名，再暴露给业务层。
 
 ### `int ep_i2c_write(ep_i2c_t *bus, uint16_t addr, const void *buf, size_t len)`
 
@@ -464,7 +466,7 @@ duty_ns   = 185185
 | --- | --- | --- |
 | GPIO | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `lcd_sleep_gpio` 和 `panel_enable_gpio`，基于 RT-Thread pin API。 |
 | UART | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `console_uart` 和 `power_uart`，基于 RT-Thread device。 |
-| I2C | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
+| I2C | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `rtc_bus`，基于 RT-Thread I2C bus `i2c1`。 |
 | SPI | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | PWM | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `beep_pwm`，基于 RT-Thread PWM device `"pwm"` channel 1。 |
 | ADC | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |

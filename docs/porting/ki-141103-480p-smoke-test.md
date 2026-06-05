@@ -15,6 +15,7 @@
 | LCD | RGB 800x480 |
 | touch | GT911，800x480 |
 | RTC | PCF8563，I2C1，PD4/PD5 |
+| RTC I2C HAL | `rtc_bus -> i2c1` |
 | console | UART1，PA2/PA3，115200 |
 | power UART | UART2，PA4/PA5 |
 | beep | PWM1，PC7，2700 Hz |
@@ -125,6 +126,7 @@ list_device
 PCF8563
 I2C1
 PD4/PD5
+EP I2C HAL: rtc_bus -> i2c1
 ```
 
 启动日志应包含：
