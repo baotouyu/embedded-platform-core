@@ -174,7 +174,7 @@ platforms/include/ep_platform_capability.h
 | `console_uart` | UART | UART | UART1，PA2/PA3，115200 | 调试控制台。 |
 | `power_uart` | UART | UART | UART2，PA4/PA5 | 电源板通信。 |
 | `rtc` | SENSOR 或 OTHER | RTC | PCF8563，I2C1，PD4/PD5 | 实时时钟。 |
-| `rtc_bus` | I2C | I2C | I2C1，PD4/PD5 | RTC 所在 I2C 总线。 |
+| `rtc_bus` | I2C | I2C | I2C1，PD4/PD5 | RTC 所在 I2C 总线，当前 RT-Thread I2C HAL 已映射。 |
 | `beep` | OTHER | PWM | PWM1 channel 1，PC7 | 2.7 kHz 蜂鸣器。 |
 | `beep_pwm` | GPIO 或 OTHER | PWM | PWM1 channel 1，PC7 | PWM 输出通道。 |
 | `lcd_sleep_gpio` | GPIO | GPIO | PD3 | LCD sleep 控制脚；当前 18-bit RGB LD 配置未占用 PD3 作为数据线。 |
