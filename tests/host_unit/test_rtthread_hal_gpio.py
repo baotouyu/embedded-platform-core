@@ -107,6 +107,10 @@ def test_rtthread_hal_gpio_maps_logical_names_to_rtthread_pins(tmp_path):
                     return 18;
                 }
 
+                if (ep_gpio_request(&panel, "lcd_sleep") != EP_ERR_UNSUPPORTED) {
+                    return 20;
+                }
+
                 return 0;
             }
             """

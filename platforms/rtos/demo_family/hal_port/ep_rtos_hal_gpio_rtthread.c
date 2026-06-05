@@ -26,11 +26,11 @@ static ep_gpio_t *ep_gpio_find_entry(const char *name)
         return 0;
     }
 
-    if (strcmp(name, "lcd_sleep_gpio") == 0 || strcmp(name, "lcd_sleep") == 0) {
+    if (strcmp(name, "lcd_sleep_gpio") == 0) {
         return &g_gpio_table[0];
     }
 
-    if (strcmp(name, "panel_enable_gpio") == 0 || strcmp(name, "panel_enable") == 0) {
+    if (strcmp(name, "panel_enable_gpio") == 0) {
         return &g_gpio_table[1];
     }
 
