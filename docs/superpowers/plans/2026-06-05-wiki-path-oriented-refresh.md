@@ -134,7 +134,7 @@ git push -u origin docs/wiki-path-oriented-refresh
 gh pr create --title "docs: 重整平台适配文档阅读顺序" --body-file /tmp/wiki-path-oriented-refresh-pr.md
 ```
 
-- [ ] **Step 4: Commit and push Wiki**
+- [x] **Step 4: Commit and push Wiki**
 
 Run:
 
