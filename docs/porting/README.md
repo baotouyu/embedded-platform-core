@@ -2,19 +2,32 @@
 
 本目录是平台移植、兼容层 API 和真实板级适配记录的源头。GitHub Wiki 只作为阅读入口和阶段性总结，详细接口语义以本目录为准。
 
-## 文档索引
+## 推荐阅读顺序
 
-| 文档 | 内容 |
+第一次看平台移植文档时，建议按下面顺序阅读：
+
+| 顺序 | 文档 | 先看它的原因 |
+| --- | --- | --- |
+| 1 | `platform-differences.md` | 先理解平台差异应该放在哪里，避免业务代码、平台代码和 SDK 代码混在一起。 |
+| 2 | `platform-bringup-checklist.md` | 再看新增真实平台时要按什么阶段推进。 |
+| 3 | `rtos-sdk-library-model.md` | 理解 RTOS 平台为什么由主工程导出静态库、厂商 SDK 负责最终固件。 |
+| 4 | `luban-lite-build-and-link.md` | 具体看 Luban-Lite 如何接收 `libep_app_core.a` 并生成镜像。 |
+| 5 | `luban-lite-compatibility-overview.md` | 看 app、framework、OSAL、HAL、设备层和 Luban-Lite 的运行关系。 |
+| 6 | `osal-api-reference.md` | 查 OS 兼容层 API 的参数、返回值、生命周期和 RT-Thread 映射。 |
+| 7 | `hal-api-reference.md` | 查硬件驱动兼容层 API 的设备名、句柄、读写和当前实现状态。 |
+| 8 | `device-compatibility-reference.md` | 查逻辑设备名、设备注册表、平台能力和 KI 板设备映射。 |
+| 9 | `ki-141103-480p-smoke-test.md` | 最后按板级冒烟手册验证镜像、串口、RTC、LCD、触摸、蜂鸣器和 SD 卡。 |
+
+## 按问题查文档
+
+| 问题 | 应看文档 |
 | --- | --- |
-| `platform-differences.md` | 平台差异归属，说明 OS、硬件、启动、资源、能力表和厂商 SDK 分别放在哪里。 |
-| `platform-bringup-checklist.md` | 新增真实平台时的执行清单。 |
-| `rtos-sdk-library-model.md` | RTOS SDK 静态库接入模型，说明主工程和厂商 SDK 的边界。 |
-| `luban-lite-compatibility-overview.md` | Luban-Lite 兼容层总览，说明 app、framework、OSAL、HAL、设备层和 SDK 的关系。 |
-| `osal-api-reference.md` | OSAL API 参考，记录线程、锁、队列、信号量、时间和内存接口的参数、返回值和平台语义。 |
-| `hal-api-reference.md` | HAL API 参考，记录 GPIO、UART、I2C、SPI、PWM、ADC 接口契约和当前实现状态。 |
-| `device-compatibility-reference.md` | 设备兼容层说明，记录逻辑设备名、设备注册表、平台能力和 KI 板设备映射。 |
-| `luban-lite-build-and-link.md` | Luban-Lite 构建和链接流程，说明 `libep_app_core.a` 如何进入最终镜像。 |
-| `ki-141103-480p-smoke-test.md` | KI-141103-480p 板级冒烟测试手册。 |
+| 业务代码能不能直接调用 RT-Thread 或 Luban-Lite API？ | `luban-lite-compatibility-overview.md` |
+| `build.sh` 怎么调用 SDK 生成固件？ | `luban-lite-build-and-link.md` |
+| `ep_malloc`、`ep_thread_create`、`ep_queue_send` 怎么用？ | `osal-api-reference.md` |
+| `ep_uart_open`、`ep_pwm_set`、`ep_i2c_read` 怎么用？ | `hal-api-reference.md` |
+| `power_uart`、`beep_pwm`、`rtc` 这些逻辑设备名对应什么硬件？ | `device-compatibility-reference.md` |
+| 板子烧录后怎么确认外设正常？ | `ki-141103-480p-smoke-test.md` |
 
 ## 维护规则
 
