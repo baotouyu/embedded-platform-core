@@ -127,10 +127,11 @@ ensure_luban_configured() {
     target_file=$2
     rtconfig=$3
 
-    [ -f "$rtconfig" ] && return 0
-
     defconfig=$(td_trim "$(td_read_section_value "$target_file" "sdk_config" "defconfig")")
     [ -n "$defconfig" ] || return 0
+    if [ -f "$rtconfig" ] && grep -q "^#define PRJ_DEFCONFIG_FILENAME \"$defconfig\"$" "$rtconfig"; then
+        return 0
+    fi
     [ -f "$luban_root/tools/onestep.sh" ] || return 0
 
     printf '配置 Luban-Lite：%s\n' "$defconfig"

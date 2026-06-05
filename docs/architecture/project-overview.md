@@ -109,6 +109,7 @@ GitHub Wiki 是阅读入口和阶段性总结。
 | --- | --- |
 | `docs/architecture/` | 架构、目录、边界说明。 |
 | `docs/development/` | 开发流程、测试策略、路线图。 |
+| `docs/porting/` | 平台移植、兼容层 API、SDK 接入和板级冒烟测试。 |
 | `docs/superpowers/specs/` | 具体功能的设计记录。 |
 | `docs/superpowers/plans/` | 具体功能的执行计划。 |
 | GitHub Wiki | 中文总览、当前进度、快速入口。 |
