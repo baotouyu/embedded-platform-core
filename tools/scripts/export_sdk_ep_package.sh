@@ -325,6 +325,7 @@ platforms/rtos/demo_family/hal_port/ep_rtos_hal_gpio_rtthread.c
 platforms/rtos/demo_family/hal_port/ep_rtos_hal_i2c_rtthread.c
 platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtthread.c
 platforms/rtos/demo_family/hal_port/ep_rtos_hal_pwm_rtthread.c
+platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtc_pcf8563.c
 platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c
 platforms/rtos/demo_family/component_port/ep_rtos_component_stub.c
 third_party/external/EasyLogger/easylogger/src/elog.c

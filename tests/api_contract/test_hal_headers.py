@@ -17,7 +17,8 @@ HEADER_SNIPPETS = {
         ep_spi_t *spi = 0;
         ep_pwm_t *pwm = 0;
         ep_adc_t *adc = 0;
-        return (gpio == 0 && uart == 0 && i2c == 0 && spi == 0 && pwm == 0 && adc == 0) ? 0 : 1;
+        ep_rtc_t *rtc = 0;
+        return (gpio == 0 && uart == 0 && i2c == 0 && spi == 0 && pwm == 0 && adc == 0 && rtc == 0) ? 0 : 1;
     """,
     "ep_hal_err.h": """
         ep_err_e err = EP_OK;
@@ -71,6 +72,23 @@ HEADER_SNIPPETS = {
         int (*open_fn)(ep_adc_t **, const char *) = ep_adc_open;
         int (*read_fn)(ep_adc_t *, uint32_t *) = ep_adc_read;
         return (adc == 0 && open_fn && read_fn) ? 0 : 1;
+    """,
+    "ep_hal_rtc.h": """
+        ep_rtc_t *rtc = 0;
+        ep_rtc_time_t time = {0};
+        time.year = 2026;
+        time.month = 6;
+        time.day = 5;
+        time.hour = 15;
+        time.minute = 30;
+        time.second = 45;
+        time.weekday = 5;
+        int (*open_fn)(ep_rtc_t **, const char *) = ep_rtc_open;
+        int (*get_time_fn)(ep_rtc_t *, ep_rtc_time_t *) = ep_rtc_get_time;
+        int (*set_time_fn)(ep_rtc_t *, const ep_rtc_time_t *) = ep_rtc_set_time;
+        int (*close_fn)(ep_rtc_t *) = ep_rtc_close;
+        return (rtc == 0 && open_fn && get_time_fn && set_time_fn && close_fn &&
+                time.year == 2026 && time.weekday == 5) ? 0 : 1;
     """,
 }
 

@@ -59,6 +59,7 @@ platforms/linux/tina/osal_port/
 - UART。
 - PWM。
 - ADC。
+- RTC。
 
 公共头文件放在：
 

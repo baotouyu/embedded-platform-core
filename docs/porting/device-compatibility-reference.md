@@ -188,7 +188,7 @@ platforms/include/ep_platform_capability.h
 | --- | --- | --- | --- | --- |
 | `console_uart` | UART | UART | UART1，PA2/PA3，115200 | 调试控制台。 |
 | `power_uart` | UART | UART | UART2，PA4/PA5 | 电源板通信。 |
-| `rtc` | SENSOR 或 OTHER | RTC | PCF8563，I2C1，PD4/PD5 | 实时时钟。 |
+| `rtc` | SENSOR | RTC | PCF8563，I2C1，PD4/PD5，地址 0x51 | 实时时钟，当前 RT-Thread RTC HAL 已映射。 |
 | `rtc_bus` | I2C | I2C | I2C1，PD4/PD5 | RTC 所在 I2C 总线，当前 RT-Thread I2C HAL 已映射。 |
 | `beep` | OTHER | PWM | PWM1 channel 1，PC7 | 2.7 kHz 蜂鸣器。 |
 | `beep_pwm` | GPIO 或 OTHER | PWM | PWM1 channel 1，PC7 | PWM 输出通道。 |
@@ -217,7 +217,7 @@ app_main()
 当前代码状态：
 
 - `ep_framework_init()` 已初始化 log、config、event、timer、device registry。
-- RTOS/demo_family 平台已注册 `console_uart`、`power_uart`、`beep_pwm`、`rtc_bus`、`lcd_sleep_gpio`、`panel_enable_gpio`。
+- RTOS/demo_family 平台已注册 `console_uart`、`power_uart`、`beep_pwm`、`rtc_bus`、`rtc`、`lcd_sleep_gpio`、`panel_enable_gpio`。
 - KI 板真实硬件由 Luban-Lite defconfig 和 RT-Thread 驱动先行初始化。
 
 ## 后续补齐项
@@ -228,4 +228,4 @@ app_main()
 - 更多设备槽位或动态注册策略。
 - 设备名常量头文件，避免字符串散落。
 - 设备到 HAL 句柄的标准 context 类型。
-- RTC、display、touch 等高层设备 API。
+- display、touch 等高层设备 API。

@@ -16,6 +16,7 @@
 | touch | GT911，800x480 |
 | RTC | PCF8563，I2C1，PD4/PD5 |
 | RTC I2C HAL | `rtc_bus -> i2c1` |
+| RTC HAL | `rtc -> PCF8563` |
 | console | UART1，PA2/PA3，115200 |
 | power UART | UART2，PA4/PA5 |
 | beep | PWM1，PC7，2700 Hz |
@@ -127,6 +128,7 @@ PCF8563
 I2C1
 PD4/PD5
 EP I2C HAL: rtc_bus -> i2c1
+EP RTC HAL: rtc -> PCF8563
 ```
 
 启动日志应包含：
@@ -148,6 +150,7 @@ date
 - 读写时间命令能正常返回。
 
 如果没有 RTC shell 命令，后续应补一个 EP 或 MSH 冒烟命令，用于读取 RTC 秒计数或日历时间。
+当前 EP RTC HAL 已能通过 `ep_rtc_open("rtc")`、`ep_rtc_get_time()`、`ep_rtc_set_time()` 读写 PCF8563 日历时间。应用层不需要直接处理 PCF8563 BCD 和寄存器地址。
 
 ## LCD 测试
 
@@ -311,5 +314,5 @@ list_device
 
 - `ep_device_init()` 已自动纳入 framework 初始化，并注册当前 KI 板默认逻辑设备。
 - SPI、ADC 等 HAL 真实 RT-Thread/Luban-Lite port 仍待按需求补齐。
-- RTC、display、touch 目前由 Luban-Lite 驱动直接管理，还没有 EP 公共高层 API。
+- display、touch 目前由 Luban-Lite 驱动直接管理，还没有 EP 公共高层 API。
 - SD 卡文件系统挂载需要按实际卡和分区继续验证。
