@@ -125,7 +125,7 @@ git add docs/porting docs/superpowers/plans/2026-06-05-wiki-path-oriented-refres
 git commit -m "docs: 重整平台适配文档阅读顺序"
 ```
 
-- [ ] **Step 3: Push branch and create Chinese PR**
+- [x] **Step 3: Push branch and create Chinese PR**
 
 Run:
 
