@@ -2,6 +2,7 @@
 #include "ep_osal_mem.h"
 #include "ep_osal_mutex.h"
 #include "ep_osal_queue.h"
+#include "ep_osal_sem.h"
 #include "ep_osal_thread.h"
 #include "ep_osal_time.h"
 
@@ -15,6 +16,10 @@ struct ep_thread {
 
 struct ep_mutex {
     rt_mutex_t handle;
+};
+
+struct ep_sem {
+    rt_sem_t handle;
 };
 
 struct ep_queue {
@@ -151,6 +156,53 @@ int ep_mutex_unlock(ep_mutex_t *mutex)
     }
 
     return ep_rt_err_to_ep(rt_mutex_release(mutex->handle));
+}
+
+int ep_sem_create(ep_sem_t **sem, unsigned int initial_count)
+{
+    ep_sem_t *new_sem;
+    rt_sem_t handle;
+
+    if (sem == 0) {
+        return EP_ERR_INVAL;
+    }
+    *sem = 0;
+
+    new_sem = (ep_sem_t *)ep_malloc(sizeof(*new_sem));
+    if (new_sem == 0) {
+        return EP_ERR_BUSY;
+    }
+
+    handle = rt_sem_create("eps", (rt_uint32_t)initial_count, RT_IPC_FLAG_FIFO);
+    if (handle == RT_NULL) {
+        ep_free(new_sem);
+        return EP_ERR_BUSY;
+    }
+
+    new_sem->handle = handle;
+    *sem = new_sem;
+    return EP_OK;
+}
+
+int ep_sem_wait(ep_sem_t *sem, unsigned int timeout_ms)
+{
+    rt_int32_t timeout;
+
+    if (sem == 0) {
+        return EP_ERR_INVAL;
+    }
+
+    timeout = timeout_ms == 0u ? RT_WAITING_NO : rt_tick_from_millisecond((rt_int32_t)timeout_ms);
+    return ep_rt_err_to_ep(rt_sem_take(sem->handle, timeout));
+}
+
+int ep_sem_post(ep_sem_t *sem)
+{
+    if (sem == 0) {
+        return EP_ERR_INVAL;
+    }
+
+    return ep_rt_err_to_ep(rt_sem_release(sem->handle));
 }
 
 int ep_queue_create(ep_queue_t **queue, size_t item_size, size_t depth)
