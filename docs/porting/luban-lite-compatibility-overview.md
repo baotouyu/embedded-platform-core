@@ -85,10 +85,11 @@ Luban-Lite helloworld main
 建议后续按以下顺序推进：
 
 1. 固定接口契约：参数、返回值、生命周期、阻塞语义。
-2. 收敛 RT-Thread OSAL 剩余生命周期语义，当前主要是 thread join/stop 这类接口边界。
-3. 为 KI 板继续补真实 HAL port，UART 已有 `console_uart` / `power_uart`，PWM 已有 `beep_pwm`，GPIO 已有 `lcd_sleep_gpio` / `panel_enable_gpio`，I2C 已有 `rtc_bus`。
-4. 继续按需求补 display、touch 等高层公共 API。
-5. 为每个真实设备补 Docker 构建验证和板级冒烟测试记录。
+2. RT-Thread OSAL 已支持 thread create/join；join 只等待线程入口自然返回，不提供强制 stop。
+3. 需要停止后台线程时，通过 stop 标志、事件或队列消息让线程自行退出后再 join。
+4. 为 KI 板继续补真实 HAL port，UART 已有 `console_uart` / `power_uart`，PWM 已有 `beep_pwm`，GPIO 已有 `lcd_sleep_gpio` / `panel_enable_gpio`，I2C 已有 `rtc_bus`，RTC 已有 `rtc -> PCF8563`。
+5. 继续按需求补 display、touch 等高层公共 API。
+6. 为每个真实设备补 Docker 构建验证和板级冒烟测试记录。
 
 详细 API 说明见：
 

@@ -176,13 +176,15 @@ rt_thread_startup()
 
 返回值：
 
+- `EP_OK`：线程入口已自然返回，线程句柄资源已释放。
 - `EP_ERR_INVAL`：`thread` 为空。
-- `EP_ERR_UNSUPPORTED`：当前 RT-Thread port 暂不支持 join。
+- `EP_ERR_UNSUPPORTED`：底层等待或资源释放失败。
 
 使用建议：
 
-- 当前公共组件不要依赖 RTOS 线程 join。
-- 需要停止后台线程时，应设计显式 stop 标志、事件或队列消息。
+- RT-Thread port 会在线程 trampoline 退出时释放内部完成信号量，`ep_thread_join()` 等待该信号量后释放 EP 线程句柄。
+- 当前没有强制 stop API，也不会通过 `rt_thread_delete()` 强杀正在运行的线程。
+- 需要停止后台线程时，应设计显式 stop 标志、事件或队列消息，让线程自行退出后再 join。
 
 ## 互斥锁
 
@@ -393,7 +395,7 @@ timeout_ms > 0  -> rt_mq_recv(..., rt_tick_from_millisecond(timeout_ms))
 | 时间 | 已实现 | `rt_tick_get_millisecond`。 |
 | sleep | 已实现 | `rt_thread_mdelay`。 |
 | 线程创建 | 已实现 | 栈、优先级、时间片暂时固定。 |
-| 线程 join | 未支持 | 返回 `EP_ERR_UNSUPPORTED`。 |
+| 线程 join | 已实现 | 等待线程入口自然返回后释放 EP 线程句柄。 |
 | mutex | 已实现 | FIFO RT-Thread mutex。 |
 | queue | 已实现 | RT-Thread message queue。 |
 | sem | 已实现 | RT-Thread semaphore，`rt_sem_create/take/release`。 |
