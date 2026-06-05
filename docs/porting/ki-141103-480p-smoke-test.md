@@ -231,6 +231,8 @@ pwm disable 1
 beep 1 500 50 2700
 ```
 
+当前 EP PWM HAL 已能把 `beep_pwm` 映射到 RT-Thread 设备 `pwm` 的 channel 1。业务代码应通过 `ep_pwm_open("beep_pwm")`、`ep_pwm_set()`、`ep_pwm_enable()`、`ep_pwm_disable()` 控制蜂鸣器，不直接依赖 MSH 命令。
+
 判断标准：
 
 - `pwm enable 1` 后蜂鸣器发声。

@@ -334,7 +334,7 @@ rtc_bus -> i2c1
 KI 板当前建议：
 
 ```text
-beep_pwm -> pwm1 channel 1, PC7
+beep_pwm -> RT-Thread device "pwm", channel 1, PC7
 ```
 
 ### `int ep_pwm_set(ep_pwm_t *pwm, unsigned int period_ns, unsigned int duty_ns)`
@@ -406,7 +406,7 @@ duty_ns   = 185185
 - `EP_ERR_BUSY`：设备忙。
 - `EP_ERR_UNSUPPORTED`：底层不支持关闭或关闭失败。
 
-当前 RT-Thread/Luban-Lite PWM 真实 port 仍待实现。后续接 `beep_pwm` 时应映射到 PWM1 channel 1，并用 `ep_pwm_enable()` / `ep_pwm_disable()` 表达蜂鸣器启动和停止。
+当前 RT-Thread/Luban-Lite PWM 真实 port 已实现 `beep_pwm`。映射关系是 `rt_device_find("pwm")` + channel 1，对应 KI 板 PWM1/PC7 蜂鸣器。`ep_pwm_set()` 直接调用 `rt_pwm_set()`，单位保持纳秒；`ep_pwm_enable()` / `ep_pwm_disable()` 分别调用 `rt_pwm_enable()` / `rt_pwm_disable()`。
 
 ## ADC
 
@@ -455,7 +455,7 @@ duty_ns   = 185185
 | UART | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `console_uart` 和 `power_uart`，基于 RT-Thread device。 |
 | I2C | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | SPI | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
-| PWM | 已定义 | 生命周期 API 已补齐；RT-Thread/Luban-Lite 真实 port 待实现。 |
+| PWM | 已定义 | RT-Thread/Luban-Lite 真实 port 已实现 `beep_pwm`，基于 RT-Thread PWM device `"pwm"` channel 1。 |
 | ADC | 已定义 | RT-Thread/Luban-Lite 真实 port 待实现。 |
 | RTC | 未定义公共 HAL | 当前由 Luban-Lite/RT-Thread 驱动直接启动 PCF8563。 |
 | Display | 未定义公共 HAL | 当前由 Luban-Lite framebuffer / panel 驱动负责。 |
