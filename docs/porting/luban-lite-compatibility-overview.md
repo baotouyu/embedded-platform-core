@@ -5,7 +5,10 @@
 ## 分层关系
 
 ```text
-app/main.c 和后续业务模块
+app/main.c 薄入口
+  -> app/app_core.c
+    -> app/selftest/app_selftest.c
+    -> app/services/
   -> core/src/ep_framework.c
     -> components/: log/config/event/timer/device/file/ui
       -> OSAL: osal/include/
@@ -27,7 +30,7 @@ app/main.c 和后续业务模块
 
 主工程负责：
 
-- 应用层和公共业务逻辑，当前入口是 `app/main.c`。
+- 应用层和公共业务逻辑，当前入口是 `app/main.c`，生命周期收口在 `app/app_core.c`。
 - framework 生命周期，当前实现在 `core/src/ep_framework.c`。
 - OSAL 公共接口，当前头文件在 `osal/include/`。
 - HAL 公共接口，当前头文件在 `hal/include/`。
@@ -76,7 +79,7 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 | target | `artinchip_d12x_lubanlite_ki_141103_480p` |
 | defconfig | `d12x_KI-141103-480p_rt-thread_helloworld_defconfig` |
 | bootloader defconfig | `d12x_KI-141103-480p_baremetal_bootloader_defconfig` |
-| app 链接 | `app/main.c` 已进入最终镜像 |
+| app 链接 | `app/main.c`、`app/app_core.c`、`app/selftest/`、`app/services/` 已进入最终镜像 |
 | 日志 | `EP_LOG*` 通过 EasyLogger 和 RT-Thread console 输出 |
 | 控制台串口 | UART1，PA2/PA3，115200 |
 | 电源板串口 | UART2，PA4/PA5 |
@@ -89,7 +92,7 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 
 ## 现在写业务时该用什么
 
-业务代码优先从 `app/main.c` 拆模块，不直接落到 SDK 目录。当前建议使用的公共接口如下：
+业务代码优先放在 `app/app_core.c`、`app/services/` 或后续新增业务模块，不直接落到 SDK 目录。`app/main.c` 只保留入口编排。当前建议使用的公共接口如下：
 
 | 能力 | 业务应包含的头文件 | 当前状态 |
 | --- | --- | --- |
@@ -101,10 +104,10 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 | semaphore | `osal/include/ep_osal_sem.h` | 已接入 RT-Thread semaphore。 |
 | queue | `osal/include/ep_osal_queue.h` | 已接入 RT-Thread message queue。 |
 | UART | `hal/include/ep_hal_uart.h` | `console_uart`、`power_uart` 已可用。 |
-| PWM | `hal/include/ep_hal_pwm.h` | `beep_pwm` 已可用，默认 2700 Hz 蜂鸣器。 |
+| PWM | `hal/include/ep_hal_pwm.h` 或 `app/services/beep_service.h` | `beep_pwm` 已可用，默认 2700 Hz 蜂鸣器。 |
 | GPIO | `hal/include/ep_hal_gpio.h` | `lcd_sleep_gpio`、`panel_enable_gpio` 已可用。 |
 | I2C | `hal/include/ep_hal_i2c.h` | `rtc_bus` 已可用。 |
-| RTC | `hal/include/ep_hal_rtc.h` | `rtc -> PCF8563` 已可用。 |
+| RTC | `hal/include/ep_hal_rtc.h` 或 `app/services/rtc_service.h` | `rtc -> PCF8563` 已可用。 |
 | 文件读写 | SDK/RT-Thread 文件系统 API | SD 卡文件系统由 SDK 负责，业务可按平台已提供的 `open/read/write` 路线使用。 |
 | UI | LVGL API | D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，LVGL、显示和触摸 port 由原厂 SDK 提供；EP 只管理公共 UI 生命周期，不封 display/touch HAL。 |
 
@@ -113,7 +116,7 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 当前平台适配可以认为完成了“能写业务”的基础条件：
 
 1. `./build.sh build-firmware artinchip_d12x_lubanlite_ki_141103_480p` 能进入 Luban-Lite 真实构建。
-2. `app/main.c` 已经链接进最终镜像，`EP_LOGI` 能从串口打印。
+2. 应用骨架已经链接进最终镜像，`EP_LOGI` 能从串口打印。
 3. OSAL 基础能力已经覆盖常用业务线程、同步和消息队列场景。
 4. KI 板当前需要的 UART/PWM/GPIO/I2C/RTC 已有真实 HAL port。
 5. display/touch 交给平台 LVGL port，避免 EP 重复封一层低价值 API。

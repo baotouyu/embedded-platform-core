@@ -45,6 +45,8 @@ copy_headers() {
     header_dirs="
 core/include
 app/include
+app/selftest
+app/services
 components/log/include
 components/config/include
 components/event/include
@@ -292,6 +294,8 @@ copy_headers "$REPO_ROOT" "$PACKAGE_ROOT"
 include_flags="
 -I$REPO_ROOT/core/include
 -I$REPO_ROOT/app/include
+-I$REPO_ROOT/app/selftest
+-I$REPO_ROOT/app/services
 -I$REPO_ROOT/components/config/include
 -I$REPO_ROOT/components/device/include
 -I$REPO_ROOT/components/event/include
@@ -320,7 +324,13 @@ rtconfig_cflags=$(extract_rtconfig_cflags "$LUBAN_ROOT" "$TARGET_CHIP")
 
 sources="
 core/src/ep_framework.c
+app/app_core.c
 app/main.c
+app/selftest/app_selftest.c
+app/services/beep_service.c
+app/services/lcd_sleep_service.c
+app/services/power_board_service.c
+app/services/rtc_service.c
 components/config/src/ep_config.c
 components/device/src/ep_device.c
 components/file/src/ep_file.c

@@ -22,6 +22,35 @@
 
 主工程不再保留顶层 `vendor/` 空目录。大型厂商 SDK 放到外部 SDK 仓库管理。RTOS 平台的主线规则是：主工程编译出 `libep_app_core.a`、头文件和 manifest，芯片 SDK 仓库负责链接、打包和输出最终固件。
 
+## 应用目录
+
+`app/main.c` 只保留应用入口函数 `app_main()`，负责串起应用上下文、服务启动、自检和主流程。业务逻辑不继续堆在入口文件里。
+
+当前应用骨架为：
+
+```text
+app/
+  main.c                         # app_main 薄入口
+  app_core.c                     # 应用生命周期和服务启动顺序
+  include/app_context.h          # 应用上下文
+  include/app_core.h             # 应用生命周期接口
+  selftest/app_selftest.c        # 当前 timer/event 生命周期冒烟
+  services/                      # 业务友好的设备服务边界
+```
+
+`app/services/` 是业务服务层，不替代 HAL，也不直接维护板级 pinmux。它负责把业务常用动作收口成清晰接口，例如蜂鸣器、RTC、LCD sleep 和电源板 UART。后续写业务时优先从服务层调用，再由服务层按需要使用 `hal/include/` 或 SDK 已提供能力。
+
+当前第一版服务边界：
+
+```text
+app/services/beep_service.*
+app/services/rtc_service.*
+app/services/lcd_sleep_service.*
+app/services/power_board_service.*
+```
+
+电源板协议还没有实现，`power_board_service` 当前只保留初始化和写入接口骨架。协议帧格式、校验、重发和状态解析应在协议明确后单独补。
+
 ## 第三方目录
 
 `third_party/external/` 放第三方源码快照，例如 EasyLogger、cJSON 和 SQLite。这里可以包含少量为了主工程编译必须保留的本地 port 文件。

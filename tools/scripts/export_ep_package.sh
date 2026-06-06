@@ -98,6 +98,8 @@ ARCHIVE=$REPO_ROOT/build/libep_app_core_export.a
 HEADER_DIRS="
 core/include
 app/include
+app/selftest
+app/services
 components/log/include
 components/config/include
 components/event/include

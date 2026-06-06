@@ -107,7 +107,13 @@ output:
     _write_file(root / "build" / "libep_app_core_export.a", "fake archive\n")
     for source in [
         "core/src/ep_framework.c",
+        "app/app_core.c",
         "app/main.c",
+        "app/selftest/app_selftest.c",
+        "app/services/beep_service.c",
+        "app/services/lcd_sleep_service.c",
+        "app/services/power_board_service.c",
+        "app/services/rtc_service.c",
         "components/config/src/ep_config.c",
         "components/device/src/ep_device.c",
         "components/file/src/ep_file.c",
@@ -130,7 +136,14 @@ output:
         _write_file(root / source, f"/* {source} */\n")
     for header in [
         "core/include/ep_framework.h",
+        "app/include/app_context.h",
+        "app/include/app_core.h",
         "app/include/app_main.h",
+        "app/selftest/app_selftest.h",
+        "app/services/beep_service.h",
+        "app/services/lcd_sleep_service.h",
+        "app/services/power_board_service.h",
+        "app/services/rtc_service.h",
         "components/log/include/ep_log.h",
         "components/config/include/ep_config.h",
         "components/event/include/ep_event.h",
@@ -139,7 +152,10 @@ output:
         "components/device/include/ep_device.h",
         "components/ui/include/ep_ui.h",
         "osal/include/ep_osal_time.h",
+        "osal/include/ep_osal_err.h",
         "hal/include/ep_hal_gpio.h",
+        "hal/include/ep_hal_rtc.h",
+        "hal/include/ep_hal_types.h",
         "platforms/include/ep_platform_capability.h",
         "third_party/external/EasyLogger/easylogger/inc/elog.h",
     ]:
