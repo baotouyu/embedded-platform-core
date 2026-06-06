@@ -30,7 +30,7 @@ typedef struct ep_adc ep_adc_t;
 typedef struct ep_rtc ep_rtc_t;
 ```
 
-调用方只能通过 HAL API 使用句柄，不能访问内部字段。除 `ep_uart_close()` 外，当前 API 尚未统一定义 close/release 函数，后续实现动态设备管理前应先补齐生命周期接口。
+调用方只能通过 HAL API 使用句柄，不能访问内部字段。UART、PWM、RTC 当前已经有 close 接口；GPIO 和 I2C 当前没有统一 release/close 接口，长生命周期使用为主。后续如果需要动态设备管理，应先补齐生命周期接口并同步更新本文档。
 
 公共头文件按功能拆分，不存在一个总入口头文件：
 

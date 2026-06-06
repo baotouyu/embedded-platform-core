@@ -27,10 +27,11 @@
 | 3 | `rtos-sdk-library-model.md` | 理解 RTOS 平台为什么由主工程导出静态库、厂商 SDK 负责最终固件。 |
 | 4 | `luban-lite-build-and-link.md` | 具体看 Luban-Lite 如何接收 `libep_app_core.a` 并生成镜像。 |
 | 5 | `luban-lite-compatibility-overview.md` | 看 app、framework、OSAL、HAL、设备层和 Luban-Lite 的运行关系。 |
-| 6 | `osal-api-reference.md` | 查 OS 兼容层 API 的参数、返回值、生命周期和 RT-Thread 映射。 |
-| 7 | `hal-api-reference.md` | 查硬件驱动兼容层 API 的设备名、句柄、读写和当前实现状态。 |
-| 8 | `device-compatibility-reference.md` | 查逻辑设备名、设备注册表、平台能力和 KI 板设备映射。 |
-| 9 | `ki-141103-480p-smoke-test.md` | 最后按板级冒烟手册验证镜像、串口、RTC、LCD、触摸、蜂鸣器和 SD 卡。 |
+| 6 | `app-business-skeleton.md` | 看现在业务入口、应用上下文、自检和服务边界怎么写。 |
+| 7 | `osal-api-reference.md` | 查 OS 兼容层 API 的参数、返回值、生命周期和 RT-Thread 映射。 |
+| 8 | `hal-api-reference.md` | 查硬件驱动兼容层 API 的设备名、句柄、读写和当前实现状态。 |
+| 9 | `device-compatibility-reference.md` | 查逻辑设备名、设备注册表、平台能力和 KI 板设备映射。 |
+| 10 | `ki-141103-480p-smoke-test.md` | 最后按板级冒烟手册验证镜像、串口、RTC、LCD、触摸、蜂鸣器和 SD 卡。 |
 
 ## 关键文件路径
 
@@ -41,6 +42,7 @@
 | 应用上下文 | `app/include/app_context.h` |
 | 应用生命周期 | `app/app_core.c`、`app/include/app_core.h` |
 | 应用自检 | `app/selftest/app_selftest.c`、`app/selftest/app_selftest.h` |
+| 业务骨架文档 | `docs/porting/app-business-skeleton.md` |
 | 设备服务边界 | `app/services/` |
 | framework 生命周期 | `core/src/ep_framework.c`、`core/include/ep_framework.h` |
 | OSAL 公共头文件 | `osal/include/` |
@@ -62,6 +64,7 @@
 | 问题 | 应看文档 |
 | --- | --- |
 | 现在能不能开始写业务代码？ | `luban-lite-compatibility-overview.md`、`device-compatibility-reference.md` |
+| 业务入口、服务初始化和自检顺序是什么？ | `app-business-skeleton.md` |
 | 业务代码能不能直接调用 RT-Thread 或 Luban-Lite API？ | `luban-lite-compatibility-overview.md` |
 | `build.sh` 怎么调用 SDK 生成固件？ | `luban-lite-build-and-link.md` |
 | `ep_malloc`、`ep_thread_create`、`ep_queue_send` 怎么用？ | `osal-api-reference.md` |
