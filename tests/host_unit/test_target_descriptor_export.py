@@ -36,6 +36,10 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: sdk
+  lvgl_note: fake SDK provides LVGL
+
 output:
   ep_package: out/ep/host_rtos_demo
 """,
@@ -130,6 +134,10 @@ def test_export_target_script_reads_descriptor_and_creates_package(tmp_path):
         "ref": "main",
     }
     assert manifest["toolchain"] == {"source": "sdk"}
+    assert manifest["ui"] == {
+        "lvgl_provider": "sdk",
+        "lvgl_note": "fake SDK provides LVGL",
+    }
 
 
 def test_export_target_script_fails_for_missing_descriptor(tmp_path):

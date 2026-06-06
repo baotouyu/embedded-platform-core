@@ -146,4 +146,8 @@ require_match "toolchain.source" \
     "$(td_trim "$(manifest_read "toolchain" "source")")" \
     "$(target_value "toolchain" "source")"
 
+require_match "ui.lvgl_provider" \
+    "$(td_trim "$(manifest_read "ui" "lvgl_provider")")" \
+    "$(target_value "ui" "lvgl_provider")"
+
 printf 'EP 导出包校验通过：%s\n' "$EP_PACKAGE"

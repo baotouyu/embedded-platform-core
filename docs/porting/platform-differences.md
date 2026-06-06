@@ -16,7 +16,7 @@
 | OS 差异 | `osal/include` 和 `platforms/<family>/<platform>/osal_port` | 线程、互斥锁、信号量、队列、时间、内存等系统能力。 |
 | 硬件差异 | `hal/include` 和 `platforms/<family>/<platform>/hal_port` | GPIO、I2C、SPI、UART、PWM、ADC 等硬件能力。 |
 | 启动差异 | `platforms/<family>/<platform>/startup` | main、RTOS app entry、SDK 启动挂接。 |
-| LVGL 差异 | `third_party/prebuilt/lvgl/<platform>` 和平台 UI port | 每个平台可以使用不同显示、输入、文件系统和图片解码配置。 |
+| LVGL 差异 | `targets/<target>.yaml` 的 `ui.lvgl_provider`、SDK、组件仓库或预编译包 | RTOS SDK 自带时声明为 `sdk`；Linux 独立应用平台可使用组件仓库或预编译包。 |
 | 资源路径差异 | `platforms/include/ep_platform_paths.h` 和平台 paths 实现 | 当前平台配置文件、资源根目录、图片、字体、主题路径。 |
 | 能力差异 | `platforms/include/ep_platform_capability.h` 和平台能力表 | 用统一接口表达平台是否支持文件系统、LVGL、显示、触摸、网络等能力。 |
 | 配置差异 | `config/profiles/<platform>.cfg` | 平台启动参数、功能开关和少量运行配置。 |
@@ -102,13 +102,16 @@ LVGL 差异主要来自：
 - 字体能力。
 - SDK 自带 LVGL 或独立预编译 LVGL。
 
-主工程当前采用规则：
+主工程当前采用 `targets/<target>.yaml` 里的 `ui.lvgl_provider` 决定归属：
 
-```text
-third_party/prebuilt/lvgl/<platform>
-```
+| provider | 归属 |
+| --- | --- |
+| `sdk` | 原厂 SDK 已经带 LVGL、显示和触摸 port。典型场景是 RTOS 芯片，例如 ArtInChip Luban-Lite。 |
+| `component` | 主工程或芯片专属组件仓库负责 LVGL port、交叉编译和加速后端。典型场景是 Linux 芯片，例如 F133/Tina Linux 的 `sunxi_lvgl_v9.1`。 |
+| `prebuilt` | 主工程消费 `third_party/prebuilt/lvgl/<platform>/` 下的头文件、库和 manifest。 |
+| `none` | 当前 target 不提供 LVGL。 |
 
-每个平台维护自己的 LVGL 产物。主工程消费头文件、静态库和 manifest，不直接维护所有平台的 `lv_conf.h`。
+`components/ui` 只保留 EP 自己的 LVGL 生命周期薄封装。它不封装控件 API，也不接管各平台 display/touch port。每个平台维护自己的 `lv_conf.h` 和底层 port，主工程只通过 target 描述、能力表和构建规则记录“这个 target 的 LVGL 从哪里来”。
 
 ## 资源路径差异
 

@@ -34,6 +34,10 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: sdk
+  lvgl_note: fake SDK provides LVGL
+
 output:
   ep_package: out/ep/{target}
   firmware: out/firmware/{target}
@@ -48,6 +52,7 @@ def _write_manifest(
     manifest_target: str | None = None,
     chip: str = "host",
     sdk_name: str = "fake-sdk",
+    lvgl_provider: str = "sdk",
 ) -> Path:
     package_root = root / "out" / "ep" / target
     package_root.mkdir(parents=True, exist_ok=True)
@@ -71,6 +76,10 @@ def _write_manifest(
             "ref": "main",
         },
         "toolchain": {"source": "sdk"},
+        "ui": {
+            "lvgl_provider": lvgl_provider,
+            "lvgl_note": "fake SDK provides LVGL",
+        },
         "headers": ["include/ep_framework.h"],
     }
     (package_root / "manifest.json").write_text(
@@ -225,6 +234,31 @@ def test_validate_ep_package_fails_when_sdk_name_mismatches(tmp_path):
     assert result.returncode != 0
     assert "EP 导出包校验失败" in result.stderr
     assert "manifest sdk.name 为 other-sdk，target 描述为 fake-sdk" in result.stderr
+
+
+def test_validate_ep_package_fails_when_lvgl_provider_mismatches(tmp_path):
+    repo = tmp_path / "repo"
+    _write_target(repo)
+    package_root = _write_manifest(repo, lvgl_provider="component")
+
+    result = subprocess.run(
+        [
+            str(VALIDATE_SCRIPT),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--ep-package",
+            str(package_root),
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "EP 导出包校验失败" in result.stderr
+    assert "manifest ui.lvgl_provider 为 component，target 描述为 sdk" in result.stderr
 
 
 def test_build_script_validate_ep_package_uses_target_default_output(tmp_path):

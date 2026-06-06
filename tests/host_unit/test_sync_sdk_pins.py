@@ -93,6 +93,9 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: none
+
 output:
   ep_package: out/ep/{target_name}
   firmware: out/firmware/{target_name}
@@ -454,6 +457,9 @@ sdk:
 
 toolchain:
   source: sdk
+
+ui:
+  lvgl_provider: none
 
 output:
   ep_package: out/ep/{target_name}

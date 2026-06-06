@@ -55,6 +55,10 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: sdk
+  lvgl_note: fake SDK provides LVGL
+
 output:
   ep_package: out/ep/{name}
   firmware: out/firmware/{name}
@@ -216,6 +220,56 @@ def test_validate_targets_fails_when_rtos_firmware_output_is_missing(tmp_path):
 
     assert result.returncode != 0
     assert "target 描述缺少 output.firmware" in result.stderr
+
+
+def test_validate_targets_fails_when_lvgl_provider_is_missing(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace(
+            """ui:
+  lvgl_provider: sdk
+  lvgl_note: fake SDK provides LVGL
+
+""",
+            "",
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "target 描述缺少 ui.lvgl_provider" in result.stderr
+
+
+def test_validate_targets_fails_when_lvgl_provider_is_invalid(tmp_path):
+    repo = tmp_path / "repo"
+    _write_valid_target(repo)
+    target_file = repo / "targets" / "host_rtos_demo.yaml"
+    target_file.write_text(
+        target_file.read_text(encoding="utf-8").replace(
+            "  lvgl_provider: sdk\n",
+            "  lvgl_provider: bundled\n",
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [str(VALIDATE_SCRIPT), "--repo-root", str(repo)],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode != 0
+    assert "ui.lvgl_provider 只能是 sdk、component、prebuilt 或 none" in result.stderr
 
 
 def test_validate_targets_fails_when_old_top_level_os_is_used(tmp_path):

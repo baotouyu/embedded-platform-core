@@ -243,15 +243,30 @@ config/profiles/<platform>.cfg
 
 3. 不把大型资源、数据库、SDK 配置塞进 profile。
 
-## 第八阶段：LVGL 预编译包
+## 第八阶段：LVGL 来源声明
 
-1. 准备平台 LVGL 产物。
+1. 先在 target 描述文件里声明 LVGL 来源。
 
 ```text
-third_party/prebuilt/lvgl/<platform>/
+targets/<target>.yaml
 ```
 
-2. 包内至少包含：
+```yaml
+ui:
+  lvgl_provider: sdk       # sdk/component/prebuilt/none
+  lvgl_note: Luban-Lite SDK provides LVGL display and input ports.
+```
+
+2. 按 provider 决定放置方式。
+
+| provider | 处理方式 |
+| --- | --- |
+| `sdk` | 原厂 SDK 已带 LVGL、显示和触摸 port，主工程不复制源码，不另建 display/touch HAL。 |
+| `component` | Linux 等独立应用平台可以使用主工程组件或芯片专属 LVGL 仓库。 |
+| `prebuilt` | 准备 `third_party/prebuilt/lvgl/<platform>/`，主工程只消费头文件、库和 manifest。 |
+| `none` | 当前 target 不接 UI。 |
+
+3. `prebuilt` 包内至少包含：
 
 ```text
 include/
@@ -259,7 +274,7 @@ lib/
 manifest
 ```
 
-3. manifest 需要说明：
+4. `prebuilt` manifest 需要说明：
 
 ```text
 LVGL 版本
@@ -270,7 +285,7 @@ LVGL 版本
 字体能力
 ```
 
-4. 主工程不直接改该平台 `lv_conf.h`，应从对应 SDK 或 LVGL 预编译仓库重新产包。
+5. 主工程不直接改该平台 `lv_conf.h`，应从对应 SDK、芯片专属 LVGL 仓库或 LVGL 预编译仓库重新产包。
 
 ## 第九阶段：资源目录
 

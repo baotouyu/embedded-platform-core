@@ -152,6 +152,8 @@ write_manifest() {
     target_sdk_repo=
     target_sdk_ref=
     target_toolchain_source=
+    target_ui_lvgl_provider=
+    target_ui_lvgl_note=
 
     td_validate_declared_target "$TARGET_FILE" "$TARGET"
     target_platform_family=$(td_trim "$(td_read_section_value "$TARGET_FILE" "platform" "family")")
@@ -164,6 +166,8 @@ write_manifest() {
     target_sdk_repo=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "repo")")
     target_sdk_ref=$(td_trim "$(td_read_section_value "$TARGET_FILE" "sdk" "ref")")
     target_toolchain_source=$(td_trim "$(td_read_section_value "$TARGET_FILE" "toolchain" "source")")
+    target_ui_lvgl_provider=$(td_trim "$(td_read_section_value "$TARGET_FILE" "ui" "lvgl_provider")")
+    target_ui_lvgl_note=$(td_trim "$(td_read_section_value "$TARGET_FILE" "ui" "lvgl_note")")
 
     {
         printf '{\n'
@@ -186,6 +190,10 @@ write_manifest() {
         printf '  },\n'
         printf '  "toolchain": {\n'
         printf '    "source": "%s"\n' "$(json_escape "$target_toolchain_source")"
+        printf '  },\n'
+        printf '  "ui": {\n'
+        printf '    "lvgl_provider": "%s",\n' "$(json_escape "$target_ui_lvgl_provider")"
+        printf '    "lvgl_note": "%s"\n' "$(json_escape "$target_ui_lvgl_note")"
         printf '  },\n'
         printf '  "headers": [\n'
 

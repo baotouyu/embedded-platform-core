@@ -84,6 +84,19 @@ validate_submodule_head() {
     fi
 }
 
+validate_lvgl_provider() {
+    target_file=$1
+    lvgl_provider=$2
+
+    case "$lvgl_provider" in
+        sdk|component|prebuilt|none)
+            ;;
+        *)
+            td_die "target 描述 ui.lvgl_provider 只能是 sdk、component、prebuilt 或 none：$target_file"
+            ;;
+    esac
+}
+
 [ -d "$TARGET_DIR" ] || td_die "缺少 targets 目录：$TARGET_DIR"
 
 count=0
@@ -111,6 +124,8 @@ for target_file in "$TARGET_DIR"/*.yaml; do
     require_section_value "$target_file" "platform" "board" >/dev/null
     require_section_value "$target_file" "platform" "kernel" >/dev/null
     require_section_value "$target_file" "toolchain" "source" >/dev/null
+    lvgl_provider=$(require_section_value "$target_file" "ui" "lvgl_provider")
+    validate_lvgl_provider "$target_file" "$lvgl_provider"
     require_section_value "$target_file" "output" "ep_package" >/dev/null
 
     if [ "$platform_family" = "rtos" ]; then

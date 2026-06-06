@@ -16,6 +16,10 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: none
+  lvgl_note: Stub target does not provide LVGL.
+
 output:
   ep_package: out/ep/host_rtos_demo
   firmware: out/firmware/host_rtos_demo

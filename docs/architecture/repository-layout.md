@@ -37,7 +37,18 @@ third_party/prebuilt/vendor/<platform>
 
 预编译包必须包含头文件、静态库和 manifest。主工程只消费这些产物，不在这里直接改第三方库配置。
 
-不要直接修改预编译包里的 lv_conf.h。正式修改 LVGL 配置时，先去对应的 `lvgl-prebuilt-*` 仓库修改源头配置并重新产包，再同步回主工程。
+不要直接修改预编译包里的 lv_conf.h。正式修改 LVGL 配置时，先去对应的 `lvgl-prebuilt-*` 或芯片专属 LVGL 仓库修改源头配置并重新产包，再同步回主工程。
+
+LVGL 的归属由 `targets/<target>.yaml` 的 `ui.lvgl_provider` 声明：
+
+| provider | 放置和维护方式 |
+| --- | --- |
+| `sdk` | RTOS 原厂 SDK 已经内置 LVGL、显示和触摸 port。主工程不复制 LVGL 源码，不在 `components/` 另建该平台 LVGL。 |
+| `component` | Linux 这类应用独立交叉编译平台可以放主工程组件或芯片专属组件仓库，例如 F133 的 `sunxi_lvgl_v9.1`。 |
+| `prebuilt` | 主工程消费已经产好的 LVGL 头文件、库和 manifest，例如 host/macOS 预编译包。 |
+| `none` | target 不提供 UI/LVGL。 |
+
+`components/ui` 是 EP 自己的 UI 生命周期薄封装，只负责 `lv_init`、tick 和 handler 这类公共生命周期，不代表主工程接管每个平台的 LVGL port。RTOS SDK 自带 LVGL 时，业务 UI 可以按该 SDK 暴露的 LVGL 使用方式写，底层显示刷新和触摸输入继续归 SDK 维护。
 
 厂商 SDK 适配不把完整 SDK 放到 `third_party/prebuilt/`。RTOS SDK 先在外部 SDK 仓库里处理原厂工程、工具链、芯片差异和固件打包，再由主工程导出 `out/ep/<target>` 静态库包给 SDK 链接。只有少量确实需要被主工程直接消费的厂商预编译库，才放到 `third_party/prebuilt/vendor/<platform>`。
 
