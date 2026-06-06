@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -95,6 +96,9 @@ sdk:
 
 toolchain:
   source: sdk
+
+ui:
+  lvgl_provider: none
 
 output:
   ep_package: out/ep/host_rtos_demo
@@ -451,6 +455,43 @@ lunch() {
         luban_root / "rtconfig-lunched.txt"
     ).read_text(encoding="utf-8") == "d12x_demo68-nor_rt-thread_helloworld_defconfig\n"
     assert "配置 Luban-Lite：d12x_demo68-nor_rt-thread_helloworld_defconfig" in result.stdout
+
+
+def test_sdk_ep_export_manifest_includes_ui_provider(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo(sdk_repo)
+
+    repo = tmp_path / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+    sdk_dir = repo / "third_party" / "sdk" / "fake-sdk"
+    _write_fake_sdk_toolchain(sdk_dir)
+
+    result = subprocess.run(
+        [
+            str(repo / "tools" / "scripts" / "export_sdk_ep_package.sh"),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--sdk-dir",
+            str(sdk_dir),
+            "--clean",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    manifest = json.loads(
+        (repo / "out" / "ep" / "host_rtos_demo" / "manifest.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert manifest["ui"] == {
+        "lvgl_provider": "none",
+        "lvgl_note": "",
+    }
 
 
 def test_build_target_firmware_allows_relative_sibling_sdk_root(tmp_path):
@@ -849,6 +890,9 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: none
+
 output:
   ep_package: out/ep/{target_name}
   firmware: out/firmware/{target_name}
@@ -914,6 +958,8 @@ sdk:
   ref: 0123456789abcdef0123456789abcdef01234567
 toolchain:
   source: sdk
+ui:
+  lvgl_provider: none
 output:
   ep_package: out/ep/test_target
   firmware: out/firmware/test_target

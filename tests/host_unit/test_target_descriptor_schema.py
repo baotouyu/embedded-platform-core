@@ -62,7 +62,20 @@ def test_target_files_declare_required_schema_fields():
         assert _read_section_value(text, "platform", "board"), target_file
         assert _read_section_value(text, "platform", "kernel"), target_file
         assert _read_section_value(text, "toolchain", "source"), target_file
+        assert _read_section_value(text, "ui", "lvgl_provider"), target_file
         assert _read_section_value(text, "output", "ep_package"), target_file
+
+
+def test_rtos_luban_lite_targets_use_sdk_managed_lvgl():
+    for target_file in sorted(TARGETS_DIR.glob("artinchip_d12x_lubanlite_*.yaml")):
+        text = target_file.read_text(encoding="utf-8")
+
+        assert _read_section_value(text, "platform", "family") == "rtos", target_file
+        assert _read_section_value(text, "platform", "sdk_family") == "luban-lite", (
+            target_file
+        )
+        assert _read_section_value(text, "ui", "lvgl_provider") == "sdk", target_file
+        assert _read_section_value(text, "ui", "lvgl_note"), target_file
 
 
 def test_repository_targets_pin_sdk_ref_to_tag_or_commit():

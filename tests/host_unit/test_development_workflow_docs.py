@@ -81,7 +81,7 @@ def test_platform_difference_docs_define_porting_boundaries():
             "平台能力表",
             "平台路径",
             "配置文件",
-            "LVGL 预编译包",
+            "LVGL 来源声明",
             "冒烟测试",
         ],
     }

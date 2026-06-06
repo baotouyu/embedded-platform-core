@@ -106,7 +106,7 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 | I2C | `hal/include/ep_hal_i2c.h` | `rtc_bus` 已可用。 |
 | RTC | `hal/include/ep_hal_rtc.h` | `rtc -> PCF8563` 已可用。 |
 | 文件读写 | SDK/RT-Thread 文件系统 API | SD 卡文件系统由 SDK 负责，业务可按平台已提供的 `open/read/write` 路线使用。 |
-| UI | LVGL API | 每个芯片使用自己的 LVGL port；EP 只管理公共 UI 生命周期，不封 display/touch HAL。 |
+| UI | LVGL API | D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，LVGL、显示和触摸 port 由原厂 SDK 提供；EP 只管理公共 UI 生命周期，不封 display/touch HAL。 |
 
 ## 当前推进结论
 
@@ -118,6 +118,22 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 4. KI 板当前需要的 UART/PWM/GPIO/I2C/RTC 已有真实 HAL port。
 5. display/touch 交给平台 LVGL port，避免 EP 重复封一层低价值 API。
 6. SD 卡文件系统能力由 Luban-Lite/RT-Thread 提供，业务层需要文件读写时直接按平台文件系统能力使用。
+
+## LVGL 归属规则
+
+`targets/<target>.yaml` 的 `ui.lvgl_provider` 是判断 LVGL 放在哪里的唯一入口。
+
+当前 D12x/Luban-Lite 使用：
+
+```yaml
+ui:
+  lvgl_provider: sdk
+  lvgl_note: Luban-Lite SDK provides LVGL display and input ports.
+```
+
+这表示 LVGL 源码、`lv_conf.h`、显示刷新、触摸输入和硬件加速配置都归 Luban-Lite SDK 维护。主工程不把这套 LVGL 复制进 `components/`，也不在 EP HAL 中再封 display/touch。业务需要写 UI 时，按 Luban-Lite 暴露的 LVGL API 和工程习惯编写。
+
+Linux 芯片如果没有这种原厂 RTOS SDK 集成，可以使用 `ui.lvgl_provider=component` 或 `prebuilt`。例如 F133/Tina Linux 可以用芯片专属 LVGL 仓库维护 framebuffer、输入、G2D 加速、旋转和交叉编译规则，再由主工程按组件或预编译依赖消费。
 7. SPI、ADC 当前不作为主线任务，等业务确实用到再补对应 port 和冒烟测试。
 8. 电源板 UART2 的硬件通道已经打开，协议层后续在业务模块或专用组件里实现。
 

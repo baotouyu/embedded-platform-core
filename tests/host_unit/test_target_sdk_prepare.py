@@ -57,6 +57,9 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: none
+
 output:
   ep_package: out/ep/host_rtos_demo
 """,

@@ -77,7 +77,7 @@ third_party / 外部 SDK 仓库
 - `file`：文件组件，支持基础文件读写。
 - `event`：事件总线。
 - `timer`：软件定时器。
-- `ui`：LVGL 生命周期组件。
+- `ui`：LVGL 生命周期薄封装，不接管各平台 display/touch port。
 
 ### host/macOS 平台
 
@@ -99,7 +99,7 @@ third_party / 外部 SDK 仓库
 - 默认逻辑设备：`platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c`。
 - 固件输出：`out/firmware/artinchip_d12x_lubanlite_ki_141103_480p/`。
 
-当前 KI 板已经完成镜像构建、烧录启动、`app/main.c` 链接、UART/PWM/GPIO/I2C/RTC 真实 port 和主要板级冒烟。display/touch 归每个芯片自己的 LVGL display/input port；SD 卡文件系统使用 SDK 已有能力；SPI/ADC 业务暂时不用，按需再补。
+当前 KI 板已经完成镜像构建、烧录启动、`app/main.c` 链接、UART/PWM/GPIO/I2C/RTC 真实 port 和主要板级冒烟。D12x/Luban-Lite target 的 `ui.lvgl_provider=sdk`，display/touch 和 LVGL port 归原厂 SDK；SD 卡文件系统使用 SDK 已有能力；SPI/ADC 业务暂时不用，按需再补。
 
 ### 第三方库
 
@@ -108,6 +108,7 @@ third_party / 外部 SDK 仓库
 - SQLite 3.53.1 amalgamation 源码快照。
 - LVGL 9.1 host/macOS 预编译包。
 - `lvgl-prebuilt-host-macos` 独立仓库负责 host LVGL 配置和产物。
+- Linux 芯片如果没有原厂 RTOS SDK 内置 LVGL，可以用芯片专属 LVGL 组件仓库接入，例如 F133 的 `sunxi_lvgl_v9.1`。
 - host 资源目录约定为 `resources/host`，图片、字体、主题分别放在对应子目录。
 
 cJSON 和 SQLite 当前只作为第三方库目标接入，后续业务组件可以按需链接。

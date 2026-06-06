@@ -10,7 +10,8 @@
 
 - OSAL、HAL 和设备兼容层是业务代码访问系统和硬件的入口。
 - UART、PWM、GPIO、I2C、RTC 已有 RT-Thread/Luban-Lite 真实 port。
-- display/touch 不在 EP HAL 中二次封装，由每个芯片自己的 LVGL display/input port 负责。
+- D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，display/touch 和 LVGL port 由原厂 SDK 负责，EP 不二次封装。
+- Linux 芯片如果没有原厂 SDK 内置 LVGL，可以使用芯片专属 LVGL 组件仓库，例如 F133 的 `sunxi_lvgl_v9.1`。
 - SD 卡文件系统使用 Luban-Lite/RT-Thread 已提供的文件系统能力，业务需要时按 SDK 的 `open/read/write` 方式读写。
 - SPI、ADC 当前业务暂时不用，保持公共接口，等真实需求出现再补 port。
 - 电源板 UART2 硬件通道已打开，协议后续按业务协议单独实现。
@@ -63,7 +64,7 @@
 | `ep_uart_open`、`ep_pwm_*`、`ep_i2c_read` 怎么用？ | `hal-api-reference.md` |
 | `power_uart`、`beep_pwm`、`rtc` 这些逻辑设备名对应什么硬件？ | `device-compatibility-reference.md` |
 | 板子烧录后怎么确认外设正常？ | `ki-141103-480p-smoke-test.md` |
-| display/touch 应该在哪里适配？ | `luban-lite-compatibility-overview.md`、`hal-api-reference.md` |
+| display/touch 和 LVGL 应该在哪里适配？ | `luban-lite-compatibility-overview.md`、`platform-differences.md` |
 
 ## 维护规则
 

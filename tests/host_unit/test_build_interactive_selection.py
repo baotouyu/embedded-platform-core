@@ -37,6 +37,9 @@ sdk:
 toolchain:
   source: sdk
 
+ui:
+  lvgl_provider: none
+
 output:
   ep_package: out/ep/{name}
   firmware: out/firmware/{name}
