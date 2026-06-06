@@ -176,12 +176,17 @@ Luban-Lite application/rt-thread/helloworld/main.c
         -> ep_device_init()
         -> ep_platform_register_default_devices()
       -> app/main.c: app_main()
+        -> app_context_init()
+        -> app_core_start()
+        -> app_selftest_run()
+        -> app_core_run()
 ```
 
 `app/main.c` 中的日志如果能在串口看到，说明：
 
 - `libep_app_core.a` 已经被链接进镜像。
 - `ep_lubanlite_app_main()` 已经进入 framework。
+- `app/main.c`、`app/app_core.c`、`app/selftest/`、`app/services/` 已经进入最终链接。
 - EasyLogger 的 RT-Thread 输出 port 已经工作。
 
 ## 产物位置

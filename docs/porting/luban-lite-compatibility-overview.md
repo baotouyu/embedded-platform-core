@@ -67,10 +67,22 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
       -> core/src/ep_framework.c: ep_framework_start()
         -> ep_platform_boot()
         -> ep_framework_init()
+          -> ep_log_init()
+          -> ep_config_init()
+          -> ep_event_init()
+          -> ep_timer_init()
+          -> ep_device_init()
+          -> ep_platform_register_default_devices()
         -> app/main.c: app_main()
+          -> app_context_init()
+          -> app_core_start()
+          -> app_selftest_run()
+          -> app_core_run()
 ```
 
 `application/rt-thread/ep_app/` 是构建时 staging 目录，由 `third_party/sdk/sdk-artinchip-luban-lite/scripts/build_firmware.sh` 复制生成，不作为主工程业务源码维护。
+
+应用业务骨架的详细文件路径、API 参数和返回值见 `app-business-skeleton.md`。
 
 ## 当前已跑通的 KI 板基线
 
@@ -89,6 +101,29 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 | 蜂鸣器 | PWM1，PC7，默认 2700 Hz |
 | 默认逻辑设备注册 | `console_uart`、`power_uart`、`beep_pwm`、`rtc_bus`、`rtc`、`lcd_sleep_gpio`、`panel_enable_gpio` |
 | SD 卡 | SDMC1，boot 阶段单线 SD |
+
+## 当前 app 业务骨架
+
+当前业务入口已经拆成四层：
+
+| 层级 | 路径 | 职责 |
+| --- | --- | --- |
+| 薄入口 | `app/main.c` | 只编排 `app_context_init()`、`app_core_start()`、`app_selftest_run()`、`app_core_run()`。 |
+| 应用上下文 | `app/include/app_context.h` | 保存跨服务共享的应用状态，当前有 `services_ready`。 |
+| 生命周期 | `app/app_core.c` | 初始化业务服务，进入应用主流程。 |
+| 自检 | `app/selftest/app_selftest.c` | 用 event/timer/sleep 验证 framework 到 app 的链路。 |
+| 服务层 | `app/services/` | 提供蜂鸣器、RTC、LCD sleep、电源板 UART 的业务边界。 |
+
+当前服务层先建立接口边界，不假装实现完整业务动作：
+
+| 服务 | 头文件 | 当前状态 |
+| --- | --- | --- |
+| 蜂鸣器 | `app/services/beep_service.h` | `beep_service_init()` 已可用；`beep_service_beep_ms()` 目前返回 `EP_ERR_UNSUPPORTED`。 |
+| RTC | `app/services/rtc_service.h` | `rtc_service_init()` 已可用；`rtc_service_get_time()` 目前返回 `EP_ERR_UNSUPPORTED`，底层 RTC HAL 已就绪。 |
+| LCD sleep | `app/services/lcd_sleep_service.h` | `lcd_sleep_service_init()` 已可用；`lcd_sleep_service_set_sleep()` 目前返回 `EP_ERR_UNSUPPORTED`，底层 GPIO 已就绪。 |
+| 电源板 | `app/services/power_board_service.h` | `power_board_service_init()` 已可用；`power_board_service_write()` 目前返回 `EP_ERR_UNSUPPORTED`，协议待定义。 |
+
+业务代码优先使用服务层接口。服务层确实需要访问硬件时，再调用 `hal/include/` 下的 HAL API 或 SDK 已提供能力。
 
 ## 现在写业务时该用什么
 
@@ -148,6 +183,7 @@ Linux 芯片如果没有这种原厂 RTOS SDK 集成，可以使用 `ui.lvgl_pro
 
 详细 API 说明见：
 
+- `app-business-skeleton.md`
 - `osal-api-reference.md`
 - `hal-api-reference.md`
 - `device-compatibility-reference.md`
