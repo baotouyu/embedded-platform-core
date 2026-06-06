@@ -46,7 +46,14 @@ output:
     )
     for header in [
         "core/include/ep_framework.h",
+        "app/include/app_context.h",
+        "app/include/app_core.h",
         "app/include/app_main.h",
+        "app/selftest/app_selftest.h",
+        "app/services/beep_service.h",
+        "app/services/lcd_sleep_service.h",
+        "app/services/power_board_service.h",
+        "app/services/rtc_service.h",
         "components/log/include/ep_log.h",
         "components/config/include/ep_config.h",
         "components/event/include/ep_event.h",

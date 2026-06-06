@@ -153,16 +153,23 @@
 当前建议下一步是：
 
 ```text
-进入业务应用结构整理和业务代码开发
+进入具体业务协议和业务模块开发
 ```
 
 KI-141103-480p 已经完成基础板级启动、镜像构建、`app/main.c` 链接、RT-Thread OSAL、UART/PWM/GPIO/I2C/RTC 真实 port 和主要板级冒烟。display/touch 由各芯片 LVGL port 负责；SD 卡文件系统走 SDK 已有能力；SPI/ADC 当前业务暂时不用，按需再补。
 
+应用入口已经拆成基础业务骨架：
+
+- `app/main.c`：只保留 `app_main()` 薄入口。
+- `app/app_core.c`：管理应用上下文、服务启动顺序和主流程收口。
+- `app/selftest/app_selftest.c`：保留当前 timer/event 生命周期冒烟，确保 framework 到 app 的链路可验证。
+- `app/services/`：建立蜂鸣器、RTC、LCD sleep、电源板 UART 的业务服务边界。
+
 后续主线建议：
 
-1. 把 `app/main.c` 从生命周期冒烟入口逐步拆成业务模块。
-2. 明确业务模块边界，例如设备协议、UI 页面流程、配置、用户数据、资源加载。
-3. 电源板 UART2 协议按实际帧格式单独实现。
+1. 电源板 UART2 协议按实际帧格式单独实现。
+2. 明确后续业务模块边界，例如 UI 页面流程、配置、用户数据、资源加载。
+3. 蜂鸣器、RTC、LCD sleep 服务在真实业务第一次调用时补具体 HAL 操作和板级冒烟。
 4. 需要后台任务时，使用 OSAL thread + queue/sem/event，线程通过显式退出协议自然结束后再 join。
 5. 每增加一个真实业务能力，同步补 API 文档、板级验证步骤和 Wiki。
 
