@@ -110,6 +110,7 @@ output:
         "app/app_core.c",
         "app/main.c",
         "app/selftest/app_selftest.c",
+        "app/ui/app_ui.c",
         "app/services/beep_service.c",
         "app/services/lcd_sleep_service.c",
         "app/services/power_board_service.c",
@@ -140,6 +141,7 @@ output:
         "app/include/app_core.h",
         "app/include/app_main.h",
         "app/selftest/app_selftest.h",
+        "app/ui/app_ui.h",
         "app/services/beep_service.h",
         "app/services/lcd_sleep_service.h",
         "app/services/power_board_service.h",
@@ -401,7 +403,7 @@ def test_build_target_firmware_runs_ep_export_and_sdk_build(tmp_path):
     assert "固件已生成" in result.stdout
 
 
-def test_sdk_ep_export_uses_rtthread_osal_and_excludes_lvgl_ui():
+def test_sdk_ep_export_uses_rtthread_osal_and_sdk_lvgl_app_ui():
     script = (REPO_ROOT / "tools" / "scripts" / "export_sdk_ep_package.sh").read_text(
         encoding="utf-8"
     )
@@ -414,6 +416,11 @@ def test_sdk_ep_export_uses_rtthread_osal_and_excludes_lvgl_ui():
     assert "platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtc_pcf8563.c" in script
     assert "components/device/src/ep_device.c" in script
     assert "platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c" in script
+    assert "app/ui/app_ui.c" in script
+    assert "-I$REPO_ROOT/app/ui" in script
+    assert "packages/artinchip/lvgl-ui/lvgl_v9" in script
+    assert "append_luban_lvgl_custom_include_flags" in script
+    assert "AIC_LVGL_DEMO_HUB_DEMO:aic_demo/demo_hub" in script
     assert "platforms/rtos/demo_family/hal_port/ep_rtos_hal_stub.c" not in script
     assert "components/ui/src/ep_ui.c" not in script
     assert "ep_thirdparty_lvgl" not in script

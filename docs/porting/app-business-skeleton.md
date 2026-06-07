@@ -14,11 +14,12 @@ app/main.c
     -> rtc_service_init()
     -> lcd_sleep_service_init()
     -> power_board_service_init()
+  -> app/ui/app_ui.c         # 有 LVGL 的平台在 display/input ready 后调用
   -> app_selftest_run()
   -> app_core_run()
 ```
 
-这些代码会被编进 `libep_app_core.a`，再由 Luban-Lite SDK 复制到 `application/rt-thread/ep_app` 并链接进最终镜像。后续业务代码优先放在 `app/app_core.c`、`app/services/` 或新增业务模块里，不直接修改 SDK staging 目录。
+这些代码会被编进 `libep_app_core.a`，再由 Luban-Lite SDK 复制到 `application/rt-thread/ep_app` 并链接进最终镜像。后续业务代码优先放在 `app/app_core.c`、`app/services/`、`app/ui/` 或新增业务模块里，不直接修改 SDK staging 目录。
 
 ## 文件路径
 
@@ -31,6 +32,8 @@ app/main.c
 | 应用生命周期实现 | `app/app_core.c` |
 | 当前自检接口 | `app/selftest/app_selftest.h` |
 | 当前自检实现 | `app/selftest/app_selftest.c` |
+| 应用 UI 公共接口 | `app/ui/app_ui.h` |
+| 应用 UI 公共实现 | `app/ui/app_ui.c` |
 | 蜂鸣器服务 | `app/services/beep_service.h`、`app/services/beep_service.c` |
 | RTC 服务 | `app/services/rtc_service.h`、`app/services/rtc_service.c` |
 | LCD sleep 服务 | `app/services/lcd_sleep_service.h`、`app/services/lcd_sleep_service.c` |
@@ -140,6 +143,56 @@ power_board_service_init()
 - `EP_ERR_INVAL`：上下文为空或服务尚未启动。
 
 当前实现只打印 `app lifecycle done` 并返回。后续真正业务主循环、后台任务管理或 UI 主流程可以从这里向外拆。
+
+## 应用 UI 层
+
+应用 UI 层放在：
+
+```text
+app/ui/
+```
+
+当前公共接口是：
+
+```c
+int app_ui_create(void);
+```
+
+这个接口的含义是：在“当前已经初始化好的 LVGL active screen” 上创建应用页面。它不负责初始化 LVGL，不负责创建显示设备，不负责触摸输入，也不负责窗口或 framebuffer。调用它之前，平台必须已经完成自己的 LVGL、display 和 input 准备工作。
+
+当前调用关系：
+
+```text
+host/macOS:
+  ep_ui_init()
+  ep_host_ui_port_init()
+  app_ui_create()
+  ep_ui_process() loop
+
+D12x/Luban-Lite:
+  Luban-Lite SDK 初始化 LVGL/display/touch
+  主工程导出的 app/ui/app_ui.c 编进 libep_app_core.a
+  后续在 SDK LVGL 已 ready 的入口调用 app_ui_create()
+```
+
+`app_ui_create()` 返回值：
+
+| 返回值 | 含义 |
+| --- | --- |
+| `EP_OK` | 页面创建成功。 |
+| `EP_ERR_UNSUPPORTED` | 当前 LVGL active screen 或控件创建失败，通常表示 LVGL/display/input 尚未准备好，或该 target 不提供 LVGL。 |
+
+`app/ui/app_ui.h` 故意不包含 `lvgl.h`，只暴露业务 UI 创建入口，避免公共头文件把 LVGL 类型向外扩散。`app/ui/app_ui.c` 可以包含标准 `lvgl.h` 并使用通用 LVGL API，例如 `lv_screen_active()`、`lv_label_create()`、`lv_label_set_text()` 和 `lv_obj_align()`。
+
+这一层必须保持平台无关，不能包含：
+
+- `SDL2/SDL.h`
+- `ep_host_ui_port.h`
+- `rtthread.h`
+- Luban-Lite/AIC 私有 BSP 头文件
+- 具体 LCD、触摸、framebuffer 或 pinmux 头文件
+
+后续在 Mac 上写 LVGL 页面、页面切换、控件布局和事件回调时，优先写在 `app/ui/`。Mac host 使用 `third_party/prebuilt/lvgl/host_macos` 提供 LVGL 头文件和 SDL2 后端；D12x/Luban-Lite 使用 SDK 自带 LVGL 头文件和显示触摸 port。只要 `app/ui/` 不碰平台私有 API，同一份页面源码就可以被两边编译。
 
 ## 自检流程
 
@@ -319,10 +372,20 @@ application/rt-thread/ep_app/
 
 `application/rt-thread/ep_app` 是 staging 目录，不是业务源头。业务源头永远在主工程 `app/`、`components/`、`osal/`、`hal/`、`platforms/` 这些目录。
 
+SDK 导出时，`tools/scripts/export_sdk_ep_package.sh` 会把 `app/ui/app_ui.c` 一起编进 `libep_app_core.a`。D12x/Luban-Lite 目标使用 SDK 自带 LVGL，所以导出脚本使用 Luban-Lite 里的 LVGL include 路径：
+
+```text
+<luban-lite-root>/packages/artinchip/lvgl-ui/lvgl_v9/
+<luban-lite-root>/packages/artinchip/lvgl-ui/lvgl_v9/lvgl/
+```
+
+同时，SDK 导出仍然不包含 `components/ui/src/ep_ui.c`。原因是 RTOS SDK 已经负责 LVGL 生命周期、显示刷新和触摸输入，主工程不能在 SDK 静态库里再执行一套 host 风格的 LVGL 初始化。
+
 ## 后续写业务的规则
 
 - 新业务先判断是“纯业务逻辑”还是“硬件/系统相关逻辑”。
 - 纯业务逻辑优先放 `app/` 下的新模块，或后续明确复用价值后放 `components/`。
+- LVGL 页面、页面切换和控件事件优先放 `app/ui/`，不要写进 `platforms/host/` 或 SDK staging 目录。
 - 硬件动作优先落到 `app/services/`，服务层再调用 HAL 或 SDK 已有能力。
 - OS 差异只能通过 `osal/include/` 访问。
 - 硬件差异只能通过 `hal/include/`、设备注册表或平台能力访问。

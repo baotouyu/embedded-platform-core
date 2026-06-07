@@ -12,6 +12,7 @@
 
 - 在 Mac 上验证框架启动流程。
 - 在 Mac 上验证通用组件行为。
+- 在 Mac 上编写和验证可复用的 `app/ui` LVGL 页面。
 - 在真实 KI-141103-480p 板上验证 RT-Thread OSAL、HAL 和业务入口。
 - 在平台边界稳定后继续开发平台无关业务代码。
 - 管理 EasyLogger、LVGL 这类第三方库的接入方式。
@@ -62,6 +63,7 @@ third_party / 外部 SDK 仓库
 
 - CMake 工程骨架。
 - `app/core/components/osal/hal/platforms` 分层。
+- `app/ui` 可复用 LVGL 页面入口。
 - 平台能力注册表第一版。
 - 平台路径接口第一版。
 - host/macOS 可运行入口。
@@ -84,7 +86,7 @@ third_party / 外部 SDK 仓库
 - POSIX 时间、内存、线程、互斥锁、信号量、队列实现。
 - host 框架启动程序。
 - SDL2 UI port。
-- LVGL 基础 demo。
+- LVGL 基础 demo，使用 `app/ui` 公共页面入口。
 - LVGL widgets demo。
 - host 资源冒烟示例。
 
@@ -99,7 +101,7 @@ third_party / 外部 SDK 仓库
 - 默认逻辑设备：`platforms/rtos/demo_family/component_port/ep_rtos_default_devices.c`。
 - 固件输出：`out/firmware/artinchip_d12x_lubanlite_ki_141103_480p/`。
 
-当前 KI 板已经完成镜像构建、烧录启动、`app/main.c` 链接、UART/PWM/GPIO/I2C/RTC 真实 port 和主要板级冒烟。D12x/Luban-Lite target 的 `ui.lvgl_provider=sdk`，display/touch 和 LVGL port 归原厂 SDK；SD 卡文件系统使用 SDK 已有能力；SPI/ADC 业务暂时不用，按需再补。
+当前 KI 板已经完成镜像构建、烧录启动、`app/main.c` 链接、`app/ui` 导出、UART/PWM/GPIO/I2C/RTC 真实 port 和主要板级冒烟。D12x/Luban-Lite target 的 `ui.lvgl_provider=sdk`，display/touch 和 LVGL port 归原厂 SDK；SD 卡文件系统使用 SDK 已有能力；SPI/ADC 业务暂时不用，按需再补。
 
 ### 第三方库
 

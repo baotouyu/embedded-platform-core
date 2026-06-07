@@ -50,23 +50,27 @@ def test_host_cmake_wires_sdl2_ui_port_only_for_host_macos():
 def test_app_cmake_stays_platform_neutral():
     app_cmake = (REPO_ROOT / "app/CMakeLists.txt").read_text(encoding="utf-8")
 
+    assert "ui/app_ui.c" in app_cmake
+    assert "${CMAKE_CURRENT_SOURCE_DIR}/ui" in app_cmake
+    assert "${EP_LVGL_INCLUDE_DIR}" in app_cmake
     assert "EP_HAS_HOST_SDL2_UI" not in app_cmake
     assert "ep_host_ui_port" not in app_cmake
-    assert "ep_thirdparty_lvgl" not in app_cmake
 
 
 def test_host_startup_runs_sdl2_demo_behind_compile_flag():
     startup = (REPO_ROOT / "platforms/host/posix/startup/main.c").read_text(encoding="utf-8")
 
     assert "#if defined(EP_HAS_HOST_SDL2_UI)" in startup
+    assert '#include "app_ui.h"' in startup
     assert '#include "ep_ui.h"' in startup
     assert '#include "ep_host_ui_port.h"' in startup
-    assert '#include "lvgl.h"' in startup
+    assert '#include "lvgl.h"' not in startup
     assert "ep_framework_start()" in startup
     assert "ep_ui_init()" in startup
     assert "ep_host_ui_port_init()" in startup
-    assert "lv_label_create(lv_screen_active())" in startup
-    assert 'lv_label_set_text(label, "embedded-platform-core host SDL2")' in startup
+    assert "app_ui_create()" in startup
+    assert "lv_label_create" not in startup
+    assert "lv_label_set_text" not in startup
     assert "ep_ui_process()" in startup
     assert "#define EP_HOST_UI_FRAME_DELAY_MS 16u" in startup
     assert "ep_sleep_ms(EP_HOST_UI_FRAME_DELAY_MS)" in startup

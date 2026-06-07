@@ -2,6 +2,7 @@ add_library(ep_app STATIC
   app_core.c
   main.c
   selftest/app_selftest.c
+  ui/app_ui.c
   services/beep_service.c
   services/lcd_sleep_service.c
   services/power_board_service.c
@@ -14,11 +15,13 @@ target_include_directories(ep_app
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/selftest
     ${CMAKE_CURRENT_SOURCE_DIR}/services
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui
     ${CMAKE_SOURCE_DIR}/components/log/include
     ${CMAKE_SOURCE_DIR}/components/event/include
     ${CMAKE_SOURCE_DIR}/components/timer/include
     ${CMAKE_SOURCE_DIR}/hal/include
     ${CMAKE_SOURCE_DIR}/osal/include
+    ${EP_LVGL_INCLUDE_DIR}
 )
 
 target_link_libraries(ep_app

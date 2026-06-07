@@ -4,11 +4,12 @@
 
 ## 先看结论
 
-当前 D12x + Luban-Lite + KI-141103-480p 平台基础适配已经完成，可以开始写业务代码。业务入口在 `app/main.c`，应用生命周期在 `app/app_core.c`，当前自检在 `app/selftest/app_selftest.c`，最终会通过 `libep_app_core.a` 链接进 Luban-Lite 镜像。
+当前 D12x + Luban-Lite + KI-141103-480p 平台基础适配已经完成，可以开始写业务代码。业务入口在 `app/main.c`，应用生命周期在 `app/app_core.c`，当前自检在 `app/selftest/app_selftest.c`，LVGL 页面入口在 `app/ui/app_ui.c`，最终会通过 `libep_app_core.a` 链接进 Luban-Lite 镜像。
 
 当前已经确认的边界：
 
 - OSAL、HAL 和设备兼容层是业务代码访问系统和硬件的入口。
+- LVGL 页面代码写在 `app/ui/`，Mac host 和 AIC Luban-Lite 编译共用源码。
 - UART、PWM、GPIO、I2C、RTC 已有 RT-Thread/Luban-Lite 真实 port。
 - D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，display/touch 和 LVGL port 由原厂 SDK 负责，EP 不二次封装。
 - Linux 芯片如果没有原厂 SDK 内置 LVGL，可以使用芯片专属 LVGL 组件仓库，例如 F133 的 `sunxi_lvgl_v9.1`。
@@ -27,7 +28,7 @@
 | 3 | `rtos-sdk-library-model.md` | 理解 RTOS 平台为什么由主工程导出静态库、厂商 SDK 负责最终固件。 |
 | 4 | `luban-lite-build-and-link.md` | 具体看 Luban-Lite 如何接收 `libep_app_core.a` 并生成镜像。 |
 | 5 | `luban-lite-compatibility-overview.md` | 看 app、framework、OSAL、HAL、设备层和 Luban-Lite 的运行关系。 |
-| 6 | `app-business-skeleton.md` | 看现在业务入口、应用上下文、自检和服务边界怎么写。 |
+| 6 | `app-business-skeleton.md` | 看现在业务入口、应用上下文、自检、服务边界和 `app/ui` 页面入口怎么写。 |
 | 7 | `osal-api-reference.md` | 查 OS 兼容层 API 的参数、返回值、生命周期和 RT-Thread 映射。 |
 | 8 | `hal-api-reference.md` | 查硬件驱动兼容层 API 的设备名、句柄、读写和当前实现状态。 |
 | 9 | `device-compatibility-reference.md` | 查逻辑设备名、设备注册表、平台能力和 KI 板设备映射。 |
@@ -42,6 +43,7 @@
 | 应用上下文 | `app/include/app_context.h` |
 | 应用生命周期 | `app/app_core.c`、`app/include/app_core.h` |
 | 应用自检 | `app/selftest/app_selftest.c`、`app/selftest/app_selftest.h` |
+| 应用 UI 页面 | `app/ui/app_ui.c`、`app/ui/app_ui.h` |
 | 业务骨架文档 | `docs/porting/app-business-skeleton.md` |
 | 设备服务边界 | `app/services/` |
 | framework 生命周期 | `core/src/ep_framework.c`、`core/include/ep_framework.h` |
@@ -72,6 +74,7 @@
 | `power_uart`、`beep_pwm`、`rtc` 这些逻辑设备名对应什么硬件？ | `device-compatibility-reference.md` |
 | 板子烧录后怎么确认外设正常？ | `ki-141103-480p-smoke-test.md` |
 | display/touch 和 LVGL 应该在哪里适配？ | `luban-lite-compatibility-overview.md`、`platform-differences.md` |
+| Mac 写好的 LVGL 页面怎么进 AIC 镜像？ | `app-business-skeleton.md`、`luban-lite-compatibility-overview.md` |
 
 ## 维护规则
 

@@ -60,6 +60,7 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
   target_include_directories(ep_platform_host_posix
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/ui_port
+      ${CMAKE_SOURCE_DIR}/app/ui
       ${CMAKE_SOURCE_DIR}/components/ui/include
       ${CMAKE_SOURCE_DIR}/components/log/include
       ${EP_LVGL_INCLUDE_DIR}
@@ -78,6 +79,7 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
 
   add_executable(ep_host_lvgl_demo
     demos/lvgl_demo_main.c
+    ${CMAKE_SOURCE_DIR}/app/ui/app_ui.c
     ui_port/ep_host_ui_port.c
     osal_port/ep_host_osal_time.c
   )
@@ -85,6 +87,8 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
   target_include_directories(ep_host_lvgl_demo
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/ui_port
+      ${CMAKE_SOURCE_DIR}/app/ui
+      ${CMAKE_SOURCE_DIR}/components/log/include
       ${CMAKE_SOURCE_DIR}/components/ui/include
       ${CMAKE_SOURCE_DIR}/osal/include
       ${EP_LVGL_INCLUDE_DIR}

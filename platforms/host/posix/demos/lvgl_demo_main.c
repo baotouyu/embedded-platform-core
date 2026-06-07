@@ -1,3 +1,4 @@
+#include "app_ui.h"
 #include "ep_host_ui_port.h"
 #include "ep_osal_err.h"
 #include "ep_osal_time.h"
@@ -17,21 +18,20 @@ static void ep_host_lvgl_demo_on_exit(lv_event_t *event)
 
 static int ep_host_lvgl_demo_create_screen(void)
 {
-    lv_obj_t *screen = lv_screen_active();
-    lv_obj_t *title = lv_label_create(screen);
-    lv_obj_t *status = lv_label_create(screen);
-    lv_obj_t *button = lv_button_create(screen);
+    lv_obj_t *screen;
+    lv_obj_t *button;
     lv_obj_t *button_label = 0;
+    int rc = app_ui_create();
 
-    if ((screen == 0) || (title == 0) || (status == 0) || (button == 0)) {
-        return EP_ERR_UNSUPPORTED;
+    if (rc != EP_OK) {
+        return rc;
     }
 
-    lv_label_set_text(title, "embedded-platform-core");
-    lv_obj_align(title, LV_ALIGN_CENTER, 0, -42);
-
-    lv_label_set_text(status, "host macOS LVGL 9.1 + SDL2");
-    lv_obj_align(status, LV_ALIGN_CENTER, 0, -12);
+    screen = lv_screen_active();
+    button = lv_button_create(screen);
+    if ((screen == 0) || (button == 0)) {
+        return EP_ERR_UNSUPPORTED;
+    }
 
     lv_obj_set_size(button, 96, 36);
     lv_obj_align(button, LV_ALIGN_CENTER, 0, 42);
