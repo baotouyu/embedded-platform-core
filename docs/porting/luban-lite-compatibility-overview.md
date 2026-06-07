@@ -80,6 +80,12 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
           -> app_core_start()
           -> app_selftest_run()
           -> app_core_run()
+
+third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/packages/artinchip/lvgl-ui/lv_demo.c
+  -> lv_user_gui_init()
+    -> ep_lubanlite_lvgl_app_ui_create()
+      -> app/ui/app_ui.c: app_ui_create()
+    -> 如果 EP UI 未接入或返回非 0，则回退 aic_ui_init()
 ```
 
 `application/rt-thread/ep_app/` 是构建时 staging 目录，由 `third_party/sdk/sdk-artinchip-luban-lite/scripts/build_firmware.sh` 复制生成，不作为主工程业务源码维护。
@@ -195,6 +201,8 @@ app/ui/app_ui.c
   -> export_sdk_ep_package.sh 使用 Luban-Lite SDK 的 lvgl_v9 头文件编译
   -> libep_app_core.a
   -> application/rt-thread/ep_app/
+  -> ep_lubanlite_lvgl_app_ui_create()
+  -> lv_user_gui_init()
   -> Luban-Lite SDK 链接最终镜像
 ```
 
