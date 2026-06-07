@@ -598,8 +598,8 @@ host/macOS 和 Linux demo 当前提供 PWM stub。打开、设置、启动和停
 
 | 服务接口 | HAL 逻辑设备 | 目标板资源 | host/Linux 行为 |
 | --- | --- | --- | --- |
-| `beep_service_beep_ms()` | `beep_pwm` | PWM1 PC7，2700 Hz，50% 占空比 | 返回 `EP_ERR_UNSUPPORTED`，无真实输出 |
-| `rtc_service_get_time()` | `rtc` | PCF8563，I2C1 PD4/PD5，地址 `0x51` | 返回 `EP_ERR_UNSUPPORTED` |
+| `beep_service_beep_ms()` | `beep_pwm` | PWM1 PC7，2700 Hz，50% 占空比 | PWM stub 无真实输出，硬件动作返回 `EP_ERR_UNSUPPORTED` |
+| `rtc_service_get_time()` | `rtc` | PCF8563，I2C1 PD4/PD5，地址 `0x51` | RTC stub 无真实时间源，读取返回 `EP_ERR_UNSUPPORTED` |
 | `lcd_sleep_service_set_sleep()` | `lcd_sleep_gpio` | PD3，高电平 sleep，低电平 wake | 初始化可通过，真实写电平返回 `EP_ERR_UNSUPPORTED` |
 
 这个关系保证业务代码可以在 Mac 上编译和跑基础生命周期，切换到 AIC target 后同一套服务接口会落到真实硬件。
