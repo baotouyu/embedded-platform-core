@@ -9,6 +9,7 @@ add_executable(ep_platform_linux_demo
 target_include_directories(ep_platform_linux_demo
   PRIVATE
     ${CMAKE_SOURCE_DIR}/core/include
+    ${CMAKE_SOURCE_DIR}/hal/include
     ${CMAKE_SOURCE_DIR}/osal/include
 )
 

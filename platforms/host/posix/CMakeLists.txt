@@ -19,6 +19,7 @@ add_executable(ep_platform_host_posix
 target_include_directories(ep_platform_host_posix
   PRIVATE
     ${CMAKE_SOURCE_DIR}/core/include
+    ${CMAKE_SOURCE_DIR}/hal/include
     ${CMAKE_SOURCE_DIR}/osal/include
 )
 

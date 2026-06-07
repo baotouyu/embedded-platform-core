@@ -250,9 +250,27 @@ int beep_service_beep_ms(unsigned int duration_ms);
 | --- | --- |
 | `BEEP_SERVICE_DEFAULT_FREQUENCY_HZ` | 默认蜂鸣器频率，当前为 2700 Hz。 |
 | `beep_service_init()` | 初始化蜂鸣器服务。当前只打印 ready 日志并返回 `EP_OK`。 |
-| `beep_service_beep_ms(duration_ms)` | 让蜂鸣器鸣叫指定毫秒数。当前真实动作尚未实现，返回 `EP_ERR_UNSUPPORTED`。 |
+| `beep_service_beep_ms(duration_ms)` | 让蜂鸣器鸣叫指定毫秒数。`duration_ms == 0` 返回 `EP_ERR_INVAL`；成功时返回 `EP_OK`；底层 PWM 不支持或失败时返回对应 `EP_ERR_*`。 |
 
-后续实现时应优先使用 `ep_pwm_open("beep_pwm")`、`ep_pwm_set()`、`ep_pwm_enable()`、`ep_pwm_disable()`，不要在业务层直接调用 RT-Thread PWM API。
+当前实现通过 `ep_pwm_open("beep_pwm")` 打开蜂鸣器 PWM，按 2700 Hz 计算周期：
+
+```text
+period_ns = 1000000000 / 2700 = 370370
+duty_ns   = period_ns / 2     = 185185
+```
+
+调用顺序：
+
+```text
+ep_pwm_open("beep_pwm")
+ep_pwm_set(period_ns, duty_ns)
+ep_pwm_enable()
+ep_sleep_ms(duration_ms)
+ep_pwm_disable()
+ep_pwm_close()
+```
+
+业务层不要直接调用 RT-Thread PWM API，也不要写死 `"pwm"`、channel 1 或 PC7。板级映射属于 HAL port。
 
 ### RTC 服务
 
@@ -274,9 +292,9 @@ int rtc_service_get_time(ep_rtc_time_t *time);
 | 接口 | 含义 |
 | --- | --- |
 | `rtc_service_init()` | 初始化 RTC 服务。当前只打印 ready 日志并返回 `EP_OK`。 |
-| `rtc_service_get_time(time)` | 读取 RTC 日历时间。当前服务层动作尚未实现，返回 `EP_ERR_UNSUPPORTED`。 |
+| `rtc_service_get_time(time)` | 读取 RTC 日历时间。`time == NULL` 返回 `EP_ERR_INVAL`；成功时返回 `EP_OK`；底层 RTC 不支持或读失败时返回对应 `EP_ERR_*`。 |
 
-底层 HAL 已有 `ep_rtc_open("rtc")`、`ep_rtc_get_time()`、`ep_rtc_set_time()`。服务层后续应封装业务需要的时间读取、校时和错误处理策略。
+当前实现调用 `ep_rtc_open("rtc")`、`ep_rtc_get_time()`、`ep_rtc_close()`。KI 板上 `rtc` 由 HAL 映射到 PCF8563，挂在 I2C1 PD4/PD5，地址 `0x51`。业务层不直接处理 PCF8563 寄存器和 BCD 编码。
 
 ### LCD Sleep 服务
 
@@ -297,10 +315,12 @@ int lcd_sleep_service_set_sleep(int sleep_enabled);
 
 | 接口 | 含义 |
 | --- | --- |
-| `lcd_sleep_service_init()` | 初始化 LCD sleep 服务。当前只打印 ready 日志并返回 `EP_OK`。 |
-| `lcd_sleep_service_set_sleep(sleep_enabled)` | 控制 LCD sleep。`0` 表示退出 sleep，非 0 表示进入 sleep。当前真实动作尚未实现，返回 `EP_ERR_UNSUPPORTED`。 |
+| `lcd_sleep_service_init()` | 初始化 LCD sleep 服务，申请 `lcd_sleep_gpio` 并设置为输出。成功返回 `EP_OK`。 |
+| `lcd_sleep_service_set_sleep(sleep_enabled)` | 控制 LCD sleep。`0` 写低电平，非 0 写高电平。当前按高电平 sleep、低电平 wake 处理。 |
 
-底层逻辑设备名是 `lcd_sleep_gpio`，当前 KI 板映射到 PD3。后续实现时应通过 `ep_gpio_request("lcd_sleep_gpio")` 和 GPIO HAL 操作，不直接操作 RT-Thread pin。
+底层逻辑设备名是 `lcd_sleep_gpio`，当前 KI 板映射到 PD3。服务层缓存 GPIO 句柄，避免重复 `ep_gpio_request()` 触发 busy。业务层不要直接操作 RT-Thread pin，也不要写死 `PD.3`。
+
+host/macOS 和 Linux demo 的 HAL stub 会让 `lcd_sleep_service_init()` 成功，以便业务生命周期可以在非目标平台跑起来；真正写电平的动作在 stub 平台仍会返回 `EP_ERR_UNSUPPORTED`。
 
 ### 电源板服务
 
