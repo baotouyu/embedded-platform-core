@@ -3,11 +3,21 @@
 #include "ep_hal_rtc.h"
 #include "ep_osal_err.h"
 
+#include <string.h>
+
 struct ep_gpio {
     int dummy;
 };
 
 static struct ep_gpio s_linux_stub_gpio;
+
+static int ep_linux_gpio_name_supported(const char *name)
+{
+    return strcmp(name, "lcd_sleep_gpio") == 0 ||
+           strcmp(name, "panel_enable_gpio") == 0 ||
+           strcmp(name, "PD.3") == 0 ||
+           strcmp(name, "PE.13") == 0;
+}
 
 int ep_linux_hal_stub(void)
 {
@@ -64,6 +74,11 @@ int ep_gpio_request(ep_gpio_t **gpio, const char *name)
 {
     if (gpio == 0 || name == 0) {
         return EP_ERR_INVAL;
+    }
+
+    *gpio = 0;
+    if (!ep_linux_gpio_name_supported(name)) {
+        return EP_ERR_UNSUPPORTED;
     }
 
     *gpio = &s_linux_stub_gpio;
