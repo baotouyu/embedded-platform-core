@@ -11,6 +11,7 @@
 - OSAL、HAL 和设备兼容层是业务代码访问系统和硬件的入口。
 - LVGL 页面代码写在 `app/ui/`，Mac host 和 AIC Luban-Lite 编译共用源码。
 - UART、PWM、GPIO、I2C、RTC 已有 RT-Thread/Luban-Lite 真实 port。
+- 蜂鸣器、RTC、LCD sleep 已经有业务服务接口，业务优先调用 `app/services/`，再由服务层访问 HAL。
 - D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，display/touch 和 LVGL port 由原厂 SDK 负责，EP 不二次封装。
 - Linux 芯片如果没有原厂 SDK 内置 LVGL，可以使用芯片专属 LVGL 组件仓库，例如 F133 的 `sunxi_lvgl_v9.1`。
 - SD 卡文件系统使用 Luban-Lite/RT-Thread 已提供的文件系统能力，业务需要时按 SDK 的 `open/read/write` 方式读写。
@@ -75,6 +76,7 @@
 | 板子烧录后怎么确认外设正常？ | `ki-141103-480p-smoke-test.md` |
 | display/touch 和 LVGL 应该在哪里适配？ | `luban-lite-compatibility-overview.md`、`platform-differences.md` |
 | Mac 写好的 LVGL 页面怎么进 AIC 镜像？ | `app-business-skeleton.md`、`luban-lite-compatibility-overview.md` |
+| 业务里怎么控制蜂鸣器、读 RTC、控制 LCD sleep？ | `app-business-skeleton.md`、`hal-api-reference.md` |
 
 ## 维护规则
 

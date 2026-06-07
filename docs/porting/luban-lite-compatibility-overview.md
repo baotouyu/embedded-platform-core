@@ -123,13 +123,13 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/packages/artinchip/
 | 服务层 | `app/services/` | 提供蜂鸣器、RTC、LCD sleep、电源板 UART 的业务边界。 |
 | 应用 UI | `app/ui/` | 提供 Mac 和目标平台共用的 LVGL 页面代码。 |
 
-当前服务层先建立接口边界，不假装实现完整业务动作：
+当前服务层已经完成第一批真实硬件动作。业务代码优先调用服务接口，服务层再通过 HAL 逻辑设备名访问目标板硬件；host/macOS 和 Linux demo 仍保留 stub 行为，用来保证同一份业务代码可以先在本机编译和跑生命周期。
 
 | 服务 | 头文件 | 当前状态 |
 | --- | --- | --- |
-| 蜂鸣器 | `app/services/beep_service.h` | `beep_service_init()` 已可用；`beep_service_beep_ms()` 目前返回 `EP_ERR_UNSUPPORTED`。 |
-| RTC | `app/services/rtc_service.h` | `rtc_service_init()` 已可用；`rtc_service_get_time()` 目前返回 `EP_ERR_UNSUPPORTED`，底层 RTC HAL 已就绪。 |
-| LCD sleep | `app/services/lcd_sleep_service.h` | `lcd_sleep_service_init()` 已可用；`lcd_sleep_service_set_sleep()` 目前返回 `EP_ERR_UNSUPPORTED`，底层 GPIO 已就绪。 |
+| 蜂鸣器 | `app/services/beep_service.h` | `beep_service_init()` 已可用；`beep_service_beep_ms(duration_ms)` 会打开 `beep_pwm`，输出 2700 Hz、50% 占空比 PWM，持续 `duration_ms` 毫秒后关闭。`duration_ms == 0` 返回 `EP_ERR_INVAL`。 |
+| RTC | `app/services/rtc_service.h` | `rtc_service_init()` 已可用；`rtc_service_get_time(time)` 会打开 `rtc`，读取 PCF8563 日历时间并关闭。`time == NULL` 返回 `EP_ERR_INVAL`。 |
+| LCD sleep | `app/services/lcd_sleep_service.h` | `lcd_sleep_service_init()` 会申请 `lcd_sleep_gpio` 并设置输出；`lcd_sleep_service_set_sleep(sleep_enabled)` 写 PD3，`0` 为低电平 wake，非 0 为高电平 sleep。 |
 | 电源板 | `app/services/power_board_service.h` | `power_board_service_init()` 已可用；`power_board_service_write()` 目前返回 `EP_ERR_UNSUPPORTED`，协议待定义。 |
 
 业务代码优先使用服务层接口。服务层确实需要访问硬件时，再调用 `hal/include/` 下的 HAL API 或 SDK 已提供能力。
@@ -147,11 +147,11 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/packages/artinchip/
 | mutex | `osal/include/ep_osal_mutex.h` | 已接入 RT-Thread mutex。 |
 | semaphore | `osal/include/ep_osal_sem.h` | 已接入 RT-Thread semaphore。 |
 | queue | `osal/include/ep_osal_queue.h` | 已接入 RT-Thread message queue。 |
-| UART | `hal/include/ep_hal_uart.h` | `console_uart`、`power_uart` 已可用。 |
-| PWM | `hal/include/ep_hal_pwm.h` 或 `app/services/beep_service.h` | `beep_pwm` 已可用，默认 2700 Hz 蜂鸣器。 |
-| GPIO | `hal/include/ep_hal_gpio.h` | `lcd_sleep_gpio`、`panel_enable_gpio` 已可用。 |
+| UART | `hal/include/ep_hal_uart.h` | `console_uart`、`power_uart` 已可用；电源板协议还未实现。 |
+| PWM | `app/services/beep_service.h`，底层才用 `hal/include/ep_hal_pwm.h` | 业务蜂鸣器动作调用 `beep_service_beep_ms()`；底层映射 `beep_pwm -> PWM1/PC7`，默认 2700 Hz。 |
+| GPIO | `app/services/lcd_sleep_service.h`，底层才用 `hal/include/ep_hal_gpio.h` | 业务 LCD 休眠调用 `lcd_sleep_service_set_sleep()`；底层映射 `lcd_sleep_gpio -> PD3`。`panel_enable_gpio` 已在 HAL 可用。 |
 | I2C | `hal/include/ep_hal_i2c.h` | `rtc_bus` 已可用。 |
-| RTC | `hal/include/ep_hal_rtc.h` 或 `app/services/rtc_service.h` | `rtc -> PCF8563` 已可用。 |
+| RTC | `app/services/rtc_service.h`，底层才用 `hal/include/ep_hal_rtc.h` | 业务读时间调用 `rtc_service_get_time()`；底层映射 `rtc -> PCF8563`。 |
 | 文件读写 | SDK/RT-Thread 文件系统 API | SD 卡文件系统由 SDK 负责，业务可按平台已提供的 `open/read/write` 路线使用。 |
 | UI 页面 | `app/ui/app_ui.h` 和 LVGL API | 页面代码写在 `app/ui/`，Mac host 和 AIC SDK 编译共用源码。 |
 | UI 生命周期 | `components/ui/include/ep_ui.h` | host/macOS 用它调用 `lv_init/timer_handler/deinit`；D12x/Luban-Lite 由 SDK 自己管理 LVGL 生命周期。 |
@@ -165,11 +165,12 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/packages/artinchip/
 2. 应用骨架已经链接进最终镜像，`EP_LOGI` 能从串口打印。
 3. OSAL 基础能力已经覆盖常用业务线程、同步和消息队列场景。
 4. KI 板当前需要的 UART/PWM/GPIO/I2C/RTC 已有真实 HAL port。
-5. display/touch 交给平台 LVGL port，避免 EP 重复封一层低价值 API。
-6. SD 卡文件系统能力由 Luban-Lite/RT-Thread 提供，业务层需要文件读写时直接按平台文件系统能力使用。
-7. LVGL 页面代码已经有 `app/ui/` 公共入口，可以在 Mac 上写页面，再随 `libep_app_core.a` 进入 AIC 镜像。
-8. SPI、ADC 当前不作为主线任务，等业务确实用到再补对应 port 和冒烟测试。
-9. 电源板 UART2 的硬件通道已经打开，协议层后续在业务模块或专用组件里实现。
+5. 蜂鸣器、RTC、LCD sleep 已经有业务服务接口，业务代码可以先调用 `app/services/`，不用直接碰 HAL 或 pinmux。
+6. display/touch 交给平台 LVGL port，避免 EP 重复封一层低价值 API。
+7. SD 卡文件系统能力由 Luban-Lite/RT-Thread 提供，业务层需要文件读写时直接按平台文件系统能力使用。
+8. LVGL 页面代码已经有 `app/ui/` 公共入口，可以在 Mac 上写页面，再随 `libep_app_core.a` 进入 AIC 镜像。
+9. SPI、ADC 当前不作为主线任务，等业务确实用到再补对应 port 和冒烟测试。
+10. 电源板 UART2 的硬件通道已经打开，协议层后续在业务模块或专用组件里实现。
 
 ## LVGL 归属规则
 
