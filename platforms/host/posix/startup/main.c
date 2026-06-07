@@ -1,11 +1,11 @@
 #include "ep_framework.h"
 
 #if defined(EP_HAS_HOST_SDL2_UI)
+#include "app_ui.h"
 #include "ep_host_ui_port.h"
 #include "ep_osal_err.h"
 #include "ep_osal_time.h"
 #include "ep_ui.h"
-#include "lvgl.h"
 
 #define EP_HOST_UI_FRAME_COUNT 30u
 #define EP_HOST_UI_FRAME_DELAY_MS 16u
@@ -31,15 +31,12 @@ static int ep_host_run_sdl2_ui_demo(void)
         return rc;
     }
 
-    lv_obj_t *label = lv_label_create(lv_screen_active());
-    if (label == 0) {
+    rc = app_ui_create();
+    if (rc != EP_OK) {
         (void)ep_host_ui_port_deinit();
         (void)ep_ui_deinit();
-        return EP_ERR_UNSUPPORTED;
+        return rc;
     }
-
-    lv_label_set_text(label, "embedded-platform-core host SDL2");
-    lv_obj_center(label);
 
     for (frame = 0u; frame < EP_HOST_UI_FRAME_COUNT; frame++) {
         rc = ep_ui_process();

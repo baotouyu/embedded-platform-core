@@ -9,6 +9,7 @@ app/main.c 薄入口
   -> app/app_core.c
     -> app/selftest/app_selftest.c
     -> app/services/
+    -> app/ui/
   -> core/src/ep_framework.c
     -> components/: log/config/event/timer/device/file/ui
       -> OSAL: osal/include/
@@ -31,6 +32,7 @@ app/main.c 薄入口
 主工程负责：
 
 - 应用层和公共业务逻辑，当前入口是 `app/main.c`，生命周期收口在 `app/app_core.c`。
+- 可复用的应用 LVGL 页面代码，当前入口是 `app/ui/app_ui.c`。
 - framework 生命周期，当前实现在 `core/src/ep_framework.c`。
 - OSAL 公共接口，当前头文件在 `osal/include/`。
 - HAL 公共接口，当前头文件在 `hal/include/`。
@@ -91,7 +93,7 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 | target | `artinchip_d12x_lubanlite_ki_141103_480p` |
 | defconfig | `d12x_KI-141103-480p_rt-thread_helloworld_defconfig` |
 | bootloader defconfig | `d12x_KI-141103-480p_baremetal_bootloader_defconfig` |
-| app 链接 | `app/main.c`、`app/app_core.c`、`app/selftest/`、`app/services/` 已进入最终镜像 |
+| app 链接 | `app/main.c`、`app/app_core.c`、`app/selftest/`、`app/services/`、`app/ui/` 已进入最终镜像 |
 | 日志 | `EP_LOG*` 通过 EasyLogger 和 RT-Thread console 输出 |
 | 控制台串口 | UART1，PA2/PA3，115200 |
 | 电源板串口 | UART2，PA4/PA5 |
@@ -113,6 +115,7 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 | 生命周期 | `app/app_core.c` | 初始化业务服务，进入应用主流程。 |
 | 自检 | `app/selftest/app_selftest.c` | 用 event/timer/sleep 验证 framework 到 app 的链路。 |
 | 服务层 | `app/services/` | 提供蜂鸣器、RTC、LCD sleep、电源板 UART 的业务边界。 |
+| 应用 UI | `app/ui/` | 提供 Mac 和目标平台共用的 LVGL 页面代码。 |
 
 当前服务层先建立接口边界，不假装实现完整业务动作：
 
@@ -144,7 +147,9 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 | I2C | `hal/include/ep_hal_i2c.h` | `rtc_bus` 已可用。 |
 | RTC | `hal/include/ep_hal_rtc.h` 或 `app/services/rtc_service.h` | `rtc -> PCF8563` 已可用。 |
 | 文件读写 | SDK/RT-Thread 文件系统 API | SD 卡文件系统由 SDK 负责，业务可按平台已提供的 `open/read/write` 路线使用。 |
-| UI | LVGL API | D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，LVGL、显示和触摸 port 由原厂 SDK 提供；EP 只管理公共 UI 生命周期，不封 display/touch HAL。 |
+| UI 页面 | `app/ui/app_ui.h` 和 LVGL API | 页面代码写在 `app/ui/`，Mac host 和 AIC SDK 编译共用源码。 |
+| UI 生命周期 | `components/ui/include/ep_ui.h` | host/macOS 用它调用 `lv_init/timer_handler/deinit`；D12x/Luban-Lite 由 SDK 自己管理 LVGL 生命周期。 |
+| display/touch | 各平台 LVGL port | D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，显示和触摸 port 由原厂 SDK 提供；EP 不封 display/touch HAL。 |
 
 ## 当前推进结论
 
@@ -156,6 +161,9 @@ third_party/sdk/sdk-artinchip-luban-lite/upstream/luban-lite/application/rt-thre
 4. KI 板当前需要的 UART/PWM/GPIO/I2C/RTC 已有真实 HAL port。
 5. display/touch 交给平台 LVGL port，避免 EP 重复封一层低价值 API。
 6. SD 卡文件系统能力由 Luban-Lite/RT-Thread 提供，业务层需要文件读写时直接按平台文件系统能力使用。
+7. LVGL 页面代码已经有 `app/ui/` 公共入口，可以在 Mac 上写页面，再随 `libep_app_core.a` 进入 AIC 镜像。
+8. SPI、ADC 当前不作为主线任务，等业务确实用到再补对应 port 和冒烟测试。
+9. 电源板 UART2 的硬件通道已经打开，协议层后续在业务模块或专用组件里实现。
 
 ## LVGL 归属规则
 
@@ -169,11 +177,28 @@ ui:
   lvgl_note: Luban-Lite SDK provides LVGL display and input ports.
 ```
 
-这表示 LVGL 源码、`lv_conf.h`、显示刷新、触摸输入和硬件加速配置都归 Luban-Lite SDK 维护。主工程不把这套 LVGL 复制进 `components/`，也不在 EP HAL 中再封 display/touch。业务需要写 UI 时，按 Luban-Lite 暴露的 LVGL API 和工程习惯编写。
+这表示 LVGL 源码、`lv_conf.h`、显示刷新、触摸输入和硬件加速配置都归 Luban-Lite SDK 维护。主工程不把这套 LVGL 复制进 `components/`，也不在 EP HAL 中再封 display/touch。业务需要写 UI 时，把页面代码写进 `app/ui/`，只使用标准 LVGL API 和 EP 公共服务接口。
+
+Mac 开发时的路径是：
+
+```text
+app/ui/app_ui.c
+  -> include host_macos 预编译包里的 lvgl.h
+  -> platforms/host/posix/ui_port 创建 SDL2 window/mouse/keyboard
+  -> ep_host_lvgl_demo 或 host startup 展示同一份页面
+```
+
+AIC 编译时的路径是：
+
+```text
+app/ui/app_ui.c
+  -> export_sdk_ep_package.sh 使用 Luban-Lite SDK 的 lvgl_v9 头文件编译
+  -> libep_app_core.a
+  -> application/rt-thread/ep_app/
+  -> Luban-Lite SDK 链接最终镜像
+```
 
 Linux 芯片如果没有这种原厂 RTOS SDK 集成，可以使用 `ui.lvgl_provider=component` 或 `prebuilt`。例如 F133/Tina Linux 可以用芯片专属 LVGL 仓库维护 framebuffer、输入、G2D 加速、旋转和交叉编译规则，再由主工程按组件或预编译依赖消费。
-7. SPI、ADC 当前不作为主线任务，等业务确实用到再补对应 port 和冒烟测试。
-8. 电源板 UART2 的硬件通道已经打开，协议层后续在业务模块或专用组件里实现。
 
 线程停止约定：
 

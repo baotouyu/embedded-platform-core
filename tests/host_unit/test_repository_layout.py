@@ -143,6 +143,8 @@ def test_repository_layout_document_explains_top_level_directories_in_chinese():
     content = layout_doc.read_text(encoding="utf-8")
     assert "仓库目录说明" in content
     assert "app/" in content
+    assert "app/ui/" in content
+    assert "可在 Mac 和目标平台共用的 LVGL 页面代码" in content
     assert "components/" in content
     assert "platforms/" in content
     assert "platforms/include/" in content
@@ -152,6 +154,7 @@ def test_repository_layout_document_explains_top_level_directories_in_chinese():
     assert "平台资源路径接口" in content
     assert "外部 SDK 仓库" in content
     assert "不要直接修改预编译包里的 lv_conf.h" in content
+    assert "应用页面代码放 `app/ui/`" in content
     assert "不为远期想法预留空目录" in content
 
 
@@ -167,6 +170,7 @@ def test_project_overview_and_roadmap_document_current_direction():
     assert "项目总览" in overview
     assert "跨平台嵌入式应用框架" in overview
     assert "host/macOS" in overview
+    assert "`app/ui` LVGL 页面" in overview
     assert "平台能力注册表" in overview
     assert "设备管理组件" in overview
     assert "平台路径接口" in overview
@@ -178,6 +182,8 @@ def test_project_overview_and_roadmap_document_current_direction():
     assert "阶段 3：设备管理组件" in roadmap
     assert "阶段 4：平台配置和资源管理" in roadmap
     assert "阶段 5：真实平台适配" in roadmap
+    assert "app/ui/" in roadmap
+    assert "Mac host 和 AIC Luban-Lite 共用的 LVGL 页面入口" in roadmap
 
 
 def test_repository_does_not_keep_duplicate_legacy_third_party_roots():

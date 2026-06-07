@@ -47,6 +47,7 @@ core/include
 app/include
 app/selftest
 app/services
+app/ui
 components/log/include
 components/config/include
 components/event/include
@@ -71,6 +72,62 @@ platforms/include
         find "$repo_root/$dir" -type f -name '*.h' -print | while IFS= read -r header; do
             cp -p "$header" "$package_root/include/$(basename -- "$header")"
         done
+    done
+}
+
+append_luban_lvgl_include_flags() {
+    luban_root=$1
+
+    for dir in \
+        "$luban_root/packages/artinchip/lvgl-ui/lvgl_v9" \
+        "$luban_root/packages/artinchip/lvgl-ui/lvgl_v9/lvgl" \
+        "$luban_root/packages/artinchip/lvgl-ui/lvgl_v8" \
+        "$luban_root/packages/artinchip/lvgl-ui/lvgl_v8/lvgl"
+    do
+        [ -d "$dir" ] || continue
+        printf '%s\n' "-I$dir"
+    done
+}
+
+append_luban_lvgl_custom_include_flags() {
+    luban_root=$1
+    rtconfig=$2
+
+    [ -f "$rtconfig" ] || return 0
+
+    lvgl_demo_dirs="
+AIC_LVGL_BASE_DEMO:aic_demo/base_demo
+AIC_LVGL_DM_DAEMON:aic_demo/dm_daemon
+AIC_LVGL_METER_DEMO:aic_demo/meter_demo
+AIC_LVGL_DEMO_HUB_DEMO:aic_demo/demo_hub
+AIC_LVGL_LAUNCHER_DEMO:aic_demo/launcher_demo
+AIC_LVGL_DASHBOARD_DEMO:aic_demo/dashboard_demo
+AIC_LVGL_SERIAL_DEMO:aic_demo/serial_com_demo
+AIC_LVGL_ELEVATOR_DEMO:aic_demo/elevator_demo
+AIC_LVGL_SLIDE_DEMO:aic_demo/slide_demo
+AIC_LVGL_INPUT_TEST_DEMO:aic_demo/input_test_demo
+AIC_LVGL_GIF_DEMO:aic_demo/gif_demo
+AIC_LVGL_RTP_RECALIBRATE_DEMO:aic_demo/rtp_recalibrate_demo
+AIC_LVGL_USB_OSD_DEMO:aic_demo/usb_osd_demo
+AIC_LVGL_IMAGE_DEMO:aic_demo/image_demo
+AIC_LVGL_DOUBLE_DISP_DEMO:aic_demo/double_disp_demo
+AIC_SPI_SCREEN_DEMO:aic_demo/spi_screen_demo
+AIC_LVGL_OTA_DEMO:aic_demo/ota_demo
+AIC_LVGL_AI_EYES_DEMO:aic_demo/ai_eyes_demo
+AIC_LLM_DEMO:aic_demo/llm_demo
+AIC_IMG_ROLLER_DEMO:aic_demo/aic_widget_demo/img_roller_demo
+AIC_PLAYER_DEMO:aic_demo/aic_widget_demo/aic_player_demo
+AIC_APNG_DEMO:aic_demo/aic_widget_demo/aic_apng_demo
+AIC_IMAGE_USAGE_DEMO:aic_demo/aic_widget_demo/img_usage_demo
+AIC_SWIPE_V1_DEMO:aic_demo/aic_widget_demo/swipe_v1_demo
+"
+
+    printf '%s\n' "$lvgl_demo_dirs" | while IFS=: read -r symbol rel_dir; do
+        [ -n "$symbol" ] || continue
+        grep -q "^#define $symbol\\b" "$rtconfig" || continue
+        dir=$luban_root/packages/artinchip/lvgl-ui/$rel_dir
+        [ -d "$dir" ] || continue
+        printf '%s\n' "-I$dir"
     done
 }
 
@@ -296,6 +353,7 @@ include_flags="
 -I$REPO_ROOT/app/include
 -I$REPO_ROOT/app/selftest
 -I$REPO_ROOT/app/services
+-I$REPO_ROOT/app/ui
 -I$REPO_ROOT/components/config/include
 -I$REPO_ROOT/components/device/include
 -I$REPO_ROOT/components/event/include
@@ -312,6 +370,10 @@ include_flags="
 -I$LUBAN_ROOT/kernel/rt-thread/components/drivers/include
 -I$LUBAN_ROOT/kernel/rt-thread/components/finsh
 "
+include_flags="$include_flags
+$(append_luban_lvgl_include_flags "$LUBAN_ROOT")"
+include_flags="$include_flags
+$(append_luban_lvgl_custom_include_flags "$LUBAN_ROOT" "$RTCONFIG")"
 
 common_flags="
 -std=c11
@@ -327,6 +389,7 @@ core/src/ep_framework.c
 app/app_core.c
 app/main.c
 app/selftest/app_selftest.c
+app/ui/app_ui.c
 app/services/beep_service.c
 app/services/lcd_sleep_service.c
 app/services/power_board_service.c

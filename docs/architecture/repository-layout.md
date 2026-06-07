@@ -36,6 +36,7 @@ app/
   include/app_core.h             # 应用生命周期接口
   selftest/app_selftest.c        # 当前 timer/event 生命周期冒烟
   services/                      # 业务友好的设备服务边界
+  ui/                            # 可在 Mac 和目标平台共用的 LVGL 页面代码
 ```
 
 `app/services/` 是业务服务层，不替代 HAL，也不直接维护板级 pinmux。它负责把业务常用动作收口成清晰接口，例如蜂鸣器、RTC、LCD sleep 和电源板 UART。后续写业务时优先从服务层调用，再由服务层按需要使用 `hal/include/` 或 SDK 已提供能力。
@@ -50,6 +51,8 @@ app/services/power_board_service.*
 ```
 
 电源板协议还没有实现，`power_board_service` 当前只保留初始化和写入接口骨架。协议帧格式、校验、重发和状态解析应在协议明确后单独补。
+
+`app/ui/` 是应用层的 LVGL 页面目录。它可以在 `.c` 文件里包含标准 `lvgl.h`，但不能包含 host SDL2、RT-Thread、Luban-Lite BSP 或板级 pinmux 头文件。host/macOS 由 `platforms/host/posix/ui_port` 创建 SDL2 display/input，D12x/Luban-Lite 由 SDK 自己提供 LVGL display/touch port；`app/ui/` 只写页面、控件和业务事件。
 
 ## 第三方目录
 
@@ -77,7 +80,7 @@ LVGL 的归属由 `targets/<target>.yaml` 的 `ui.lvgl_provider` 声明：
 | `prebuilt` | 主工程消费已经产好的 LVGL 头文件、库和 manifest，例如 host/macOS 预编译包。 |
 | `none` | target 不提供 UI/LVGL。 |
 
-`components/ui` 是 EP 自己的 UI 生命周期薄封装，只负责 `lv_init`、tick 和 handler 这类公共生命周期，不代表主工程接管每个平台的 LVGL port。RTOS SDK 自带 LVGL 时，业务 UI 可以按该 SDK 暴露的 LVGL 使用方式写，底层显示刷新和触摸输入继续归 SDK 维护。
+`components/ui` 是 EP 自己的 UI 生命周期薄封装，只负责 `lv_init`、tick 和 handler 这类公共生命周期，不代表主工程接管每个平台的 LVGL port。应用页面代码放 `app/ui/`。RTOS SDK 自带 LVGL 时，`app/ui/` 会随 `libep_app_core.a` 一起编进 SDK，底层显示刷新和触摸输入继续归 SDK 维护。
 
 厂商 SDK 适配不把完整 SDK 放到 `third_party/prebuilt/`。RTOS SDK 先在外部 SDK 仓库里处理原厂工程、工具链、芯片差异和固件打包，再由主工程导出 `out/ep/<target>` 静态库包给 SDK 链接。只有少量确实需要被主工程直接消费的厂商预编译库，才放到 `third_party/prebuilt/vendor/<platform>`。
 

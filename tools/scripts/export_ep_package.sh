@@ -100,6 +100,7 @@ core/include
 app/include
 app/selftest
 app/services
+app/ui
 components/log/include
 components/config/include
 components/event/include

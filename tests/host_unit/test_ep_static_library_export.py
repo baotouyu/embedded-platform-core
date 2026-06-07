@@ -24,6 +24,7 @@ def _prepare_minimal_repo(root: Path) -> None:
         "app/include/app_core.h",
         "app/include/app_main.h",
         "app/selftest/app_selftest.h",
+        "app/ui/app_ui.h",
         "app/services/beep_service.h",
         "app/services/lcd_sleep_service.h",
         "app/services/power_board_service.h",

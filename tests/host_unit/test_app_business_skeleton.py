@@ -87,6 +87,7 @@ def test_app_cmake_and_sdk_export_include_business_skeleton_sources():
     expected_sources = [
         "app_core.c",
         "selftest/app_selftest.c",
+        "ui/app_ui.c",
         "services/beep_service.c",
         "services/rtc_service.c",
         "services/lcd_sleep_service.c",
@@ -97,5 +98,7 @@ def test_app_cmake_and_sdk_export_include_business_skeleton_sources():
         assert f"app/{source}" in sdk_export
 
     assert "${CMAKE_CURRENT_SOURCE_DIR}/services" in app_cmake
+    assert "${CMAKE_CURRENT_SOURCE_DIR}/ui" in app_cmake
     assert "app/app_core.c" in host_export
     assert "app/selftest/app_selftest.c" in host_export
+    assert "app/ui/app_ui.c" in host_export

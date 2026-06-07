@@ -3,6 +3,7 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/app/app_core.c
   ${CMAKE_SOURCE_DIR}/app/main.c
   ${CMAKE_SOURCE_DIR}/app/selftest/app_selftest.c
+  ${CMAKE_SOURCE_DIR}/app/ui/app_ui.c
   ${CMAKE_SOURCE_DIR}/app/services/beep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/lcd_sleep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/power_board_service.c
@@ -35,6 +36,7 @@ target_include_directories(ep_app_core_export
     ${CMAKE_SOURCE_DIR}/app/include
     ${CMAKE_SOURCE_DIR}/app/selftest
     ${CMAKE_SOURCE_DIR}/app/services
+    ${CMAKE_SOURCE_DIR}/app/ui
     ${CMAKE_SOURCE_DIR}/components/config/include
     ${CMAKE_SOURCE_DIR}/components/device/include
     ${CMAKE_SOURCE_DIR}/components/event/include
