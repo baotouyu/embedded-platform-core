@@ -87,6 +87,8 @@ panel_enable_gpio -> rt_pin_get("PE.13")
 
 当前也兼容直接传入已登记的底层 pin 名称 `PD.3` 和 `PE.13`。业务代码应优先使用逻辑名；新增 GPIO 应先登记逻辑名，再暴露给业务层。
 
+host/macOS 和 Linux demo 当前提供 GPIO stub。stub 用于保证应用服务初始化和主流程可以链接、运行；它可以返回一个 dummy GPIO 句柄并接受方向设置，但真实读写动作仍表示为不支持。需要验证真实电平时必须切到目标板或补对应 Linux GPIO port。
+
 ### `int ep_gpio_set_direction(ep_gpio_t *gpio, ep_gpio_dir_e dir)`
 
 设置 GPIO 输入或输出方向。
@@ -460,6 +462,8 @@ KI 板当前建议：
 beep_pwm -> RT-Thread device "pwm", channel 1, PC7
 ```
 
+应用层蜂鸣器服务使用逻辑名 `beep_pwm`，不会直接写 `"pwm"` 或 channel 1。
+
 ### `int ep_pwm_set(ep_pwm_t *pwm, unsigned int period_ns, unsigned int duty_ns)`
 
 设置 PWM 周期和占空比。
@@ -531,6 +535,8 @@ duty_ns   = 185185
 
 当前 RT-Thread/Luban-Lite PWM 真实 port 已实现 `beep_pwm`。映射关系是 `rt_device_find("pwm")` + channel 1，对应 KI 板 PWM1/PC7 蜂鸣器。`ep_pwm_set()` 直接调用 `rt_pwm_set()`，单位保持纳秒；`ep_pwm_enable()` / `ep_pwm_disable()` 分别调用 `rt_pwm_enable()` / `rt_pwm_disable()`。
 
+host/macOS 和 Linux demo 当前提供 PWM stub。打开、设置、启动和停止没有真实硬件输出，调用方会收到 `EP_ERR_UNSUPPORTED`，用于提醒业务动作只能在目标板验证。
+
 ## ADC
 
 ### `int ep_adc_open(ep_adc_t **adc, const char *name)`
@@ -585,3 +591,15 @@ duty_ns   = 185185
 | Touch | 不规划 EP HAL | 当前由各芯片 SDK 的 LVGL input port 或触摸驱动负责。 |
 
 后续补 SPI、ADC 等真实驱动时，应同时补 host fake 或单测，确保 API 语义稳定。display/touch 不在 EP HAL 中二次封装，业务 UI 直接使用 LVGL。
+
+## 当前应用服务调用关系
+
+当前已有业务服务通过 HAL 访问硬件：
+
+| 服务接口 | HAL 逻辑设备 | 目标板资源 | host/Linux 行为 |
+| --- | --- | --- | --- |
+| `beep_service_beep_ms()` | `beep_pwm` | PWM1 PC7，2700 Hz，50% 占空比 | 返回 `EP_ERR_UNSUPPORTED`，无真实输出 |
+| `rtc_service_get_time()` | `rtc` | PCF8563，I2C1 PD4/PD5，地址 `0x51` | 返回 `EP_ERR_UNSUPPORTED` |
+| `lcd_sleep_service_set_sleep()` | `lcd_sleep_gpio` | PD3，高电平 sleep，低电平 wake | 初始化可通过，真实写电平返回 `EP_ERR_UNSUPPORTED` |
+
+这个关系保证业务代码可以在 Mac 上编译和跑基础生命周期，切换到 AIC target 后同一套服务接口会落到真实硬件。
