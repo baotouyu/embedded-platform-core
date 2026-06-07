@@ -23,6 +23,8 @@ def test_app_business_skeleton_doc_tracks_current_code_paths_and_services():
         "app/ui/app_ui.h",
         "app/ui/app_ui.c",
         "app_ui_create",
+        "lv_user_gui_init",
+        "ep_lubanlite_lvgl_app_ui_create",
         "LVGL active screen",
         "lvgl_v9",
         "app/services/beep_service.h",
@@ -54,3 +56,5 @@ def test_porting_entry_and_luban_overview_link_app_business_doc():
     assert "app/ui/" in overview
     assert "Mac host 和 AIC SDK 编译共用源码" in overview
     assert "export_sdk_ep_package.sh 使用 Luban-Lite SDK 的 lvgl_v9 头文件编译" in overview
+    assert "ep_lubanlite_lvgl_app_ui_create()" in overview
+    assert "lv_user_gui_init()" in overview

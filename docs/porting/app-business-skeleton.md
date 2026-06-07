@@ -172,7 +172,9 @@ host/macOS:
 D12x/Luban-Lite:
   Luban-Lite SDK 初始化 LVGL/display/touch
   主工程导出的 app/ui/app_ui.c 编进 libep_app_core.a
-  后续在 SDK LVGL 已 ready 的入口调用 app_ui_create()
+  lv_user_gui_init()
+    -> ep_lubanlite_lvgl_app_ui_create()
+      -> app_ui_create()
 ```
 
 `app_ui_create()` 返回值：
@@ -192,7 +194,7 @@ D12x/Luban-Lite:
 - Luban-Lite/AIC 私有 BSP 头文件
 - 具体 LCD、触摸、framebuffer 或 pinmux 头文件
 
-后续在 Mac 上写 LVGL 页面、页面切换、控件布局和事件回调时，优先写在 `app/ui/`。Mac host 使用 `third_party/prebuilt/lvgl/host_macos` 提供 LVGL 头文件和 SDL2 后端；D12x/Luban-Lite 使用 SDK 自带 LVGL 头文件和显示触摸 port。只要 `app/ui/` 不碰平台私有 API，同一份页面源码就可以被两边编译。
+后续在 Mac 上写 LVGL 页面、页面切换、控件布局和事件回调时，优先写在 `app/ui/`。Mac host 使用 `third_party/prebuilt/lvgl/host_macos` 提供 LVGL 头文件和 SDL2 后端；D12x/Luban-Lite 使用 SDK 自带 LVGL 头文件和显示触摸 port，并通过 `lv_user_gui_init()` 的 `ep_lubanlite_lvgl_app_ui_create()` 弱符号桥接进入 `app_ui_create()`。只要 `app/ui/` 不碰平台私有 API，同一份页面源码就可以被两边编译和运行。
 
 ## 自检流程
 
