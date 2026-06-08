@@ -17,6 +17,8 @@ print_help() {
   configure    生成 CMake 构建目录
   build        编译当前构建目录
   test         运行 host 单元测试和 API 契约测试
+  host          编译并运行 Mac host app 入口
+  build-host    编译并运行 Mac host app 入口
   run-host-app 编译并运行 Mac host app 入口
   package-host 生成 host/macOS 发布目录包
   export-ep    生成主工程静态库导出包 out/ep/<target>
@@ -38,6 +40,8 @@ print_help() {
   ./build.sh configure
   ./build.sh build
   ./build.sh test
+  ./build.sh host
+  ./build.sh build-host
   ./build.sh run-host-app
   ./build.sh package-host --clean
   ./build.sh export-ep --clean
@@ -227,7 +231,7 @@ case "$command" in
     test)
         run_test
         ;;
-    run-host-app)
+    host|build-host|run-host-app)
         run_host_app
         ;;
     package-host)

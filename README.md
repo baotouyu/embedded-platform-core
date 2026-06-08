@@ -25,10 +25,10 @@ English: A portable embedded platform framework for RTOS and Linux, with unified
 Mac 上调页面和平台无关业务时运行：
 
 ```bash
-./build.sh run-host-app
+./build.sh host
 ```
 
-这个命令会编译并运行 `ep_host_app`：先走 `ep_framework_start()` 和 `app_main()`，再初始化 host SDL2/LVGL 并调用 `app_ui_create()`。关闭窗口即可退出。调完后切到 AIC 目标板时，同一份 `app/` 源码会通过 `libep_app_core.a` 进入 Luban-Lite 镜像。
+这个命令会编译并运行 `ep_host_app`：先走 `ep_framework_start()` 和 `app_main()`，再初始化 host SDL2/LVGL 并调用 `app_ui_create()`。关闭窗口即可退出。`./build.sh build-host` 和 `./build.sh run-host-app` 是同一入口。调完后切到 AIC 目标板时，同一份 `app/` 源码会通过 `libep_app_core.a` 进入 Luban-Lite 镜像。
 
 ## 设计目标
 

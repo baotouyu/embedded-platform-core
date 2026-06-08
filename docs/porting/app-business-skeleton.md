@@ -24,10 +24,10 @@ app/main.c
 Mac 本地调试应用时运行：
 
 ```bash
-./build.sh run-host-app
+./build.sh host
 ```
 
-该命令会编译并运行 `ep_host_app`。它先走完整 framework 和 `app_main()` 生命周期，再初始化 host SDL2/LVGL，调用同一份 `app_ui_create()` 并进入 UI 循环。这个入口用于写应用业务和页面；`ep_host_lvgl_demo` 继续作为 LVGL demo/控件验证入口保留。
+该命令会编译并运行 `ep_host_app`。它先走完整 framework 和 `app_main()` 生命周期，再初始化 host SDL2/LVGL，调用同一份 `app_ui_create()` 并进入 UI 循环。`./build.sh build-host` 和 `./build.sh run-host-app` 是同一入口。这个入口用于写应用业务和页面；`ep_host_lvgl_demo` 继续作为 LVGL demo/控件验证入口保留。
 
 ## 文件路径
 

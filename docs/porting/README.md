@@ -4,7 +4,7 @@
 
 ## 先看结论
 
-当前 D12x + Luban-Lite + KI-141103-480p 平台基础适配已经完成，可以开始写业务代码。业务入口在 `app/main.c`，应用生命周期在 `app/app_core.c`，当前自检在 `app/selftest/app_selftest.c`，LVGL 页面入口在 `app/ui/app_ui.c`，最终会通过 `libep_app_core.a` 链接进 Luban-Lite 镜像。Mac 本地调试入口是 `./build.sh run-host-app`。
+当前 D12x + Luban-Lite + KI-141103-480p 平台基础适配已经完成，可以开始写业务代码。业务入口在 `app/main.c`，应用生命周期在 `app/app_core.c`，当前自检在 `app/selftest/app_selftest.c`，LVGL 页面入口在 `app/ui/app_ui.c`，最终会通过 `libep_app_core.a` 链接进 Luban-Lite 镜像。Mac 本地调试入口是 `./build.sh host`，它会编译 host app 后直接运行；`./build.sh build-host` 和 `./build.sh run-host-app` 是同一入口。
 
 当前已经确认的边界：
 

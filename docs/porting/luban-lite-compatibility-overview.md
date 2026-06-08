@@ -189,7 +189,7 @@ ui:
 Mac 开发时的路径是：
 
 ```text
-./build.sh run-host-app
+./build.sh host
   -> ep_host_app
   -> ep_framework_start()
   -> app/main.c: app_main()
