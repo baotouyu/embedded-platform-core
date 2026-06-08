@@ -39,6 +39,7 @@ def test_app_business_skeleton_doc_tracks_current_code_paths_and_services():
         "EP_ERR_UNSUPPORTED",
         "libep_app_core.a",
         "application/rt-thread/ep_app",
+        "./build.sh host",
         "./build.sh run-host-app",
         "ep_host_app",
         "host_app_main.c",
@@ -54,6 +55,7 @@ def test_porting_entry_and_luban_overview_link_app_business_doc():
 
     assert "app-business-skeleton.md" in readme
     assert "app/ui/app_ui.c" in readme
+    assert "./build.sh host" in readme
     assert "./build.sh run-host-app" in readme
     assert "Mac host 和 AIC Luban-Lite 编译共用源码" in readme
     assert "app-business-skeleton.md" in overview

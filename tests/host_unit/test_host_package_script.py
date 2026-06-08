@@ -57,6 +57,8 @@ def test_host_package_script_exists_and_describes_usage():
 
     build_text = BUILD_SCRIPT.read_text(encoding="utf-8")
     assert "package-host" in build_text
+    assert "build-host" in build_text
+    assert "host)" in build_text
     assert "run-host-app" in build_text
     assert "help" in build_text
 
@@ -81,6 +83,8 @@ def test_build_script_help_lists_supported_commands():
     assert "configure" in result.stdout
     assert "build" in result.stdout
     assert "test" in result.stdout
+    assert "host" in result.stdout
+    assert "build-host" in result.stdout
     assert "run-host-app" in result.stdout
     assert "package-host" in result.stdout
     assert "clean" in result.stdout
@@ -91,6 +95,7 @@ def test_build_script_run_host_app_builds_and_runs_host_app_target():
     build_text = BUILD_SCRIPT.read_text(encoding="utf-8")
 
     assert "run_host_app()" in build_text
+    assert "host|build-host|run-host-app" in build_text
     assert "uname -s" in build_text
     assert "uname -m" in build_text
     assert "run-host-app 目前只支持 macOS arm64" in build_text
