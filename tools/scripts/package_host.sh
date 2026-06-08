@@ -3,7 +3,7 @@
 set -eu
 
 PACKAGE_NAME=host_macos
-HOST_EXECUTABLES="ep_platform_host_posix ep_host_resource_smoke ep_host_lvgl_demo ep_host_lvgl_widgets_demo"
+HOST_EXECUTABLES="ep_platform_host_posix ep_host_app ep_host_resource_smoke ep_host_lvgl_demo ep_host_lvgl_widgets_demo"
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)

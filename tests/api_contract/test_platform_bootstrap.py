@@ -37,6 +37,36 @@ def test_platform_executables_link_framework_components():
     assert "PUBLIC" in timer_cmake
 
 
+def test_host_app_runner_is_declared_as_business_entry():
+    build_sh = (REPO_ROOT / "build.sh").read_text()
+    host_cmake = (REPO_ROOT / "platforms/host/posix/CMakeLists.txt").read_text()
+    host_app = REPO_ROOT / "platforms/host/posix/startup/host_app_main.c"
+
+    assert "run-host-app" in build_sh
+    assert "ep_host_app" in build_sh
+    assert host_app.is_file()
+    assert "add_executable(ep_host_app" in host_cmake
+    assert "startup/host_app_main.c" in host_cmake
+    assert "ep_host_ui_port.c" in host_cmake
+    assert "ep_components_ui" in host_cmake
+    assert "ep_thirdparty_lvgl" in host_cmake
+
+
+def test_host_app_runner_uses_framework_then_ui_loop():
+    host_app = (REPO_ROOT / "platforms/host/posix/startup/host_app_main.c").read_text()
+
+    assert "ep_platform_boot" in host_app
+    assert "ep_framework_start()" in host_app
+    assert "ep_ui_init()" in host_app
+    assert "ep_host_ui_port_init()" in host_app
+    assert "app_ui_create()" in host_app
+    assert "while (!ep_host_ui_port_should_quit())" in host_app
+    assert "ep_ui_process()" in host_app
+    assert "ep_sleep_ms(" in host_app
+    assert "ep_host_ui_port_deinit()" in host_app
+    assert "ep_ui_deinit()" in host_app
+
+
 def test_platform_demo_targets_configure_and_build(tmp_path):
     build_dir = tmp_path / "platform-smoke"
 

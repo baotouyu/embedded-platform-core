@@ -21,6 +21,14 @@ app/main.c
 
 这些代码会被编进 `libep_app_core.a`，再由 Luban-Lite SDK 复制到 `application/rt-thread/ep_app` 并链接进最终镜像。后续业务代码优先放在 `app/app_core.c`、`app/services/`、`app/ui/` 或新增业务模块里，不直接修改 SDK staging 目录。
 
+Mac 本地调试应用时运行：
+
+```bash
+./build.sh run-host-app
+```
+
+该命令会编译并运行 `ep_host_app`。它先走完整 framework 和 `app_main()` 生命周期，再初始化 host SDL2/LVGL，调用同一份 `app_ui_create()` 并进入 UI 循环。这个入口用于写应用业务和页面；`ep_host_lvgl_demo` 继续作为 LVGL demo/控件验证入口保留。
+
 ## 文件路径
 
 | 作用 | 路径 |
@@ -34,6 +42,7 @@ app/main.c
 | 当前自检实现 | `app/selftest/app_selftest.c` |
 | 应用 UI 公共接口 | `app/ui/app_ui.h` |
 | 应用 UI 公共实现 | `app/ui/app_ui.c` |
+| Mac app 运行入口 | `platforms/host/posix/startup/host_app_main.c` |
 | 蜂鸣器服务 | `app/services/beep_service.h`、`app/services/beep_service.c` |
 | RTC 服务 | `app/services/rtc_service.h`、`app/services/rtc_service.c` |
 | LCD sleep 服务 | `app/services/lcd_sleep_service.h`、`app/services/lcd_sleep_service.c` |
@@ -164,6 +173,9 @@ int app_ui_create(void);
 
 ```text
 host/macOS:
+  ./build.sh run-host-app
+  ep_framework_start()
+  app_main()
   ep_ui_init()
   ep_host_ui_port_init()
   app_ui_create()
