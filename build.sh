@@ -17,6 +17,7 @@ print_help() {
   configure    生成 CMake 构建目录
   build        编译当前构建目录
   test         运行 host 单元测试和 API 契约测试
+  run-host-app 编译并运行 Mac host app 入口
   package-host 生成 host/macOS 发布目录包
   export-ep    生成主工程静态库导出包 out/ep/<target>
   export-target 通过 targets/<target>.yaml 导出主工程静态库包
@@ -37,6 +38,7 @@ print_help() {
   ./build.sh configure
   ./build.sh build
   ./build.sh test
+  ./build.sh run-host-app
   ./build.sh package-host --clean
   ./build.sh export-ep --clean
   ./build.sh export-target host_rtos_demo
@@ -62,6 +64,22 @@ run_build() {
 run_test() {
     cd "$REPO_ROOT"
     pytest tests/host_unit tests/api_contract -v
+}
+
+run_host_app() {
+    host_os=$(uname -s)
+    host_arch=$(uname -m)
+
+    if [ "$host_os" != "Darwin" ] || { [ "$host_arch" != "arm64" ] && [ "$host_arch" != "aarch64" ]; }; then
+        printf 'run-host-app 目前只支持 macOS arm64，当前环境：%s %s\n' "$host_os" "$host_arch" >&2
+        printf 'Linux 环境请继续使用 ./build.sh test 或在 macOS 上运行 host app。\n' >&2
+        exit 2
+    fi
+
+    run_configure
+    cmake --build "$BUILD_DIR" --target ep_host_app
+    cd "$REPO_ROOT"
+    "$BUILD_DIR/platforms/host/posix/ep_host_app"
 }
 
 run_package_host() {
@@ -208,6 +226,9 @@ case "$command" in
         ;;
     test)
         run_test
+        ;;
+    run-host-app)
+        run_host_app
         ;;
     package-host)
         run_package_host "$@"

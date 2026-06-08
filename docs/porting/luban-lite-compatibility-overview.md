@@ -189,10 +189,15 @@ ui:
 Mac 开发时的路径是：
 
 ```text
-app/ui/app_ui.c
+./build.sh run-host-app
+  -> ep_host_app
+  -> ep_framework_start()
+  -> app/main.c: app_main()
+  -> app/ui/app_ui.c
   -> include host_macos 预编译包里的 lvgl.h
   -> platforms/host/posix/ui_port 创建 SDL2 window/mouse/keyboard
-  -> ep_host_lvgl_demo 或 host startup 展示同一份页面
+  -> app_ui_create()
+  -> ep_ui_process() loop
 ```
 
 AIC 编译时的路径是：

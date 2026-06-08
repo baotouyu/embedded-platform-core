@@ -4,12 +4,13 @@
 
 ## 先看结论
 
-当前 D12x + Luban-Lite + KI-141103-480p 平台基础适配已经完成，可以开始写业务代码。业务入口在 `app/main.c`，应用生命周期在 `app/app_core.c`，当前自检在 `app/selftest/app_selftest.c`，LVGL 页面入口在 `app/ui/app_ui.c`，最终会通过 `libep_app_core.a` 链接进 Luban-Lite 镜像。
+当前 D12x + Luban-Lite + KI-141103-480p 平台基础适配已经完成，可以开始写业务代码。业务入口在 `app/main.c`，应用生命周期在 `app/app_core.c`，当前自检在 `app/selftest/app_selftest.c`，LVGL 页面入口在 `app/ui/app_ui.c`，最终会通过 `libep_app_core.a` 链接进 Luban-Lite 镜像。Mac 本地调试入口是 `./build.sh run-host-app`。
 
 当前已经确认的边界：
 
 - OSAL、HAL 和设备兼容层是业务代码访问系统和硬件的入口。
 - LVGL 页面代码写在 `app/ui/`，Mac host 和 AIC Luban-Lite 编译共用源码。
+- Mac 本地用 `ep_host_app` 跑完整应用生命周期和 LVGL 页面循环，关闭 SDL 窗口退出。
 - UART、PWM、GPIO、I2C、RTC 已有 RT-Thread/Luban-Lite 真实 port。
 - 蜂鸣器、RTC、LCD sleep 已经有业务服务接口，业务优先调用 `app/services/`，再由服务层访问 HAL。
 - D12x/Luban-Lite 的 `ui.lvgl_provider=sdk`，display/touch 和 LVGL port 由原厂 SDK 负责，EP 不二次封装。
@@ -45,6 +46,7 @@
 | 应用生命周期 | `app/app_core.c`、`app/include/app_core.h` |
 | 应用自检 | `app/selftest/app_selftest.c`、`app/selftest/app_selftest.h` |
 | 应用 UI 页面 | `app/ui/app_ui.c`、`app/ui/app_ui.h` |
+| Mac app 运行入口 | `platforms/host/posix/startup/host_app_main.c` |
 | 业务骨架文档 | `docs/porting/app-business-skeleton.md` |
 | 设备服务边界 | `app/services/` |
 | framework 生命周期 | `core/src/ep_framework.c`、`core/include/ep_framework.h` |
@@ -68,6 +70,7 @@
 | --- | --- |
 | 现在能不能开始写业务代码？ | `luban-lite-compatibility-overview.md`、`device-compatibility-reference.md` |
 | 业务入口、服务初始化和自检顺序是什么？ | `app-business-skeleton.md` |
+| Mac 上怎么跑完整 app 生命周期和 LVGL 页面？ | `app-business-skeleton.md` |
 | 业务代码能不能直接调用 RT-Thread 或 Luban-Lite API？ | `luban-lite-compatibility-overview.md` |
 | `build.sh` 怎么调用 SDK 生成固件？ | `luban-lite-build-and-link.md` |
 | `ep_malloc`、`ep_thread_create`、`ep_queue_send` 怎么用？ | `osal-api-reference.md` |

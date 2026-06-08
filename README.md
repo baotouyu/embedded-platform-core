@@ -14,6 +14,22 @@ English: A portable embedded platform framework for RTOS and Linux, with unified
 
 当前仓库已经完成基础骨架，当前重点是保持目录简洁，用 host/macOS 继续验证平台无关组件和平台适配边界。
 
+## 现在写 app
+
+当前已经可以开始写应用业务代码。优先改这些目录：
+
+- `app/app_core.c`：应用生命周期、业务主流程和后台任务编排。
+- `app/services/`：蜂鸣器、RTC、LCD sleep、电源板 UART 等业务服务边界。
+- `app/ui/`：可在 Mac host 和目标板共用的 LVGL 页面代码。
+
+Mac 上调页面和平台无关业务时运行：
+
+```bash
+./build.sh run-host-app
+```
+
+这个命令会编译并运行 `ep_host_app`：先走 `ep_framework_start()` 和 `app_main()`，再初始化 host SDL2/LVGL 并调用 `app_ui_create()`。关闭窗口即可退出。调完后切到 AIC 目标板时，同一份 `app/` 源码会通过 `libep_app_core.a` 进入 Luban-Lite 镜像。
+
 ## 设计目标
 
 - 支持 `RTOS` 和 `Linux` 两类平台
@@ -232,13 +248,14 @@ SDK 子模块和 RTOS 固件构建边界见 `docs/porting/rtos-sdk-library-model
 - `ep_core`
 - `ep_app`
 - host/macOS 可执行程序
+- host/macOS app 运行入口 `ep_host_app`
 - host 资源冒烟程序
 - LVGL demo 和 widgets demo
 - cJSON 和 SQLite 第三方库目标
 
 说明：
 
-- host/macOS 是当前主要运行平台
+- host/macOS 是当前主要运行平台，写应用时优先用 `./build.sh run-host-app` 做本地验证
 - RTOS 和 Linux 的 `demo_family` 当前用于保留平台边界，不代表真实芯片适配已经完成
 
 ## 当前测试覆盖
