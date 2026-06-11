@@ -48,6 +48,21 @@ json_escape() {
     printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
+copy_resources() {
+    repo_root=$1
+    package_root=$2
+
+    mkdir -p "$package_root/resources/images" "$package_root/resources/recipe"
+
+    if [ -d "$repo_root/resources/host/images" ]; then
+        cp -R "$repo_root/resources/host/images/." "$package_root/resources/images/"
+    fi
+
+    if [ -d "$repo_root/resources/host/recipe" ]; then
+        cp -R "$repo_root/resources/host/recipe/." "$package_root/resources/recipe/"
+    fi
+}
+
 while [ "$#" -gt 0 ]; do
     case "$1" in
         --repo-root)
@@ -127,6 +142,7 @@ fi
 
 mkdir -p "$PACKAGE_ROOT/lib" "$PACKAGE_ROOT/include"
 cp -p "$ARCHIVE" "$PACKAGE_ROOT/lib/libep_app_core.a"
+copy_resources "$REPO_ROOT" "$PACKAGE_ROOT"
 
 for dir in $HEADER_DIRS; do
     find "$REPO_ROOT/$dir" -type f -name '*.h' -print | while IFS= read -r header; do

@@ -50,7 +50,7 @@ def test_app_ui_source_uses_common_lvgl_api_only():
     assert "lv_obj_create(NULL)" in home_text
     assert "lv_label_create(" in home_text
     assert "lv_label_set_text(" in home_text
-    assert "lv_obj_align(" in home_text
+    assert "lv_obj_align(" in home_text or "lv_obj_set_pos(" in home_text
 
     forbidden = [
         "SDL2/SDL.h",

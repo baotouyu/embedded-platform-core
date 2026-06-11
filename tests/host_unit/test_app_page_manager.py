@@ -152,6 +152,16 @@ def test_home_page_builds_recipe_carousel_from_portrait_images():
     assert "ep_platform_api" in app_cmake
 
 
+def test_home_page_uses_platform_recipe_db_path():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert 'resources/host/recipe/recipelib.db' not in home_page
+    assert 'HOME_PAGE_RECIPE_DB_NAME "recipelib.db"' in home_page
+    assert "char recipe_db_path[160];" in home_page
+    assert "ep_platform_recipe_path(HOME_PAGE_RECIPE_DB_NAME" in home_page
+    assert "ep_simple_recipe_open_saas2_db(recipe_db_path, &store)" in home_page
+
+
 def test_home_page_preloads_offscreen_carousel_items_before_drag_commit():
     home_page = _read("app/ui/pages/home_page.c")
 

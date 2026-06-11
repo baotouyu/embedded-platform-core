@@ -105,12 +105,19 @@ output:
 {firmware_line}""",
     )
     _write_file(root / "build" / "libep_app_core_export.a", "fake archive\n")
+    _write_file(root / "resources" / "host" / "images" / "home_bg.png", "fake image\n")
+    _write_file(root / "resources" / "host" / "images" / "icon_settings.png", "fake icon\n")
+    _write_file(root / "resources" / "host" / "recipe" / "recipelib.db", "fake db\n")
+    _write_file(root / "resources" / "host" / "recipe" / "latte.png", "fake recipe image\n")
     for source in [
         "core/src/ep_framework.c",
         "app/app_core.c",
         "app/main.c",
         "app/selftest/app_selftest.c",
         "app/ui/app_ui.c",
+        "app/ui/page_manager.c",
+        "app/ui/pages/home_page.c",
+        "app/ui/pages/settings_page.c",
         "app/services/beep_service.c",
         "app/services/lcd_sleep_service.c",
         "app/services/power_board_service.c",
@@ -121,8 +128,12 @@ output:
         "components/event/src/ep_event.c",
         "components/timer/src/ep_timer.c",
         "components/log/src/ep_log.c",
+        "components/recipe_parser/src/ep_simple_recipe.c",
         "platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c",
         "platforms/rtos/demo_family/startup/app_start.c",
+        "platforms/rtos/demo_family/paths/ep_rtos_platform_paths.c",
+        "platforms/rtos/demo_family/storage/ep_rtos_sqlite_vfs.c",
+        "platforms/rtos/demo_family/storage/ep_rtos_sqlite3.c",
         "platforms/rtos/demo_family/hal_port/ep_rtos_hal_gpio_rtthread.c",
         "platforms/rtos/demo_family/hal_port/ep_rtos_hal_i2c_rtthread.c",
         "platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtthread.c",
@@ -133,6 +144,7 @@ output:
         "third_party/external/EasyLogger/easylogger/src/elog.c",
         "third_party/external/EasyLogger/easylogger/src/elog_utils.c",
         "third_party/external/EasyLogger/easylogger/port/elog_port.c",
+        "third_party/external/cjson/cJSON.c",
     ]:
         _write_file(root / source, f"/* {source} */\n")
     for header in [
@@ -142,11 +154,16 @@ output:
         "app/include/app_main.h",
         "app/selftest/app_selftest.h",
         "app/ui/app_ui.h",
+        "app/ui/page_manager.h",
+        "app/ui/pages/home_page.h",
+        "app/ui/pages/settings_page.h",
+        "app/ui/pages/app_pages.h",
         "app/services/beep_service.h",
         "app/services/lcd_sleep_service.h",
         "app/services/power_board_service.h",
         "app/services/rtc_service.h",
         "components/log/include/ep_log.h",
+        "components/recipe_parser/include/ep_simple_recipe.h",
         "components/config/include/ep_config.h",
         "components/event/include/ep_event.h",
         "components/timer/include/ep_timer.h",
@@ -159,7 +176,10 @@ output:
         "hal/include/ep_hal_rtc.h",
         "hal/include/ep_hal_types.h",
         "platforms/include/ep_platform_capability.h",
+        "platforms/include/ep_platform_paths.h",
         "third_party/external/EasyLogger/easylogger/inc/elog.h",
+        "third_party/external/cjson/cJSON.h",
+        "third_party/external/sqlite/sqlite3.h",
     ]:
         _write_file(root / header, f"/* {header} */\n")
 
@@ -426,6 +446,44 @@ def test_sdk_ep_export_uses_rtthread_osal_and_sdk_lvgl_app_ui():
     assert "ep_thirdparty_lvgl" not in script
 
 
+def test_sdk_ep_export_includes_recipe_dependencies_and_rtos_paths():
+    script = (REPO_ROOT / "tools" / "scripts" / "export_sdk_ep_package.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert "components/recipe_parser/include" in script
+    assert "third_party/external/cjson" in script
+    assert "third_party/external/sqlite" in script
+    assert "components/recipe_parser/src/ep_simple_recipe.c" in script
+    assert "third_party/external/cjson/cJSON.c" in script
+    assert "platforms/rtos/demo_family/storage/ep_rtos_sqlite3.c" in script
+    assert "platforms/rtos/demo_family/paths/ep_rtos_platform_paths.c" in script
+
+
+def test_sdk_ep_export_uses_rtos_sqlite_vfs_instead_of_unix_vfs():
+    script = (REPO_ROOT / "tools" / "scripts" / "export_sdk_ep_package.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert "platforms/rtos/demo_family/storage/ep_rtos_sqlite_vfs.c" in script
+    assert "platforms/rtos/demo_family/storage/ep_rtos_sqlite3.c" in script
+    assert "third_party/external/sqlite/sqlite3.c\n" not in script
+    assert "SQLITE_OS_OTHER=1" in script
+
+
+def test_sdk_build_firmware_installs_images_to_rodata_and_recipes_to_data():
+    script = (
+        REPO_ROOT / "third_party/sdk/sdk-artinchip-luban-lite/scripts/build_firmware.sh"
+    ).read_text(encoding="utf-8")
+
+    assert "copy_ep_resources" in script
+    assert "resources/images" in script
+    assert "resources/recipe" in script
+    assert "INSTALL = [" in script
+    assert "('resources/images/', 'rodata/ep/resources/images/')" in script
+    assert "('resources/recipe/', 'data/ep/resources/recipe/')" in script
+
+
 def test_sdk_ep_export_re_lunches_when_rtconfig_is_for_another_defconfig(tmp_path):
     sdk_repo = tmp_path / "fake-sdk-src"
     _create_fake_sdk_repo(sdk_repo)
@@ -515,6 +573,47 @@ def test_sdk_ep_export_manifest_includes_ui_provider(tmp_path):
         "lvgl_provider": "none",
         "lvgl_note": "",
     }
+
+
+def test_sdk_ep_export_copies_home_resources_into_package(tmp_path):
+    sdk_repo = tmp_path / "fake-sdk-src"
+    _create_fake_sdk_repo(sdk_repo)
+
+    repo = tmp_path / "repo"
+    _prepare_minimal_repo(repo, sdk_repo)
+    sdk_dir = repo / "third_party" / "sdk" / "fake-sdk"
+    _write_fake_sdk_toolchain(sdk_dir)
+
+    result = subprocess.run(
+        [
+            str(repo / "tools" / "scripts" / "export_sdk_ep_package.sh"),
+            "--repo-root",
+            str(repo),
+            "--target",
+            "host_rtos_demo",
+            "--sdk-dir",
+            str(sdk_dir),
+            "--clean",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    package_root = repo / "out" / "ep" / "host_rtos_demo"
+    assert (package_root / "resources" / "images" / "home_bg.png").read_text(
+        encoding="utf-8"
+    ) == "fake image\n"
+    assert (package_root / "resources" / "images" / "icon_settings.png").read_text(
+        encoding="utf-8"
+    ) == "fake icon\n"
+    assert (package_root / "resources" / "recipe" / "recipelib.db").read_text(
+        encoding="utf-8"
+    ) == "fake db\n"
+    assert (package_root / "resources" / "recipe" / "latte.png").read_text(
+        encoding="utf-8"
+    ) == "fake recipe image\n"
 
 
 def test_build_target_firmware_allows_relative_sibling_sdk_root(tmp_path):

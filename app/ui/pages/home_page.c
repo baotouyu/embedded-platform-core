@@ -17,7 +17,7 @@
 #define HOME_PAGE_BG_IMAGE_NAME "home_bg.png"
 #define HOME_PAGE_SETTINGS_ICON_NAME "icon_settings.png"
 #define HOME_PAGE_SETTINGS_TEXT "Settings"
-#define HOME_PAGE_RECIPE_DB_PATH "resources/host/recipe/recipelib.db"
+#define HOME_PAGE_RECIPE_DB_NAME "recipelib.db"
 #define HOME_PAGE_MAX_RECIPES 16u
 #define HOME_PAGE_CAROUSEL_SLOT_COUNT 5u
 #define HOME_PAGE_FAR_LEFT_SLOT 0u
@@ -248,10 +248,16 @@ static void home_page_create_settings_button(home_page_state_t *state)
 static int home_page_load_recipes(home_page_state_t *state)
 {
     ep_simple_recipe_store_t *store = NULL;
+    char recipe_db_path[160];
     size_t count = 0u;
     int rc;
 
-    rc = ep_simple_recipe_open_saas2_db(HOME_PAGE_RECIPE_DB_PATH, &store);
+    rc = ep_platform_recipe_path(HOME_PAGE_RECIPE_DB_NAME, recipe_db_path, sizeof(recipe_db_path));
+    if (rc != EP_OK) {
+        return rc;
+    }
+
+    rc = ep_simple_recipe_open_saas2_db(recipe_db_path, &store);
     if (rc != EP_OK) {
         return rc;
     }

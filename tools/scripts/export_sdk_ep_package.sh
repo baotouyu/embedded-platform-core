@@ -49,6 +49,7 @@ app/selftest
 app/services
 app/ui
 components/log/include
+components/recipe_parser/include
 components/config/include
 components/event/include
 components/timer/include
@@ -58,6 +59,8 @@ components/ui/include
 osal/include
 hal/include
 platforms/include
+third_party/external/cjson
+third_party/external/sqlite
 "
 
     missing=""
@@ -73,6 +76,21 @@ platforms/include
             cp -p "$header" "$package_root/include/$(basename -- "$header")"
         done
     done
+}
+
+copy_resources() {
+    repo_root=$1
+    package_root=$2
+
+    mkdir -p "$package_root/resources/images" "$package_root/resources/recipe"
+
+    if [ -d "$repo_root/resources/host/images" ]; then
+        cp -R "$repo_root/resources/host/images/." "$package_root/resources/images/"
+    fi
+
+    if [ -d "$repo_root/resources/host/recipe" ]; then
+        cp -R "$repo_root/resources/host/recipe/." "$package_root/resources/recipe/"
+    fi
 }
 
 append_luban_lvgl_include_flags() {
@@ -347,6 +365,7 @@ fi
 
 mkdir -p "$PACKAGE_ROOT/lib" "$PACKAGE_ROOT/include" "$OBJECT_ROOT"
 copy_headers "$REPO_ROOT" "$PACKAGE_ROOT"
+copy_resources "$REPO_ROOT" "$PACKAGE_ROOT"
 
 include_flags="
 -I$REPO_ROOT/core/include
@@ -360,11 +379,14 @@ include_flags="
 -I$REPO_ROOT/components/event/include
 -I$REPO_ROOT/components/file/include
 -I$REPO_ROOT/components/log/include
+-I$REPO_ROOT/components/recipe_parser/include
 -I$REPO_ROOT/components/timer/include
 -I$REPO_ROOT/osal/include
 -I$REPO_ROOT/hal/include
 -I$REPO_ROOT/platforms/include
 -I$REPO_ROOT/third_party/external/EasyLogger/easylogger/inc
+-I$REPO_ROOT/third_party/external/cjson
+-I$REPO_ROOT/third_party/external/sqlite
 -I$LUBAN_ROOT
 -I$LUBAN_ROOT/kernel/rt-thread/include
 -I$LUBAN_ROOT/kernel/rt-thread/components/legacy
@@ -384,6 +406,7 @@ $RTCONFIG
 
 rtconfig_cflags=$(extract_rtconfig_cflags "$LUBAN_ROOT" "$TARGET_CHIP")
 [ -n "$rtconfig_cflags" ] || rtconfig_cflags="-Os -ffunction-sections -fdata-sections -Wall -Wextra"
+sqlite_flags="-DSQLITE_OS_OTHER=1 -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_OMIT_WAL"
 
 sources="
 core/src/ep_framework.c
@@ -404,8 +427,12 @@ components/file/src/ep_file.c
 components/event/src/ep_event.c
 components/timer/src/ep_timer.c
 components/log/src/ep_log.c
+components/recipe_parser/src/ep_simple_recipe.c
 platforms/rtos/demo_family/osal_port/ep_rtos_osal_rtthread.c
 platforms/rtos/demo_family/startup/app_start.c
+platforms/rtos/demo_family/paths/ep_rtos_platform_paths.c
+platforms/rtos/demo_family/storage/ep_rtos_sqlite_vfs.c
+platforms/rtos/demo_family/storage/ep_rtos_sqlite3.c
 platforms/rtos/demo_family/hal_port/ep_rtos_hal_gpio_rtthread.c
 platforms/rtos/demo_family/hal_port/ep_rtos_hal_i2c_rtthread.c
 platforms/rtos/demo_family/hal_port/ep_rtos_hal_rtthread.c
@@ -416,6 +443,7 @@ platforms/rtos/demo_family/component_port/ep_rtos_component_stub.c
 third_party/external/EasyLogger/easylogger/src/elog.c
 third_party/external/EasyLogger/easylogger/src/elog_utils.c
 third_party/external/EasyLogger/easylogger/port/elog_port.c
+third_party/external/cjson/cJSON.c
 "
 
 objects=""
@@ -423,7 +451,13 @@ for rel in $sources; do
     src=$REPO_ROOT/$rel
     [ -f "$src" ] || die "缺少 EP 源文件：$src"
     obj=$OBJECT_ROOT/${rel##*/}.o
-    compile_source "$CC" "$src" "$obj" $common_flags $rtconfig_cflags $include_flags
+    extra_flags=
+    case "$rel" in
+        platforms/rtos/demo_family/storage/ep_rtos_sqlite3.c)
+            extra_flags=$sqlite_flags
+            ;;
+    esac
+    compile_source "$CC" "$src" "$obj" $common_flags $rtconfig_cflags $include_flags $extra_flags
     objects="$objects $obj"
 done
 

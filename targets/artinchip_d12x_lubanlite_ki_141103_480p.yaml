@@ -21,7 +21,7 @@ ui:
   lvgl_note: Luban-Lite SDK provides LVGL display and input ports.
 
 sdk_config:
-  defconfig: d12x_KI-141103-480p_rt-thread_helloworld_defconfig
+  defconfig: d12x_KI-141103-480p_rt-thread_ep_app_defconfig
 
 output:
   ep_package: out/ep/artinchip_d12x_lubanlite_ki_141103_480p

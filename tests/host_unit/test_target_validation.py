@@ -5,6 +5,39 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BUILD_SCRIPT = REPO_ROOT / "build.sh"
 VALIDATE_SCRIPT = REPO_ROOT / "tools" / "scripts" / "validate_targets.sh"
+D121_KI_TARGET = REPO_ROOT / "targets" / "artinchip_d12x_lubanlite_ki_141103_480p.yaml"
+D121_KI_SDK_ENV = (
+    REPO_ROOT
+    / "third_party"
+    / "sdk"
+    / "sdk-artinchip-luban-lite"
+    / "targets"
+    / "artinchip_d12x_lubanlite_ki_141103_480p.env"
+)
+D121_KI_EP_DEFCONFIG = (
+    REPO_ROOT
+    / "third_party"
+    / "sdk"
+    / "sdk-artinchip-luban-lite"
+    / "upstream"
+    / "luban-lite"
+    / "target"
+    / "configs"
+    / "d12x_KI-141103-480p_rt-thread_ep_app_defconfig"
+)
+D121_KI_EP_DEFCONFIG_NAME = "d12x_KI-141103-480p_rt-thread_ep_app_defconfig"
+LUBAN_LITE_LV_DEMO_C = (
+    REPO_ROOT
+    / "third_party"
+    / "sdk"
+    / "sdk-artinchip-luban-lite"
+    / "upstream"
+    / "luban-lite"
+    / "packages"
+    / "artinchip"
+    / "lvgl-ui"
+    / "lv_demo.c"
+)
 
 
 def _write_file(path: Path, content: str) -> None:
@@ -106,10 +139,45 @@ def test_artinchip_d12x_lubanlite_targets_cover_rt_thread_board_defconfigs():
         "demo68-mmc": "d12x_demo68-mmc_rt-thread_helloworld_defconfig",
         "demo68-nand": "d12x_demo68-nand_rt-thread_helloworld_defconfig",
         "demo68-nor": "d12x_demo68-nor_rt-thread_helloworld_defconfig",
-        "KI-141103-480p": "d12x_KI-141103-480p_rt-thread_helloworld_defconfig",
+        "KI-141103-480p": D121_KI_EP_DEFCONFIG_NAME,
         "hmi-nor": "d12x_hmi-nor_rt-thread_helloworld_defconfig",
     }
     assert all("baremetal_bootloader" not in defconfig for defconfig in actual.values())
+
+
+def test_d121_ki_target_uses_ep_defconfig_without_luban_lite_demo():
+    target_text = D121_KI_TARGET.read_text(encoding="utf-8")
+    sdk_env_text = D121_KI_SDK_ENV.read_text(encoding="utf-8")
+
+    assert (
+        _read_section_value(D121_KI_TARGET, "sdk_config", "defconfig")
+        == D121_KI_EP_DEFCONFIG_NAME
+    )
+    assert f"DEFCONFIG={D121_KI_EP_DEFCONFIG_NAME}" in sdk_env_text
+
+    defconfig_text = D121_KI_EP_DEFCONFIG.read_text(encoding="utf-8")
+    assert (
+        f'CONFIG_PRJ_DEFCONFIG_FILENAME="{D121_KI_EP_DEFCONFIG_NAME}"'
+        in defconfig_text
+    )
+    assert 'CONFIG_PRJ_APP="helloworld"' in defconfig_text
+    assert "CONFIG_LPKG_USING_LVGL=y" in defconfig_text
+    assert "CONFIG_LVGL_V_9=y" in defconfig_text
+    assert "CONFIG_AIC_LVGL_DEMO=y" not in defconfig_text
+    assert "CONFIG_AIC_LVGL_DEMO_HUB_DEMO=y" not in defconfig_text
+    assert "CONFIG_AIC_STARTUP_UI_SHOW=y" not in defconfig_text
+    assert D121_KI_EP_DEFCONFIG_NAME in target_text
+
+
+def test_luban_lite_lvgl_user_init_runs_ep_ui_hook_without_demo_config():
+    text = LUBAN_LITE_LV_DEMO_C.read_text(encoding="utf-8")
+    hook_call = "ep_lubanlite_lvgl_app_ui_create() == 0"
+    demo_guard = "#if defined(AIC_LVGL_DEMO) && !defined(RT_USING_MODULE)"
+
+    assert "extern int ep_lubanlite_lvgl_app_ui_create(void) __attribute__((weak));" in text
+    assert hook_call in text
+    assert demo_guard in text
+    assert text.index(hook_call) < text.index(demo_guard)
 
 
 def test_validate_targets_passes_for_valid_temp_repo(tmp_path):
