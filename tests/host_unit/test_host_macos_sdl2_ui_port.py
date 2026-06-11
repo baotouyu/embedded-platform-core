@@ -25,10 +25,21 @@ def test_host_macos_sdl2_ui_port_files_and_api_are_present():
     assert '#include "ep_host_ui_port.h"' in source_text
     assert '#include "ep_osal_err.h"' in source_text
     assert '#include "lvgl.h"' in source_text
+    assert '#include "src/misc/cache/lv_image_cache.h"' in source_text
+    assert '#include "src/misc/lv_timer.h"' in source_text
     assert '#include "src/drivers/sdl/lv_sdl_window.h"' in source_text
     assert '#include "src/drivers/sdl/lv_sdl_mouse.h"' in source_text
     assert '#include "src/drivers/sdl/lv_sdl_keyboard.h"' in source_text
-    assert "lv_sdl_window_create(480, 320)" in source_text
+    assert "#define EP_HOST_UI_HOR_RES 800" in source_text
+    assert "#define EP_HOST_UI_VER_RES 480" in source_text
+    assert "#define EP_HOST_UI_REFR_PERIOD_MS 16u" in source_text
+    assert "#define EP_HOST_UI_IMAGE_CACHE_SIZE (12u * 1024u * 1024u)" in source_text
+    assert "#define EP_HOST_UI_IMAGE_HEADER_CACHE_COUNT 64u" in source_text
+    assert "lv_sdl_window_create(EP_HOST_UI_HOR_RES, EP_HOST_UI_VER_RES)" in source_text
+    assert "lv_display_get_refr_timer(g_host_ui_display)" in source_text
+    assert "lv_timer_set_period(refresh_timer, EP_HOST_UI_REFR_PERIOD_MS)" in source_text
+    assert "lv_image_cache_resize(EP_HOST_UI_IMAGE_CACHE_SIZE, true)" in source_text
+    assert "lv_image_header_cache_resize(EP_HOST_UI_IMAGE_HEADER_CACHE_COUNT, true)" in source_text
     assert "lv_sdl_window_set_title" in source_text
     assert "lv_sdl_mouse_create()" in source_text
     assert "lv_sdl_keyboard_create()" in source_text
@@ -73,7 +84,10 @@ def test_host_startup_runs_sdl2_demo_behind_compile_flag():
     assert "lv_label_set_text" not in startup
     assert "ep_ui_process()" in startup
     assert "#define EP_HOST_UI_FRAME_DELAY_MS 16u" in startup
-    assert "ep_sleep_ms(EP_HOST_UI_FRAME_DELAY_MS)" in startup
+    assert "frame_start_ms = ep_time_now_ms()" in startup
+    assert "frame_elapsed_ms = ep_time_now_ms() - frame_start_ms" in startup
+    assert "if (frame_elapsed_ms < EP_HOST_UI_FRAME_DELAY_MS)" in startup
+    assert "ep_sleep_ms((unsigned int)(EP_HOST_UI_FRAME_DELAY_MS - frame_elapsed_ms))" in startup
     assert "ep_host_ui_port_deinit()" in startup
     assert "ep_ui_deinit()" in startup
 

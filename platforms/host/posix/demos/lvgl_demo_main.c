@@ -51,6 +51,8 @@ static int ep_host_lvgl_demo_create_screen(void)
 int main(void)
 {
     int rc = ep_ui_init();
+    uint64_t frame_elapsed_ms;
+    uint64_t frame_start_ms;
     if (rc != EP_OK) {
         return rc;
     }
@@ -69,6 +71,15 @@ int main(void)
     }
 
     while (!g_demo_should_exit && !ep_host_ui_port_should_quit()) {
+        frame_start_ms = ep_time_now_ms();
+
+        rc = ep_ui_tick_inc(EP_HOST_LVGL_DEMO_FRAME_DELAY_MS);
+        if (rc != EP_OK) {
+            (void)ep_host_ui_port_deinit();
+            (void)ep_ui_deinit();
+            return rc;
+        }
+
         rc = ep_ui_process();
         if (rc != EP_OK) {
             (void)ep_host_ui_port_deinit();
@@ -76,7 +87,10 @@ int main(void)
             return rc;
         }
 
-        ep_sleep_ms(EP_HOST_LVGL_DEMO_FRAME_DELAY_MS);
+        frame_elapsed_ms = ep_time_now_ms() - frame_start_ms;
+        if (frame_elapsed_ms < EP_HOST_LVGL_DEMO_FRAME_DELAY_MS) {
+            ep_sleep_ms((unsigned int)(EP_HOST_LVGL_DEMO_FRAME_DELAY_MS - frame_elapsed_ms));
+        }
     }
 
     rc = ep_host_ui_port_deinit();

@@ -57,9 +57,13 @@ def test_host_widgets_demo_source_calls_official_lvgl_demo():
     assert "ep_ui_init()" in text
     assert "ep_host_ui_port_init()" in text
     assert "lv_demo_widgets();" in text
+    assert "ep_ui_tick_inc(EP_HOST_LVGL_WIDGETS_DEMO_FRAME_DELAY_MS)" in text
     assert "ep_ui_process()" in text
     assert "ep_host_ui_port_should_quit()" in text
-    assert "ep_sleep_ms(EP_HOST_LVGL_WIDGETS_DEMO_FRAME_DELAY_MS)" in text
+    assert "frame_start_ms = ep_time_now_ms()" in text
+    assert "frame_elapsed_ms = ep_time_now_ms() - frame_start_ms" in text
+    assert "if (frame_elapsed_ms < EP_HOST_LVGL_WIDGETS_DEMO_FRAME_DELAY_MS)" in text
+    assert "ep_sleep_ms((unsigned int)(EP_HOST_LVGL_WIDGETS_DEMO_FRAME_DELAY_MS - frame_elapsed_ms))" in text
 
 
 def test_host_cmake_builds_widgets_demo_only_for_macos():

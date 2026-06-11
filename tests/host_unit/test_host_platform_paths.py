@@ -68,12 +68,44 @@ def test_host_platform_paths_are_queryable(tmp_path):
                     return 6;
                 }
 
+                if (ep_platform_lvgl_image_src("logo.png", path, sizeof(path)) != EP_OK) {
+                    return 20;
+                }
+
+                if (strcmp(path, "A:resources/host/images/logo.png") != 0) {
+                    return 21;
+                }
+
+                if (ep_platform_lvgl_image_src("drinks/latte.png", path, sizeof(path)) != EP_OK) {
+                    return 22;
+                }
+
+                if (strcmp(path, "A:resources/host/images/drinks/latte.png") != 0) {
+                    return 23;
+                }
+
                 if (ep_platform_font_path("main.ttf", path, sizeof(path)) != EP_OK) {
                     return 7;
                 }
 
                 if (strcmp(path, "resources/host/fonts/main.ttf") != 0) {
                     return 8;
+                }
+
+                if (ep_platform_recipe_path("latte.png", path, sizeof(path)) != EP_OK) {
+                    return 26;
+                }
+
+                if (strcmp(path, "resources/host/recipe/latte.png") != 0) {
+                    return 27;
+                }
+
+                if (ep_platform_lvgl_recipe_src("latte.png", path, sizeof(path)) != EP_OK) {
+                    return 28;
+                }
+
+                if (strcmp(path, "A:resources/host/recipe/latte.png") != 0) {
+                    return 29;
                 }
 
                 if (ep_platform_theme_path("default.bin", path, sizeof(path)) != EP_OK) {
@@ -110,6 +142,14 @@ def test_host_platform_paths_are_queryable(tmp_path):
 
                 if (ep_platform_image_path("logo.png", small, sizeof(small)) != EP_ERR_INVAL) {
                     return 17;
+                }
+
+                if (ep_platform_lvgl_image_src("logo.png", small, sizeof(small)) != EP_ERR_INVAL) {
+                    return 24;
+                }
+
+                if (small[0] != '\\0') {
+                    return 25;
                 }
 
                 return 0;

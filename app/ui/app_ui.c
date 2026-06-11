@@ -1,39 +1,36 @@
 #include "app_ui.h"
 
 #include "ep_log.h"
-#include "ep_osal_err.h"
-#include "lvgl.h"
-
-#define APP_UI_TITLE_TEXT "embedded-platform-core"
-#define APP_UI_STATUS_TEXT "Mac edit, target run"
+#include "page_manager.h"
+#include "pages/app_pages.h"
+#include "pages/home_page.h"
+#include "pages/settings_page.h"
 
 int app_ui_create(void)
 {
-    lv_obj_t *screen = lv_screen_active();
-    lv_obj_t *title;
-    lv_obj_t *status;
+    int rc;
 
-    if (screen == 0) {
-        return EP_ERR_UNSUPPORTED;
+    rc = page_manager_init(NULL);
+    if (rc != 0) {
+        return rc;
     }
 
-    title = lv_label_create(screen);
-    if (title == 0) {
-        return EP_ERR_UNSUPPORTED;
+    rc = page_manager_register(APP_PAGE_HOME, home_page_create, home_page_event, home_page_destroy);
+    if (rc != 0) {
+        return rc;
     }
 
-    status = lv_label_create(screen);
-    if (status == 0) {
-        return EP_ERR_UNSUPPORTED;
+    rc = page_manager_register(APP_PAGE_SETTINGS, settings_page_create, settings_page_event, NULL);
+    if (rc != 0) {
+        return rc;
     }
 
-    lv_label_set_text(title, APP_UI_TITLE_TEXT);
-    lv_obj_align(title, LV_ALIGN_CENTER, 0, -18);
-
-    lv_label_set_text(status, APP_UI_STATUS_TEXT);
-    lv_obj_align(status, LV_ALIGN_CENTER, 0, 18);
+    rc = page_manager_switch(APP_PAGE_HOME, LV_SCR_LOAD_ANIM_NONE, 0, false);
+    if (rc != 0) {
+        return rc;
+    }
 
     EP_LOGI("app", "app ui ready");
 
-    return EP_OK;
+    return rc;
 }

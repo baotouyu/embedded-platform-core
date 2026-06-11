@@ -41,6 +41,13 @@ def test_lvgl_host_macos_package_declares_sdl2_backend():
     assert "#define LV_USE_SDL 1" in lv_conf
     assert "#define LV_USE_DRAW_SDL 0" in lv_conf
     assert "#define LV_SDL_INCLUDE_PATH <SDL2/SDL.h>" in lv_conf
+    assert "#define LV_DEF_REFR_PERIOD 16" in lv_conf
+    assert "#define LV_SDL_RENDER_MODE LV_DISPLAY_RENDER_MODE_DIRECT" in lv_conf
+    assert "#define LV_SDL_BUF_COUNT 2" in lv_conf
+    assert "#define LV_SDL_ACCELERATED 1" in lv_conf
+    assert "render_mode=direct" in manifest_text
+    assert "renderer=accelerated" in manifest_text
+    assert "frame_period_ms=16" in manifest_text
 
 
 def test_lvgl_host_macos_package_declares_local_asset_support():
@@ -55,7 +62,7 @@ def test_lvgl_host_macos_package_declares_local_asset_support():
     assert "#define LV_USE_FS_STDIO 1" in lv_conf
     assert "#define LV_FS_STDIO_LETTER 'A'" in lv_conf
     assert '#define LV_FS_STDIO_PATH ""' in lv_conf
-    assert "#define LV_FS_STDIO_CACHE_SIZE 0" in lv_conf
+    assert "#define LV_FS_STDIO_CACHE_SIZE (64 * 1024)" in lv_conf
     assert "#define LV_USE_LODEPNG 1" in lv_conf
     assert "#define LV_USE_TJPGD 1" in lv_conf
     assert "#define LV_USE_BMP 1" in lv_conf

@@ -14,6 +14,7 @@ REQUIRED_DIRECTORIES = [
     "components/config",
     "components/device",
     "components/file",
+    "components/recipe_parser",
     "platforms/include",
     "config/profiles",
     "resources/common",

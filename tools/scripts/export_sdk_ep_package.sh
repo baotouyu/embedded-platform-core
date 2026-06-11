@@ -354,6 +354,7 @@ include_flags="
 -I$REPO_ROOT/app/selftest
 -I$REPO_ROOT/app/services
 -I$REPO_ROOT/app/ui
+-I$REPO_ROOT/app/ui/pages
 -I$REPO_ROOT/components/config/include
 -I$REPO_ROOT/components/device/include
 -I$REPO_ROOT/components/event/include
@@ -390,6 +391,9 @@ app/app_core.c
 app/main.c
 app/selftest/app_selftest.c
 app/ui/app_ui.c
+app/ui/page_manager.c
+app/ui/pages/home_page.c
+app/ui/pages/settings_page.c
 app/services/beep_service.c
 app/services/lcd_sleep_service.c
 app/services/power_board_service.c

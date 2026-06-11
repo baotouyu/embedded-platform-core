@@ -35,10 +35,19 @@ def test_platform_paths_header_compiles_standalone(tmp_path):
                 const char *(*resource_fn)(void) = ep_platform_resource_root_path;
                 int (*asset_fn)(const char *, char *, size_t) = ep_platform_asset_path;
                 int (*image_fn)(const char *, char *, size_t) = ep_platform_image_path;
+                int (*lvgl_image_fn)(const char *, char *, size_t) = ep_platform_lvgl_image_src;
                 int (*font_fn)(const char *, char *, size_t) = ep_platform_font_path;
                 int (*theme_fn)(const char *, char *, size_t) = ep_platform_theme_path;
 
-                return (config_fn && resource_fn && asset_fn && image_fn && font_fn && theme_fn) ? 0 : 1;
+                return (
+                    config_fn &&
+                    resource_fn &&
+                    asset_fn &&
+                    image_fn &&
+                    lvgl_image_fn &&
+                    font_fn &&
+                    theme_fn
+                ) ? 0 : 1;
             }
             """
         ).strip()

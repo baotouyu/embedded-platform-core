@@ -61,8 +61,12 @@ def test_host_app_runner_uses_framework_then_ui_loop():
     assert "ep_host_ui_port_init()" in host_app
     assert "app_ui_create()" in host_app
     assert "while (!ep_host_ui_port_should_quit())" in host_app
+    assert "ep_ui_tick_inc(EP_HOST_APP_FRAME_DELAY_MS)" in host_app
     assert "ep_ui_process()" in host_app
-    assert "ep_sleep_ms(" in host_app
+    assert "frame_start_ms = ep_time_now_ms()" in host_app
+    assert "frame_elapsed_ms = ep_time_now_ms() - frame_start_ms" in host_app
+    assert "if (frame_elapsed_ms < EP_HOST_APP_FRAME_DELAY_MS)" in host_app
+    assert "ep_sleep_ms((unsigned int)(EP_HOST_APP_FRAME_DELAY_MS - frame_elapsed_ms))" in host_app
     assert "ep_host_ui_port_deinit()" in host_app
     assert "ep_ui_deinit()" in host_app
 

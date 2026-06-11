@@ -129,16 +129,25 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
   add_executable(ep_host_lvgl_demo
     demos/lvgl_demo_main.c
     ${CMAKE_SOURCE_DIR}/app/ui/app_ui.c
+    ${CMAKE_SOURCE_DIR}/app/ui/page_manager.c
+    ${CMAKE_SOURCE_DIR}/app/ui/pages/home_page.c
+    ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_page.c
+    paths/ep_host_platform_paths.c
     ui_port/ep_host_ui_port.c
     osal_port/ep_host_osal_time.c
+    osal_port/ep_host_osal_mem.c
+    osal_port/ep_host_osal_mutex.c
   )
 
   target_include_directories(ep_host_lvgl_demo
     PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/ui_port
       ${CMAKE_SOURCE_DIR}/app/ui
+      ${CMAKE_SOURCE_DIR}/app/ui/pages
       ${CMAKE_SOURCE_DIR}/components/log/include
+      ${CMAKE_SOURCE_DIR}/components/recipe_parser/include
       ${CMAKE_SOURCE_DIR}/components/ui/include
+      ${CMAKE_SOURCE_DIR}/platforms/include
       ${CMAKE_SOURCE_DIR}/osal/include
       ${EP_LVGL_INCLUDE_DIR}
   )
@@ -152,6 +161,8 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
     PRIVATE
       ep_components_ui
       ep_components_log
+      ep_components_recipe_parser
+      ep_platform_api
       ep_thirdparty_lvgl
   )
 

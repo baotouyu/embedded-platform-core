@@ -7,6 +7,7 @@
 
 #define EP_HOST_CONFIG_PROFILE_PATH "config/profiles/host.cfg"
 #define EP_HOST_RESOURCE_ROOT_PATH "resources/host"
+#define EP_HOST_LVGL_FS_PREFIX "A:"
 
 static int ep_host_is_valid_relative_path(const char *path)
 {
@@ -113,6 +114,75 @@ int ep_platform_asset_path(const char *relative_path, char *buffer, size_t buffe
 int ep_platform_image_path(const char *name, char *buffer, size_t buffer_size)
 {
     return ep_host_resource_category_path("images", name, buffer, buffer_size);
+}
+
+int ep_platform_lvgl_image_src(const char *name, char *buffer, size_t buffer_size)
+{
+    char image_path[160];
+    size_t prefix_len;
+    size_t path_len;
+    size_t required_size;
+    int rc;
+
+    if (buffer == NULL || buffer_size == 0u) {
+        return EP_ERR_INVAL;
+    }
+
+    rc = ep_platform_image_path(name, image_path, sizeof(image_path));
+    if (rc != EP_OK) {
+        buffer[0] = '\0';
+        return rc;
+    }
+
+    prefix_len = strlen(EP_HOST_LVGL_FS_PREFIX);
+    path_len = strlen(image_path);
+    required_size = prefix_len + path_len + 1u;
+    if (required_size > buffer_size) {
+        buffer[0] = '\0';
+        return EP_ERR_INVAL;
+    }
+
+    (void)memcpy(buffer, EP_HOST_LVGL_FS_PREFIX, prefix_len);
+    (void)memcpy(&buffer[prefix_len], image_path, path_len + 1u);
+
+    return EP_OK;
+}
+
+int ep_platform_recipe_path(const char *name, char *buffer, size_t buffer_size)
+{
+    return ep_host_resource_category_path("recipe", name, buffer, buffer_size);
+}
+
+int ep_platform_lvgl_recipe_src(const char *name, char *buffer, size_t buffer_size)
+{
+    char recipe_path[160];
+    size_t prefix_len;
+    size_t path_len;
+    size_t required_size;
+    int rc;
+
+    if (buffer == NULL || buffer_size == 0u) {
+        return EP_ERR_INVAL;
+    }
+
+    rc = ep_platform_recipe_path(name, recipe_path, sizeof(recipe_path));
+    if (rc != EP_OK) {
+        buffer[0] = '\0';
+        return rc;
+    }
+
+    prefix_len = strlen(EP_HOST_LVGL_FS_PREFIX);
+    path_len = strlen(recipe_path);
+    required_size = prefix_len + path_len + 1u;
+    if (required_size > buffer_size) {
+        buffer[0] = '\0';
+        return EP_ERR_INVAL;
+    }
+
+    (void)memcpy(buffer, EP_HOST_LVGL_FS_PREFIX, prefix_len);
+    (void)memcpy(&buffer[prefix_len], recipe_path, path_len + 1u);
+
+    return EP_OK;
 }
 
 int ep_platform_font_path(const char *name, char *buffer, size_t buffer_size)

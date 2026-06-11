@@ -4,6 +4,9 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/app/main.c
   ${CMAKE_SOURCE_DIR}/app/selftest/app_selftest.c
   ${CMAKE_SOURCE_DIR}/app/ui/app_ui.c
+  ${CMAKE_SOURCE_DIR}/app/ui/page_manager.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/home_page.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_page.c
   ${CMAKE_SOURCE_DIR}/app/services/beep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/lcd_sleep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/power_board_service.c
@@ -12,6 +15,7 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/components/event/src/ep_event.c
   ${CMAKE_SOURCE_DIR}/components/file/src/ep_file.c
   ${CMAKE_SOURCE_DIR}/components/log/src/ep_log.c
+  ${CMAKE_SOURCE_DIR}/components/recipe_parser/src/ep_simple_recipe.c
   ${CMAKE_SOURCE_DIR}/components/timer/src/ep_timer.c
   ${CMAKE_SOURCE_DIR}/components/device/src/ep_device.c
   ${CMAKE_SOURCE_DIR}/components/ui/src/ep_ui.c
@@ -37,11 +41,13 @@ target_include_directories(ep_app_core_export
     ${CMAKE_SOURCE_DIR}/app/selftest
     ${CMAKE_SOURCE_DIR}/app/services
     ${CMAKE_SOURCE_DIR}/app/ui
+    ${CMAKE_SOURCE_DIR}/app/ui/pages
     ${CMAKE_SOURCE_DIR}/components/config/include
     ${CMAKE_SOURCE_DIR}/components/device/include
     ${CMAKE_SOURCE_DIR}/components/event/include
     ${CMAKE_SOURCE_DIR}/components/file/include
     ${CMAKE_SOURCE_DIR}/components/log/include
+    ${CMAKE_SOURCE_DIR}/components/recipe_parser/include
     ${CMAKE_SOURCE_DIR}/components/timer/include
     ${CMAKE_SOURCE_DIR}/components/ui/include
     ${CMAKE_SOURCE_DIR}/osal/include
@@ -49,6 +55,8 @@ target_include_directories(ep_app_core_export
     ${CMAKE_SOURCE_DIR}/platforms/include
   PRIVATE
     ${CMAKE_SOURCE_DIR}/third_party/external/EasyLogger/easylogger/inc
+    ${CMAKE_SOURCE_DIR}/third_party/external/cjson
+    ${CMAKE_SOURCE_DIR}/third_party/external/sqlite
     ${EP_LVGL_INCLUDE_DIR}
 )
 

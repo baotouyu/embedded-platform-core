@@ -1,0 +1,106 @@
+{
+    "accessoryCodes": "",
+    "challengeLevel": 0,
+    "chefName": "",
+    "cookingNum": 0,
+    "createdAt": "2026-06-02 15:44:42",
+    "id": 2061685419668815874,
+    "isCustomFood": 1,
+    "isFeeder": 0,
+    "landscapeImageUrl": "https://file.kitchenidea.com.cn/cook_platform/images/e311ad5c-7962-4738-bd8d-4ab25ea98612.png",
+    "name": "Americano",
+    "portraitImageUrl": "https://file.kitchenidea.com.cn/cook_platform/images/76d402b3-9713-4e80-9a38-e6f79067ca89.png",
+    "preStepVoList": [],
+    "productCode": "C08",
+    "recipeCategoryIds": "",
+    "recipeIntroduce": "",
+    "recipeStepVoList": [
+        {
+            "picUrl": "",
+            "recipeStepParameterVoList": [
+                {
+                    "pre_soak": { // 预浸泡
+                        "ctlVal": "3",
+                        "maxVal": "5",
+                        "minVal": "0",
+                        "rangeVal": ""
+                    }
+                },
+                {
+                    "coffee_powder_quantity": { // 咖啡粉量
+                        "ctlVal": "3",
+                        "maxVal": "3",
+                        "minVal": "1",
+                        "rangeVal": ""
+                    }
+                },
+                {
+                    "discharge": { // 咖啡量
+                        "ctlVal": "70",
+                        "maxVal": "250",
+                        "minVal": "60",
+                        "rangeVal": ""
+                    }
+                },
+                {
+                    "hot_water": { // 热水量
+                        "ctlVal": "80",
+                        "maxVal": "150",
+                        "minVal": "50",
+                        "rangeVal": ""
+                    }
+                },
+                {
+                    "milk_quantity": { // 牛奶量
+                        "ctlVal": "0"
+                    }
+                },
+                {
+                    "milk_foam_volume": { // 牛奶泡沫量
+                        "ctlVal": "0"
+                    }
+                },
+                {
+                    "temperature": { // 温度
+                        "ctlVal": "92",
+                        "maxVal": "95",
+                        "minVal": "86",
+                        "rangeVal": ""
+                    }
+                },
+                {
+                    "coffee_type": { // 咖啡类型
+                        "ctlVal": "2"
+                    }
+                },
+                {
+                    "cupNumber": { // 杯数
+                        "ctlVal": "1"
+                    }
+                }
+            ],
+            "serialNumb": 0,
+            "stepDesc": "",
+            "stepType": 1,
+            "weighed": 0,
+            "weight": "0.00"
+        }
+    ],
+    "recipeType": 3,
+    "serviceSize": 1,
+    "sort": 0,
+    "updatedAt": "2026-06-02 15:54:35"
+}
+
+
+{
+    "challengeLevel": 0,
+    "collect": false,
+    "cookingNum": 0,
+    "id": 2061685419668815874,
+    "isFeeder": 0,
+    "landscapeImageUrl": "https://file.kitchenidea.com.cn/cook_platform/images/e311ad5c-7962-4738-bd8d-4ab25ea98612.png",
+    "name": "Americano",
+    "portraitImageUrl": "https://file.kitchenidea.com.cn/cook_platform/images/76d402b3-9713-4e80-9a38-e6f79067ca89.png",
+    "serviceSize": 1
+}

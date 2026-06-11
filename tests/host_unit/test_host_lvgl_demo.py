@@ -16,8 +16,12 @@ def test_host_lvgl_demo_source_and_behavior_are_declared():
     text = demo.read_text()
     assert "ep_ui_init()" in text
     assert "ep_host_ui_port_init()" in text
+    assert "ep_ui_tick_inc(EP_HOST_LVGL_DEMO_FRAME_DELAY_MS)" in text
     assert "ep_ui_process()" in text
-    assert "ep_sleep_ms(EP_HOST_LVGL_DEMO_FRAME_DELAY_MS)" in text
+    assert "frame_start_ms = ep_time_now_ms()" in text
+    assert "frame_elapsed_ms = ep_time_now_ms() - frame_start_ms" in text
+    assert "if (frame_elapsed_ms < EP_HOST_LVGL_DEMO_FRAME_DELAY_MS)" in text
+    assert "ep_sleep_ms((unsigned int)(EP_HOST_LVGL_DEMO_FRAME_DELAY_MS - frame_elapsed_ms))" in text
     assert "#define EP_HOST_LVGL_DEMO_FRAME_DELAY_MS 16u" in text
     assert "ep_host_ui_port_should_quit()" in text
     assert "lv_label_create" in text
@@ -47,10 +51,16 @@ def test_host_cmake_builds_lvgl_demo_only_for_host_macos():
 
     assert "add_executable(ep_host_lvgl_demo" in cmake
     assert "demos/lvgl_demo_main.c" in cmake
+    assert "${CMAKE_SOURCE_DIR}/app/ui/page_manager.c" in cmake
+    assert "${CMAKE_SOURCE_DIR}/app/ui/pages/home_page.c" in cmake
+    assert "${CMAKE_SOURCE_DIR}/app/ui/pages/settings_page.c" in cmake
     assert "ui_port/ep_host_ui_port.c" in cmake
+    assert "osal_port/ep_host_osal_mem.c" in cmake
+    assert "osal_port/ep_host_osal_mutex.c" in cmake
     assert "ep_components_ui" in cmake
     assert "ep_thirdparty_lvgl" in cmake
     assert "EP_HAS_HOST_SDL2_UI=1" in cmake
+    assert "EP_HOME_CAROUSEL_DISABLE_LIVE_SCALE" not in cmake
     assert 'if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")' in cmake
 
     assert "ep_host_lvgl_demo" not in app_cmake

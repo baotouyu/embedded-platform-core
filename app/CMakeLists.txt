@@ -3,6 +3,9 @@ add_library(ep_app STATIC
   main.c
   selftest/app_selftest.c
   ui/app_ui.c
+  ui/page_manager.c
+  ui/pages/home_page.c
+  ui/pages/settings_page.c
   services/beep_service.c
   services/lcd_sleep_service.c
   services/power_board_service.c
@@ -16,9 +19,12 @@ target_include_directories(ep_app
     ${CMAKE_CURRENT_SOURCE_DIR}/selftest
     ${CMAKE_CURRENT_SOURCE_DIR}/services
     ${CMAKE_CURRENT_SOURCE_DIR}/ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/ui/pages
     ${CMAKE_SOURCE_DIR}/components/log/include
     ${CMAKE_SOURCE_DIR}/components/event/include
     ${CMAKE_SOURCE_DIR}/components/timer/include
+    ${CMAKE_SOURCE_DIR}/components/recipe_parser/include
+    ${CMAKE_SOURCE_DIR}/platforms/include
     ${CMAKE_SOURCE_DIR}/hal/include
     ${CMAKE_SOURCE_DIR}/osal/include
     ${EP_LVGL_INCLUDE_DIR}
@@ -29,4 +35,6 @@ target_link_libraries(ep_app
     ep_components_log
     ep_components_event
     ep_components_timer
+    ep_components_recipe_parser
+    ep_platform_api
 )
