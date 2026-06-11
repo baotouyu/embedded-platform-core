@@ -16,7 +16,10 @@
 
 #define HOME_PAGE_BG_IMAGE_NAME "home_bg.png"
 #define HOME_PAGE_SETTINGS_ICON_NAME "icon_settings.png"
-#define HOME_PAGE_USER_AVATAR_IMAGE_NAME "avatar_user.png"
+#define HOME_PAGE_USER_AVATAR_1_IMAGE_NAME "avatar_user_1.png"
+#define HOME_PAGE_USER_AVATAR_2_IMAGE_NAME "avatar_user_2.png"
+#define HOME_PAGE_USER_AVATAR_3_IMAGE_NAME "avatar_user_3.png"
+#define HOME_PAGE_USER_AVATAR_4_IMAGE_NAME "avatar_user_4.png"
 #define HOME_PAGE_SETTINGS_TEXT "Settings"
 #define HOME_PAGE_RECIPE_DB_NAME "recipelib.db"
 #define HOME_PAGE_MAX_RECIPES 16u
@@ -109,13 +112,14 @@ typedef struct {
     ep_simple_recipe_item_t recipes[HOME_PAGE_MAX_RECIPES];
     char bg_src[128];
     char settings_src[128];
-    char user_avatar_src[128];
+    char user_avatar_src[HOME_PAGE_USER_COUNT][128];
     char recipe_src[HOME_PAGE_CAROUSEL_SLOT_COUNT][160];
     size_t recipe_count;
     size_t selected_index;
     lv_obj_t *screen;
     lv_obj_t *carousel;
     lv_obj_t *user_button;
+    lv_obj_t *user_avatar_image;
     lv_obj_t *user_arrow_button;
     lv_obj_t *user_dropdown;
     lv_obj_t *user_rows[HOME_PAGE_USER_COUNT];
@@ -148,6 +152,13 @@ static const char *const home_page_user_names[HOME_PAGE_USER_COUNT] = {
     "用户2",
     "用户3",
     "用户4",
+};
+
+static const char *const home_page_user_avatar_names[HOME_PAGE_USER_COUNT] = {
+    HOME_PAGE_USER_AVATAR_1_IMAGE_NAME,
+    HOME_PAGE_USER_AVATAR_2_IMAGE_NAME,
+    HOME_PAGE_USER_AVATAR_3_IMAGE_NAME,
+    HOME_PAGE_USER_AVATAR_4_IMAGE_NAME,
 };
 
 static const lv_point_precise_t home_page_user_arrow_points[] = {
@@ -355,6 +366,8 @@ static void home_page_refresh_user_rows(home_page_state_t *state)
     }
 }
 
+static void home_page_refresh_selected_user_avatar(home_page_state_t *state);
+
 static void home_page_user_row_clicked(lv_event_t *event)
 {
     home_page_state_t *state;
@@ -370,19 +383,20 @@ static void home_page_user_row_clicked(lv_event_t *event)
         if (state->user_rows[i] == row) {
             state->selected_user_index = i;
             home_page_refresh_user_rows(state);
+            home_page_refresh_selected_user_avatar(state);
             home_page_set_user_dropdown_visible(state, false);
             return;
         }
     }
 }
 
-static void home_page_add_user_avatar(lv_obj_t *parent, const char *src)
+static lv_obj_t *home_page_add_user_avatar(lv_obj_t *parent, const char *src)
 {
     lv_obj_t *avatar;
     lv_obj_t *fallback;
 
     if (parent == NULL) {
-        return;
+        return NULL;
     }
 
     if (src != NULL && src[0] != '\0') {
@@ -390,7 +404,7 @@ static void home_page_add_user_avatar(lv_obj_t *parent, const char *src)
         if (avatar != NULL) {
             lv_image_set_src(avatar, src);
             lv_obj_set_pos(avatar, 0, 0);
-            return;
+            return avatar;
         }
     }
 
@@ -400,6 +414,19 @@ static void home_page_add_user_avatar(lv_obj_t *parent, const char *src)
         lv_obj_set_style_text_color(fallback, lv_color_white(), LV_PART_MAIN);
         lv_obj_center(fallback);
     }
+    return NULL;
+}
+
+static void home_page_refresh_selected_user_avatar(home_page_state_t *state)
+{
+    if (state == NULL ||
+        state->user_avatar_image == NULL ||
+        state->selected_user_index >= HOME_PAGE_USER_COUNT ||
+        state->user_avatar_src[state->selected_user_index][0] == '\0') {
+        return;
+    }
+
+    lv_image_set_src(state->user_avatar_image, state->user_avatar_src[state->selected_user_index]);
 }
 
 static void home_page_create_user_dropdown(home_page_state_t *state)
@@ -452,7 +479,7 @@ static void home_page_create_user_dropdown(home_page_state_t *state)
             home_page_set_clean_clickable_style(avatar_holder);
             lv_obj_set_pos(avatar_holder, HOME_PAGE_USER_ROW_AVATAR_X, HOME_PAGE_USER_ROW_AVATAR_Y);
             lv_obj_set_size(avatar_holder, HOME_PAGE_USER_AVATAR_SIZE, HOME_PAGE_USER_AVATAR_SIZE);
-            home_page_add_user_avatar(avatar_holder, state->user_avatar_src);
+            home_page_add_user_avatar(avatar_holder, state->user_avatar_src[i]);
         }
 
         label = lv_label_create(row);
@@ -476,9 +503,11 @@ static void home_page_create_user_switcher(home_page_state_t *state)
     }
 
     state->selected_user_index = 0u;
-    (void)ep_platform_lvgl_image_src(HOME_PAGE_USER_AVATAR_IMAGE_NAME,
-                                     state->user_avatar_src,
-                                     sizeof(state->user_avatar_src));
+    for (size_t i = 0u; i < HOME_PAGE_USER_COUNT; ++i) {
+        (void)ep_platform_lvgl_image_src(home_page_user_avatar_names[i],
+                                         state->user_avatar_src[i],
+                                         sizeof(state->user_avatar_src[i]));
+    }
 
     button = lv_button_create(state->screen);
     state->user_button = button;
@@ -487,7 +516,7 @@ static void home_page_create_user_switcher(home_page_state_t *state)
         lv_obj_set_pos(button, HOME_PAGE_USER_AVATAR_X, HOME_PAGE_USER_AVATAR_Y);
         lv_obj_set_size(button, HOME_PAGE_USER_AVATAR_SIZE, HOME_PAGE_USER_AVATAR_SIZE);
         lv_obj_add_event_cb(button, home_page_toggle_user_dropdown, LV_EVENT_CLICKED, state);
-        home_page_add_user_avatar(button, state->user_avatar_src);
+        state->user_avatar_image = home_page_add_user_avatar(button, state->user_avatar_src[state->selected_user_index]);
     }
 
     arrow = lv_button_create(state->screen);

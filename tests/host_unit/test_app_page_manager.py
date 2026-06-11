@@ -295,7 +295,7 @@ def test_home_page_snap_uses_directional_step_to_avoid_commit_jitter():
 def test_home_page_has_reference_positioned_user_switcher():
     home_page = _read("app/ui/pages/home_page.c")
 
-    assert '#define HOME_PAGE_USER_AVATAR_IMAGE_NAME "avatar_user.png"' in home_page
+    assert 'HOME_PAGE_USER_AVATAR_1_IMAGE_NAME "avatar_user_1.png"' in home_page
     assert "#define HOME_PAGE_SETTINGS_X 32" in home_page
     assert "#define HOME_PAGE_SETTINGS_Y 24" in home_page
     assert "#define HOME_PAGE_USER_AVATAR_X 677" in home_page
@@ -327,17 +327,34 @@ def test_home_page_user_switcher_toggles_dropdown_and_rows():
     assert "lv_obj_add_event_cb(row, home_page_user_row_clicked, LV_EVENT_CLICKED, state)" in home_page
 
 
-def test_home_page_user_switcher_uses_requested_row_colors_and_resource():
+def test_home_page_user_switcher_uses_requested_row_colors_and_resources():
     home_page = _read("app/ui/pages/home_page.c")
 
     assert "HOME_PAGE_USER_SELECTED_COLOR 0xFFFFFF" in home_page
     assert "HOME_PAGE_USER_UNSELECTED_COLOR 0x2F2B29" in home_page
-    assert "ep_platform_lvgl_image_src(HOME_PAGE_USER_AVATAR_IMAGE_NAME" in home_page
+    assert 'HOME_PAGE_USER_AVATAR_1_IMAGE_NAME "avatar_user_1.png"' in home_page
+    assert 'HOME_PAGE_USER_AVATAR_2_IMAGE_NAME "avatar_user_2.png"' in home_page
+    assert 'HOME_PAGE_USER_AVATAR_3_IMAGE_NAME "avatar_user_3.png"' in home_page
+    assert 'HOME_PAGE_USER_AVATAR_4_IMAGE_NAME "avatar_user_4.png"' in home_page
+    assert "home_page_user_avatar_names[HOME_PAGE_USER_COUNT]" in home_page
+    assert "ep_platform_lvgl_image_src(home_page_user_avatar_names[i]" in home_page
     assert "static const char *const home_page_user_names[HOME_PAGE_USER_COUNT]" in home_page
     assert '"用户1"' in home_page
     assert '"用户4"' in home_page
 
-    assert (REPO_ROOT / "resources/host/images/avatar_user.png").exists()
+    assert (REPO_ROOT / "resources/host/images/avatar_user_1.png").exists()
+    assert (REPO_ROOT / "resources/host/images/avatar_user_2.png").exists()
+    assert (REPO_ROOT / "resources/host/images/avatar_user_3.png").exists()
+    assert (REPO_ROOT / "resources/host/images/avatar_user_4.png").exists()
+
+
+def test_home_page_user_switcher_updates_top_avatar_after_selection():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert "char user_avatar_src[HOME_PAGE_USER_COUNT][128]" in home_page
+    assert "lv_obj_t *user_avatar_image" in home_page
+    assert "home_page_refresh_selected_user_avatar(state)" in home_page
+    assert "lv_image_set_src(state->user_avatar_image, state->user_avatar_src[state->selected_user_index])" in home_page
 
 
 def test_app_ui_registers_home_page_through_page_manager():
