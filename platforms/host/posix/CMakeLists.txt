@@ -147,6 +147,7 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
       ${CMAKE_SOURCE_DIR}/components/log/include
       ${CMAKE_SOURCE_DIR}/components/recipe_parser/include
       ${CMAKE_SOURCE_DIR}/components/ui/include
+      ${CMAKE_SOURCE_DIR}/components/ui_style/include
       ${CMAKE_SOURCE_DIR}/platforms/include
       ${CMAKE_SOURCE_DIR}/osal/include
       ${EP_LVGL_INCLUDE_DIR}
@@ -162,6 +163,7 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
       ep_components_ui
       ep_components_log
       ep_components_recipe_parser
+      ep_components_ui_style
       ep_platform_api
       ep_thirdparty_lvgl
   )

@@ -19,6 +19,7 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/components/timer/src/ep_timer.c
   ${CMAKE_SOURCE_DIR}/components/device/src/ep_device.c
   ${CMAKE_SOURCE_DIR}/components/ui/src/ep_ui.c
+  ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_style.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/startup/app_start.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/osal_port/ep_rtos_osal_stub.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/hal_port/ep_rtos_hal_stub.c
@@ -50,6 +51,7 @@ target_include_directories(ep_app_core_export
     ${CMAKE_SOURCE_DIR}/components/recipe_parser/include
     ${CMAKE_SOURCE_DIR}/components/timer/include
     ${CMAKE_SOURCE_DIR}/components/ui/include
+    ${CMAKE_SOURCE_DIR}/components/ui_style/include
     ${CMAKE_SOURCE_DIR}/osal/include
     ${CMAKE_SOURCE_DIR}/hal/include
     ${CMAKE_SOURCE_DIR}/platforms/include

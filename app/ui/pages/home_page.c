@@ -5,6 +5,7 @@
 #include "ep_simple_recipe.h"
 #include "lvgl.h"
 #include "pages/app_pages.h"
+#include "ui_style.h"
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -295,6 +296,7 @@ static void home_page_create_settings_button(home_page_state_t *state)
     if (fallback != NULL) {
         lv_label_set_text(fallback, HOME_PAGE_SETTINGS_TEXT);
         lv_obj_set_style_text_color(fallback, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_font(fallback, ui_style_font(UI_STYLE_FONT_HOME_SIDE), LV_PART_MAIN);
         lv_obj_center(fallback);
     }
 }
@@ -412,6 +414,7 @@ static lv_obj_t *home_page_add_user_avatar(lv_obj_t *parent, const char *src)
     if (fallback != NULL) {
         lv_label_set_text(fallback, "U");
         lv_obj_set_style_text_color(fallback, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_font(fallback, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
         lv_obj_center(fallback);
     }
     return NULL;
@@ -486,6 +489,7 @@ static void home_page_create_user_dropdown(home_page_state_t *state)
         if (label != NULL) {
             state->user_row_labels[i] = label;
             lv_label_set_text(label, home_page_user_names[i]);
+            lv_obj_set_style_text_font(label, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
             lv_obj_set_pos(label, HOME_PAGE_USER_TEXT_X, HOME_PAGE_USER_TEXT_Y);
         }
     }
@@ -1164,6 +1168,10 @@ static void home_page_create_slot(
         lv_label_set_long_mode(slot->label, LV_LABEL_LONG_DOT);
         lv_obj_set_style_text_align(slot->label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         lv_obj_set_style_text_color(slot->label, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_font(slot->label,
+                                   is_center ? ui_style_font(UI_STYLE_FONT_HOME_CENTER) :
+                                       ui_style_font(UI_STYLE_FONT_HOME_SIDE),
+                                   LV_PART_MAIN);
         lv_obj_set_pos(slot->label, title_x, HOME_PAGE_TITLE_Y);
     }
 }
@@ -1242,6 +1250,7 @@ lv_obj_t *home_page_create(page_manager_page_ctx_t *ctx)
     lv_obj_set_user_data(screen, state);
     lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
+    (void)ui_style_init();
     home_page_style_screen(state);
     home_page_create_settings_button(state);
     home_page_create_carousel(state);
