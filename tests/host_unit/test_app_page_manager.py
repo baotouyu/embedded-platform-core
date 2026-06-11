@@ -292,6 +292,54 @@ def test_home_page_snap_uses_directional_step_to_avoid_commit_jitter():
     assert "HOME_PAGE_RIGHT_SNAP_STEP" not in home_page
 
 
+def test_home_page_has_reference_positioned_user_switcher():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert '#define HOME_PAGE_USER_AVATAR_IMAGE_NAME "avatar_user.png"' in home_page
+    assert "#define HOME_PAGE_SETTINGS_X 32" in home_page
+    assert "#define HOME_PAGE_SETTINGS_Y 24" in home_page
+    assert "#define HOME_PAGE_USER_AVATAR_X 677" in home_page
+    assert "#define HOME_PAGE_USER_AVATAR_Y 24" in home_page
+    assert "#define HOME_PAGE_USER_ARROW_X 749" in home_page
+    assert "#define HOME_PAGE_USER_ARROW_Y 43" in home_page
+    assert "#define HOME_PAGE_USER_DROPDOWN_X 399" in home_page
+    assert "#define HOME_PAGE_USER_DROPDOWN_Y 112" in home_page
+    assert "#define HOME_PAGE_USER_DROPDOWN_WIDTH 369" in home_page
+    assert "#define HOME_PAGE_USER_DROPDOWN_HEIGHT 325" in home_page
+    assert "#define HOME_PAGE_USER_DROPDOWN_RADIUS 12" in home_page
+    assert "home_page_create_user_switcher(state)" in home_page
+
+
+def test_home_page_user_switcher_toggles_dropdown_and_rows():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert "lv_obj_add_flag(state->user_dropdown, LV_OBJ_FLAG_HIDDEN)" in home_page
+    assert "lv_obj_clear_flag(state->user_dropdown, LV_OBJ_FLAG_HIDDEN)" in home_page
+    assert "lv_obj_move_foreground(state->user_dropdown)" in home_page
+    assert "lv_line_create(arrow)" in home_page
+    assert "lv_line_set_points(arrow_line" in home_page
+    assert "home_page_user_arrow_points" in home_page
+    assert "home_page_toggle_user_dropdown" in home_page
+    assert "home_page_user_row_clicked" in home_page
+    assert "home_page_refresh_user_rows" in home_page
+    assert "state->selected_user_index = 0u" in home_page
+    assert "lv_obj_add_event_cb(button, home_page_toggle_user_dropdown, LV_EVENT_CLICKED, state)" in home_page
+    assert "lv_obj_add_event_cb(row, home_page_user_row_clicked, LV_EVENT_CLICKED, state)" in home_page
+
+
+def test_home_page_user_switcher_uses_requested_row_colors_and_resource():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert "HOME_PAGE_USER_SELECTED_COLOR 0xFFFFFF" in home_page
+    assert "HOME_PAGE_USER_UNSELECTED_COLOR 0x2F2B29" in home_page
+    assert "ep_platform_lvgl_image_src(HOME_PAGE_USER_AVATAR_IMAGE_NAME" in home_page
+    assert "static const char *const home_page_user_names[HOME_PAGE_USER_COUNT]" in home_page
+    assert '"用户1"' in home_page
+    assert '"用户4"' in home_page
+
+    assert (REPO_ROOT / "resources/host/images/avatar_user.png").exists()
+
+
 def test_app_ui_registers_home_page_through_page_manager():
     app_ui = _read("app/ui/app_ui.c")
     app_cmake = _read("app/CMakeLists.txt")

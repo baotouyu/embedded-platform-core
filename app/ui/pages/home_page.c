@@ -16,9 +16,11 @@
 
 #define HOME_PAGE_BG_IMAGE_NAME "home_bg.png"
 #define HOME_PAGE_SETTINGS_ICON_NAME "icon_settings.png"
+#define HOME_PAGE_USER_AVATAR_IMAGE_NAME "avatar_user.png"
 #define HOME_PAGE_SETTINGS_TEXT "Settings"
 #define HOME_PAGE_RECIPE_DB_NAME "recipelib.db"
 #define HOME_PAGE_MAX_RECIPES 16u
+#define HOME_PAGE_USER_COUNT 4u
 #define HOME_PAGE_CAROUSEL_SLOT_COUNT 5u
 #define HOME_PAGE_FAR_LEFT_SLOT 0u
 #define HOME_PAGE_LEFT_SLOT 1u
@@ -64,9 +66,29 @@
 #define HOME_PAGE_LEFT_TITLE_X 0
 #define HOME_PAGE_CENTER_TITLE_X 0
 #define HOME_PAGE_RIGHT_TITLE_X 10
-#define HOME_PAGE_SETTINGS_X 50
-#define HOME_PAGE_SETTINGS_Y 44
+#define HOME_PAGE_SETTINGS_X 32
+#define HOME_PAGE_SETTINGS_Y 24
 #define HOME_PAGE_SETTINGS_SIZE 48
+#define HOME_PAGE_USER_AVATAR_X 677
+#define HOME_PAGE_USER_AVATAR_Y 24
+#define HOME_PAGE_USER_AVATAR_SIZE 48
+#define HOME_PAGE_USER_ARROW_X 749
+#define HOME_PAGE_USER_ARROW_Y 43
+#define HOME_PAGE_USER_ARROW_WIDTH 19
+#define HOME_PAGE_USER_ARROW_HEIGHT 10
+#define HOME_PAGE_USER_DROPDOWN_X 399
+#define HOME_PAGE_USER_DROPDOWN_Y 112
+#define HOME_PAGE_USER_DROPDOWN_WIDTH 369
+#define HOME_PAGE_USER_DROPDOWN_HEIGHT 325
+#define HOME_PAGE_USER_DROPDOWN_RADIUS 12
+#define HOME_PAGE_USER_ROW_HEIGHT 81
+#define HOME_PAGE_USER_SELECTED_COLOR 0xFFFFFF
+#define HOME_PAGE_USER_UNSELECTED_COLOR 0x2F2B29
+#define HOME_PAGE_USER_DROPDOWN_BORDER_COLOR 0x3D3734
+#define HOME_PAGE_USER_TEXT_X 184
+#define HOME_PAGE_USER_TEXT_Y 24
+#define HOME_PAGE_USER_ROW_AVATAR_X 129
+#define HOME_PAGE_USER_ROW_AVATAR_Y 16
 
 typedef struct {
     lv_obj_t *container;
@@ -87,11 +109,17 @@ typedef struct {
     ep_simple_recipe_item_t recipes[HOME_PAGE_MAX_RECIPES];
     char bg_src[128];
     char settings_src[128];
+    char user_avatar_src[128];
     char recipe_src[HOME_PAGE_CAROUSEL_SLOT_COUNT][160];
     size_t recipe_count;
     size_t selected_index;
     lv_obj_t *screen;
     lv_obj_t *carousel;
+    lv_obj_t *user_button;
+    lv_obj_t *user_arrow_button;
+    lv_obj_t *user_dropdown;
+    lv_obj_t *user_rows[HOME_PAGE_USER_COUNT];
+    lv_obj_t *user_row_labels[HOME_PAGE_USER_COUNT];
     home_page_carousel_slot_t slots[HOME_PAGE_CAROUSEL_SLOT_COUNT];
     lv_timer_t *snap_timer;
     uint32_t snap_start_tick;
@@ -111,7 +139,22 @@ typedef struct {
     uint32_t last_drag_tick;
     int32_t release_velocity;
     int32_t drag_offset;
+    size_t selected_user_index;
+    bool user_dropdown_visible;
 } home_page_state_t;
+
+static const char *const home_page_user_names[HOME_PAGE_USER_COUNT] = {
+    "用户1",
+    "用户2",
+    "用户3",
+    "用户4",
+};
+
+static const lv_point_precise_t home_page_user_arrow_points[] = {
+    {0, 0},
+    {9, 8},
+    {18, 0},
+};
 
 static int home_page_wrap_index(int index, size_t count)
 {
@@ -243,6 +286,233 @@ static void home_page_create_settings_button(home_page_state_t *state)
         lv_obj_set_style_text_color(fallback, lv_color_white(), LV_PART_MAIN);
         lv_obj_center(fallback);
     }
+}
+
+static void home_page_set_clean_clickable_style(lv_obj_t *obj)
+{
+    if (obj == NULL) {
+        return;
+    }
+
+    lv_obj_remove_style_all(obj);
+    lv_obj_set_style_bg_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
+}
+
+static void home_page_set_user_dropdown_visible(home_page_state_t *state, bool visible)
+{
+    if (state == NULL || state->user_dropdown == NULL) {
+        return;
+    }
+
+    state->user_dropdown_visible = visible;
+    if (visible) {
+        lv_obj_clear_flag(state->user_dropdown, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_move_foreground(state->user_dropdown);
+    } else {
+        lv_obj_add_flag(state->user_dropdown, LV_OBJ_FLAG_HIDDEN);
+    }
+}
+
+static void home_page_toggle_user_dropdown(lv_event_t *event)
+{
+    home_page_state_t *state;
+
+    state = (home_page_state_t *)lv_event_get_user_data(event);
+    if (state == NULL) {
+        return;
+    }
+
+    home_page_set_user_dropdown_visible(state, !state->user_dropdown_visible);
+}
+
+static void home_page_refresh_user_rows(home_page_state_t *state)
+{
+    if (state == NULL) {
+        return;
+    }
+
+    for (size_t i = 0u; i < HOME_PAGE_USER_COUNT; ++i) {
+        bool selected;
+        lv_color_t bg_color;
+        lv_color_t text_color;
+
+        selected = i == state->selected_user_index;
+        bg_color = lv_color_hex(selected ? HOME_PAGE_USER_SELECTED_COLOR : HOME_PAGE_USER_UNSELECTED_COLOR);
+        text_color = selected ? lv_color_black() : lv_color_white();
+
+        if (state->user_rows[i] != NULL) {
+            lv_obj_set_style_bg_color(state->user_rows[i], bg_color, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(state->user_rows[i], LV_OPA_COVER, LV_PART_MAIN);
+        }
+
+        if (state->user_row_labels[i] != NULL) {
+            lv_obj_set_style_text_color(state->user_row_labels[i], text_color, LV_PART_MAIN);
+        }
+    }
+}
+
+static void home_page_user_row_clicked(lv_event_t *event)
+{
+    home_page_state_t *state;
+    lv_obj_t *row;
+
+    state = (home_page_state_t *)lv_event_get_user_data(event);
+    row = (lv_obj_t *)lv_event_get_target(event);
+    if (state == NULL || row == NULL) {
+        return;
+    }
+
+    for (size_t i = 0u; i < HOME_PAGE_USER_COUNT; ++i) {
+        if (state->user_rows[i] == row) {
+            state->selected_user_index = i;
+            home_page_refresh_user_rows(state);
+            home_page_set_user_dropdown_visible(state, false);
+            return;
+        }
+    }
+}
+
+static void home_page_add_user_avatar(lv_obj_t *parent, const char *src)
+{
+    lv_obj_t *avatar;
+    lv_obj_t *fallback;
+
+    if (parent == NULL) {
+        return;
+    }
+
+    if (src != NULL && src[0] != '\0') {
+        avatar = lv_image_create(parent);
+        if (avatar != NULL) {
+            lv_image_set_src(avatar, src);
+            lv_obj_set_pos(avatar, 0, 0);
+            return;
+        }
+    }
+
+    fallback = lv_label_create(parent);
+    if (fallback != NULL) {
+        lv_label_set_text(fallback, "U");
+        lv_obj_set_style_text_color(fallback, lv_color_white(), LV_PART_MAIN);
+        lv_obj_center(fallback);
+    }
+}
+
+static void home_page_create_user_dropdown(home_page_state_t *state)
+{
+    lv_obj_t *row;
+    lv_obj_t *avatar_holder;
+    lv_obj_t *label;
+
+    if (state == NULL || state->screen == NULL) {
+        return;
+    }
+
+    state->user_dropdown = lv_obj_create(state->screen);
+    if (state->user_dropdown == NULL) {
+        return;
+    }
+
+    lv_obj_remove_style_all(state->user_dropdown);
+    lv_obj_set_pos(state->user_dropdown, HOME_PAGE_USER_DROPDOWN_X, HOME_PAGE_USER_DROPDOWN_Y);
+    lv_obj_set_size(state->user_dropdown, HOME_PAGE_USER_DROPDOWN_WIDTH, HOME_PAGE_USER_DROPDOWN_HEIGHT);
+    lv_obj_set_style_radius(state->user_dropdown, HOME_PAGE_USER_DROPDOWN_RADIUS, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(state->user_dropdown, lv_color_hex(HOME_PAGE_USER_UNSELECTED_COLOR), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(state->user_dropdown, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_color(state->user_dropdown, lv_color_hex(HOME_PAGE_USER_DROPDOWN_BORDER_COLOR), LV_PART_MAIN);
+    lv_obj_set_style_border_width(state->user_dropdown, 1, LV_PART_MAIN);
+    lv_obj_set_style_clip_corner(state->user_dropdown, true, LV_PART_MAIN);
+    lv_obj_clear_flag(state->user_dropdown, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(state->user_dropdown, LV_OBJ_FLAG_HIDDEN);
+
+    for (size_t i = 0u; i < HOME_PAGE_USER_COUNT; ++i) {
+        row = lv_obj_create(state->user_dropdown);
+        if (row == NULL) {
+            continue;
+        }
+
+        state->user_rows[i] = row;
+        lv_obj_remove_style_all(row);
+        lv_obj_set_pos(row, 0, (int32_t)i * HOME_PAGE_USER_ROW_HEIGHT);
+        lv_obj_set_size(row,
+                        HOME_PAGE_USER_DROPDOWN_WIDTH,
+                        i == HOME_PAGE_USER_COUNT - 1u ? 82 : HOME_PAGE_USER_ROW_HEIGHT);
+        lv_obj_set_style_radius(row, 0, LV_PART_MAIN);
+        lv_obj_set_style_border_width(row, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_add_flag(row, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_event_cb(row, home_page_user_row_clicked, LV_EVENT_CLICKED, state);
+
+        avatar_holder = lv_obj_create(row);
+        if (avatar_holder != NULL) {
+            home_page_set_clean_clickable_style(avatar_holder);
+            lv_obj_set_pos(avatar_holder, HOME_PAGE_USER_ROW_AVATAR_X, HOME_PAGE_USER_ROW_AVATAR_Y);
+            lv_obj_set_size(avatar_holder, HOME_PAGE_USER_AVATAR_SIZE, HOME_PAGE_USER_AVATAR_SIZE);
+            home_page_add_user_avatar(avatar_holder, state->user_avatar_src);
+        }
+
+        label = lv_label_create(row);
+        if (label != NULL) {
+            state->user_row_labels[i] = label;
+            lv_label_set_text(label, home_page_user_names[i]);
+            lv_obj_set_pos(label, HOME_PAGE_USER_TEXT_X, HOME_PAGE_USER_TEXT_Y);
+        }
+    }
+
+    home_page_refresh_user_rows(state);
+}
+
+static void home_page_create_user_switcher(home_page_state_t *state)
+{
+    lv_obj_t *button;
+    lv_obj_t *arrow;
+
+    if (state == NULL || state->screen == NULL) {
+        return;
+    }
+
+    state->selected_user_index = 0u;
+    (void)ep_platform_lvgl_image_src(HOME_PAGE_USER_AVATAR_IMAGE_NAME,
+                                     state->user_avatar_src,
+                                     sizeof(state->user_avatar_src));
+
+    button = lv_button_create(state->screen);
+    state->user_button = button;
+    if (button != NULL) {
+        home_page_set_clean_clickable_style(button);
+        lv_obj_set_pos(button, HOME_PAGE_USER_AVATAR_X, HOME_PAGE_USER_AVATAR_Y);
+        lv_obj_set_size(button, HOME_PAGE_USER_AVATAR_SIZE, HOME_PAGE_USER_AVATAR_SIZE);
+        lv_obj_add_event_cb(button, home_page_toggle_user_dropdown, LV_EVENT_CLICKED, state);
+        home_page_add_user_avatar(button, state->user_avatar_src);
+    }
+
+    arrow = lv_button_create(state->screen);
+    state->user_arrow_button = arrow;
+    if (arrow != NULL) {
+        lv_obj_t *arrow_line;
+
+        home_page_set_clean_clickable_style(arrow);
+        lv_obj_set_pos(arrow, HOME_PAGE_USER_ARROW_X, HOME_PAGE_USER_ARROW_Y);
+        lv_obj_set_size(arrow, HOME_PAGE_USER_ARROW_WIDTH, HOME_PAGE_USER_ARROW_HEIGHT);
+        lv_obj_add_event_cb(arrow, home_page_toggle_user_dropdown, LV_EVENT_CLICKED, state);
+
+        arrow_line = lv_line_create(arrow);
+        if (arrow_line != NULL) {
+            lv_line_set_points(arrow_line,
+                               home_page_user_arrow_points,
+                               sizeof(home_page_user_arrow_points) / sizeof(home_page_user_arrow_points[0]));
+            lv_obj_set_style_line_color(arrow_line, lv_color_white(), LV_PART_MAIN);
+            lv_obj_set_style_line_width(arrow_line, 2, LV_PART_MAIN);
+            lv_obj_set_style_line_rounded(arrow_line, true, LV_PART_MAIN);
+            lv_obj_set_pos(arrow_line, 0, 1);
+        }
+    }
+
+    home_page_create_user_dropdown(state);
 }
 
 static int home_page_load_recipes(home_page_state_t *state)
@@ -946,6 +1216,7 @@ lv_obj_t *home_page_create(page_manager_page_ctx_t *ctx)
     home_page_style_screen(state);
     home_page_create_settings_button(state);
     home_page_create_carousel(state);
+    home_page_create_user_switcher(state);
 
     if (home_page_load_recipes(state) == EP_OK) {
         home_page_apply_carousel_layout(state, true);
