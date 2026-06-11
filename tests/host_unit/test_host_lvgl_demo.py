@@ -36,9 +36,13 @@ def test_host_ui_port_exposes_quit_query_without_polluting_public_ui():
     public_ui = (REPO_ROOT / "components/ui/include/ep_ui.h").read_text()
 
     assert "int ep_host_ui_port_should_quit(void);" in header
-    assert "SDL_PeepEvents" in source
-    assert "SDL_PEEKEVENT" in source
+    assert "SDL_PollEvent" in source
+    assert "SDL_PushEvent" in source
+    assert "SDL_AddEventWatch" in source
+    assert "SDL_DelEventWatch" in source
     assert "SDL_QUIT" in source
+    assert "SDL_WINDOWEVENT_CLOSE" in source
+    assert "exit(0)" in source
     assert "ep_host_ui_port_should_quit" in source
 
     assert "ep_host_ui_port" not in public_ui

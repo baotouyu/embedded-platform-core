@@ -7,6 +7,7 @@
 #include "src/misc/cache/lv_image_cache.h"
 #include "src/misc/lv_timer.h"
 #include <SDL2/SDL.h>
+#include <stdlib.h>
 
 #define EP_HOST_UI_HOR_RES 800
 #define EP_HOST_UI_VER_RES 480
@@ -17,6 +18,23 @@
 static int g_host_ui_port_initialized;
 static int g_host_ui_port_should_quit;
 static lv_display_t *g_host_ui_display;
+
+static int ep_host_ui_port_event_watch(void *userdata, SDL_Event *event)
+{
+    (void)userdata;
+
+    if (event == 0) {
+        return 1;
+    }
+
+    if (event->type == SDL_QUIT ||
+        (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_CLOSE)) {
+        g_host_ui_port_should_quit = 1;
+        exit(0);
+    }
+
+    return 1;
+}
 
 int ep_host_ui_port_init(void)
 {
@@ -39,6 +57,7 @@ int ep_host_ui_port_init(void)
     lv_sdl_window_set_title(g_host_ui_display, "embedded-platform-core host SDL2");
     lv_sdl_mouse_create();
     lv_sdl_keyboard_create();
+    SDL_AddEventWatch(ep_host_ui_port_event_watch, 0);
 
     g_host_ui_port_should_quit = 0;
     g_host_ui_port_initialized = 1;
@@ -47,6 +66,10 @@ int ep_host_ui_port_init(void)
 
 int ep_host_ui_port_deinit(void)
 {
+    if (g_host_ui_port_initialized) {
+        SDL_DelEventWatch(ep_host_ui_port_event_watch, 0);
+    }
+
     g_host_ui_display = 0;
     g_host_ui_port_initialized = 0;
     g_host_ui_port_should_quit = 1;
@@ -61,8 +84,16 @@ int ep_host_ui_port_should_quit(void)
         return 1;
     }
 
-    if (SDL_PeepEvents(&event, 1, SDL_PEEKEVENT, SDL_QUIT, SDL_QUIT) > 0) {
-        g_host_ui_port_should_quit = 1;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT ||
+            (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)) {
+            g_host_ui_port_should_quit = 1;
+            exit(0);
+            continue;
+        }
+
+        (void)SDL_PushEvent(&event);
+        break;
     }
 
     return g_host_ui_port_should_quit;
