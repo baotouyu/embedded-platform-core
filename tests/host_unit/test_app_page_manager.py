@@ -332,6 +332,12 @@ def test_home_page_has_reference_positioned_user_switcher():
 def test_home_page_user_switcher_toggles_dropdown_and_rows():
     home_page = _read("app/ui/pages/home_page.c")
 
+    assert "lv_obj_t *user_dropdown_mask" in home_page
+    assert "home_page_user_mask_clicked" in home_page
+    assert "lv_obj_set_size(state->user_dropdown_mask, HOME_PAGE_SCREEN_WIDTH, HOME_PAGE_SCREEN_HEIGHT)" in home_page
+    assert "lv_obj_add_event_cb(state->user_dropdown_mask, home_page_user_mask_clicked, LV_EVENT_CLICKED, state)" in home_page
+    assert "lv_obj_clear_flag(state->user_dropdown_mask, LV_OBJ_FLAG_HIDDEN)" in home_page
+    assert "lv_obj_move_foreground(state->user_dropdown_mask)" in home_page
     assert "lv_obj_add_flag(state->user_dropdown, LV_OBJ_FLAG_HIDDEN)" in home_page
     assert "lv_obj_clear_flag(state->user_dropdown, LV_OBJ_FLAG_HIDDEN)" in home_page
     assert "lv_obj_move_foreground(state->user_dropdown)" in home_page
@@ -344,6 +350,26 @@ def test_home_page_user_switcher_toggles_dropdown_and_rows():
     assert "state->selected_user_index = 0u" in home_page
     assert "lv_obj_add_event_cb(button, home_page_toggle_user_dropdown, LV_EVENT_CLICKED, state)" in home_page
     assert "lv_obj_add_event_cb(row, home_page_user_row_clicked, LV_EVENT_CLICKED, state)" in home_page
+    assert "lv_obj_add_event_cb(avatar_holder, home_page_user_row_clicked, LV_EVENT_CLICKED, state)" in home_page
+    assert "lv_obj_add_event_cb(label, home_page_user_row_clicked, LV_EVENT_CLICKED, state)" in home_page
+    assert "lv_event_get_current_target_obj(event)" in home_page
+    assert "lv_obj_t *user_row_avatar_holders[HOME_PAGE_USER_COUNT]" in home_page
+    assert "state->user_row_avatar_holders[i] == target" in home_page
+
+
+def test_home_page_user_switcher_centers_row_content_and_uses_gray_internal_lines():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert "#define HOME_PAGE_USER_DROPDOWN_BORDER_COLOR 0x666666" in home_page
+    assert "#define HOME_PAGE_USER_ROW_BORDER_COLOR 0x666666" in home_page
+    assert "#define HOME_PAGE_USER_ROW_CONTENT_WIDTH" in home_page
+    assert "#define HOME_PAGE_USER_ROW_CONTENT_X ((HOME_PAGE_USER_DROPDOWN_WIDTH - HOME_PAGE_USER_ROW_CONTENT_WIDTH) / 2)" in home_page
+    assert "lv_obj_t *user_row_content[HOME_PAGE_USER_COUNT]" in home_page
+    assert "lv_obj_set_pos(content, HOME_PAGE_USER_ROW_CONTENT_X, HOME_PAGE_USER_ROW_CONTENT_Y)" in home_page
+    assert "lv_obj_set_style_border_color(row, lv_color_hex(HOME_PAGE_USER_ROW_BORDER_COLOR), LV_PART_MAIN)" in home_page
+    assert "lv_obj_set_style_border_side(row, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN)" in home_page
+    assert "HOME_PAGE_USER_TEXT_X" not in home_page
+    assert "HOME_PAGE_USER_ROW_AVATAR_X" not in home_page
 
 
 def test_home_page_user_switcher_uses_requested_row_colors_and_resources():
@@ -451,7 +477,7 @@ def test_settings_page_matches_reference_layout_and_resources():
     assert "#define SETTINGS_PAGE_ROW_STEP (SETTINGS_PAGE_BUTTON_HEIGHT + SETTINGS_PAGE_BUTTON_GAP_Y)" in settings_page
     assert "#define SETTINGS_PAGE_ICON_SIZE 80" in settings_page
     assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in settings_page
-    assert "#define SETTINGS_PAGE_BUTTON_BORDER_COLOR 0x43382D" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_BORDER_COLOR 0x666666" in settings_page
 
     assert "typedef struct {" in settings_page
     assert "settings_page_button_spec_t" in settings_page
@@ -499,6 +525,7 @@ def test_settings_page_matches_reference_layout_and_resources():
         "settings_icon_app_link.png",
         "settings_icon_info.png",
         "settings_icon_back.png",
+        "settings_icon_confirm.png",
     ]
     for icon_name in expected_icons:
         assert f'"{icon_name}"' in settings_page
@@ -506,3 +533,78 @@ def test_settings_page_matches_reference_layout_and_resources():
 
     assert "components/multi_lang/include" in app_cmake
     assert "ep_components_multi_lang" in app_cmake
+
+
+def test_language_page_is_registered_and_reachable():
+    app_pages = _read("app/ui/pages/app_pages.h")
+    app_ui = _read("app/ui/app_ui.c")
+    settings_page = _read("app/ui/pages/settings_page.c")
+
+    assert "APP_PAGE_LANGUAGE" in app_pages
+    assert "page_manager_register(APP_PAGE_LANGUAGE" in app_ui
+    assert "settings_language_page_create" in app_ui
+    assert "page_manager_switch(APP_PAGE_LANGUAGE" in settings_page
+    assert "SETTINGS_PAGE_ACTION_LANGUAGE" in settings_page
+
+
+def test_settings_selection_list_reusable_metrics_and_language_options():
+    settings_page = _read("app/ui/pages/settings_page.c")
+
+    assert "#define SETTINGS_SELECTION_LIST_WIDTH 369" in settings_page
+    assert "#define SETTINGS_SELECTION_LIST_ROW_HEIGHT 64" in settings_page
+    assert "#define SETTINGS_SELECTION_LIST_RADIUS 12" in settings_page
+    assert "#define SETTINGS_SELECTION_LIST_Y 160" in settings_page
+    assert "#define SETTINGS_SELECTION_LIST_UNSELECTED_COLOR SETTINGS_PAGE_BUTTON_COLOR" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in settings_page
+    assert "settings_selection_list_create(" in settings_page
+    assert "settings_selection_option_index(settings_language_options" in settings_page
+    assert "SETTINGS_PAGE_LANGUAGE)" in settings_page
+    assert "settings_language_options[]" in settings_page
+    for label in ["English", "简体中文", "Français", "Italiano", "Deutsch", "Русский"]:
+        assert label in settings_page
+
+
+def test_language_page_confirm_and_back_return_to_settings():
+    settings_page = _read("app/ui/pages/settings_page.c")
+
+    assert "settings_language_back_clicked" in settings_page
+    assert "settings_language_confirm_clicked" in settings_page
+    assert settings_page.count("page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180)") >= 3
+
+
+def test_sleep_page_is_registered_and_reachable():
+    app_pages = _read("app/ui/pages/app_pages.h")
+    app_ui = _read("app/ui/app_ui.c")
+    settings_page = _read("app/ui/pages/settings_page.c")
+
+    assert "APP_PAGE_SLEEP" in app_pages
+    assert "page_manager_register(APP_PAGE_SLEEP" in app_ui
+    assert "settings_sleep_page_create" in app_ui
+    assert "page_manager_switch(APP_PAGE_SLEEP" in settings_page
+    assert "SETTINGS_PAGE_ACTION_SLEEP" in settings_page
+
+
+def test_sleep_page_reuses_selection_list_with_sleep_options():
+    settings_page = _read("app/ui/pages/settings_page.c")
+
+    assert "settings_sleep_options[]" in settings_page
+    assert "settings_sleep_default_index" in settings_page
+    assert "SETTINGS_SLEEP_DEFAULT_VALUE" in settings_page
+    assert "#define SETTINGS_SLEEP_VISIBLE_ROWS 4" in settings_page
+    assert "settings_selection_option_index(settings_sleep_options" in settings_page
+    for label in ["10mins", "30mins", "1h", "2h"]:
+        assert label in settings_page
+    assert "settings_sleep_back_clicked" in settings_page
+    assert "settings_sleep_confirm_clicked" in settings_page
+    assert "SETTINGS_SLEEP_VISIBLE_ROWS))" in settings_page
+    assert settings_page.count("settings_selection_list_create(screen") >= 2
+
+
+def test_settings_and_user_borders_are_gray():
+    settings_page = _read("app/ui/pages/settings_page.c")
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert "#define SETTINGS_PAGE_BUTTON_BORDER_COLOR 0x666666" in settings_page
+    assert "#define HOME_PAGE_USER_DROPDOWN_BORDER_COLOR 0x666666" in home_page
+    assert "0x43382D" not in settings_page
+    assert "0x3D3734" not in home_page
