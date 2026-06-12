@@ -553,7 +553,7 @@ static void home_page_create_user_dropdown(home_page_state_t *state)
             lv_obj_set_size(label, HOME_PAGE_USER_LABEL_WIDTH, HOME_PAGE_USER_LABEL_HEIGHT);
             lv_obj_set_pos(label, HOME_PAGE_USER_LABEL_X, HOME_PAGE_USER_LABEL_Y);
             lv_label_set_text(label, home_page_user_names[i]);
-            lv_obj_set_style_text_font(label, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
+            lv_obj_set_style_text_font(label, ui_style_font(UI_STYLE_FONT_HOME_SIDE), LV_PART_MAIN);
             lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
             lv_obj_add_flag(label, LV_OBJ_FLAG_CLICKABLE);
             lv_obj_add_event_cb(label, home_page_user_row_clicked, LV_EVENT_CLICKED, state);
@@ -1235,8 +1235,8 @@ static void home_page_create_slot(
         lv_obj_set_style_text_align(slot->label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         lv_obj_set_style_text_color(slot->label, lv_color_white(), LV_PART_MAIN);
         lv_obj_set_style_text_font(slot->label,
-                                   is_center ? ui_style_font(UI_STYLE_FONT_HOME_CENTER) :
-                                       ui_style_font(UI_STYLE_FONT_HOME_SIDE),
+                                   is_center ? ui_style_font(UI_STYLE_FONT_HOME_USER) :
+                                       ui_style_font(UI_STYLE_FONT_DETAILS_MENU_TITLE),
                                    LV_PART_MAIN);
         lv_obj_set_pos(slot->label, title_x, HOME_PAGE_TITLE_Y);
     }

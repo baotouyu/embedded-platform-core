@@ -5,12 +5,15 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/app/selftest/app_selftest.c
   ${CMAKE_SOURCE_DIR}/app/ui/app_ui.c
   ${CMAKE_SOURCE_DIR}/app/ui/page_manager.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/boot_page.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/home_page.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_common.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_page.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_language_page.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_sleep_page.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_brightness_page.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_cleaning_page.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_details_page.c
   ${CMAKE_SOURCE_DIR}/app/services/beep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/lcd_sleep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/power_board_service.c
@@ -25,8 +28,11 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/components/device/src/ep_device.c
   ${CMAKE_SOURCE_DIR}/components/ui/src/ep_ui.c
   ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_style.c
+  ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_font_source_han_18.c
+  ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_font_source_han_20.c
   ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_font_source_han_24.c
   ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_font_source_han_28.c
+  ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_font_source_han_32.c
   ${CMAKE_SOURCE_DIR}/components/ui_style/src/ui_font_source_han_40.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/startup/app_start.c
   ${CMAKE_SOURCE_DIR}/platforms/rtos/demo_family/osal_port/ep_rtos_osal_stub.c

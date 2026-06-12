@@ -1,7 +1,10 @@
 add_library(ep_components_ui_style STATIC
   src/ui_style.c
+  src/ui_font_source_han_18.c
+  src/ui_font_source_han_20.c
   src/ui_font_source_han_24.c
   src/ui_font_source_han_28.c
+  src/ui_font_source_han_32.c
   src/ui_font_source_han_40.c
 )
 

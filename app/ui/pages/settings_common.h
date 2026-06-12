@@ -23,6 +23,10 @@
 #define SETTINGS_PAGE_CONFIRM_Y 32
 #define SETTINGS_PAGE_CONFIRM_SIZE 48
 #define SETTINGS_PAGE_SRC_BUFFER_SIZE 128
+#define SETTINGS_SUBPAGE_TITLE_X 0
+#define SETTINGS_SUBPAGE_TITLE_Y 90
+#define SETTINGS_SUBPAGE_TITLE_WIDTH SETTINGS_PAGE_SCREEN_WIDTH
+#define SETTINGS_SUBPAGE_TITLE_HEIGHT 42
 
 #define SETTINGS_SELECTION_LIST_WIDTH 369
 #define SETTINGS_SELECTION_LIST_ROW_HEIGHT 64
@@ -63,6 +67,7 @@ bool settings_common_create_icon_button(lv_obj_t *screen,
                                         int32_t y,
                                         int32_t size,
                                         lv_event_cb_t clicked_cb);
+bool settings_common_create_title(lv_obj_t *screen, const char *text);
 bool settings_selection_list_create(lv_obj_t *parent,
                                     settings_selection_list_t *list,
                                     const settings_selection_option_t *options,

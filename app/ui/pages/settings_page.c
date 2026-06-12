@@ -113,6 +113,10 @@ static void settings_page_item_clicked(lv_event_t *event)
         (void)page_manager_switch(APP_PAGE_BRIGHTNESS, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
     } else if (spec->action == SETTINGS_PAGE_ACTION_SLEEP) {
         (void)page_manager_switch(APP_PAGE_SLEEP, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
+    } else if (spec->action == SETTINGS_PAGE_ACTION_CLEAN) {
+        (void)page_manager_switch(APP_PAGE_CLEANING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
+    } else if (spec->action == SETTINGS_PAGE_ACTION_DETAILS) {
+        (void)page_manager_switch(APP_PAGE_DETAILS, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
     }
 }
 
@@ -183,7 +187,7 @@ static bool settings_page_create_title(settings_page_state_t *state)
     lv_obj_set_size(title, SETTINGS_PAGE_SCREEN_WIDTH, SETTINGS_PAGE_TITLE_HEIGHT);
     lv_obj_set_pos(title, 0, SETTINGS_PAGE_TITLE_Y);
     lv_obj_set_style_text_color(title, lv_color_hex(SETTINGS_PAGE_TEXT_COLOR), LV_PART_MAIN);
-    lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_HOME_CENTER), LV_PART_MAIN);
+    lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
     lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(title, settings_page_text(state, SETTINGS_PAGE_TITLE_KEY));
 
@@ -249,7 +253,7 @@ static bool settings_page_create_button(settings_page_state_t *state,
     lv_obj_set_size(label, SETTINGS_PAGE_LABEL_WIDTH, SETTINGS_PAGE_LABEL_HEIGHT);
     lv_obj_set_pos(label, SETTINGS_PAGE_LABEL_X, SETTINGS_PAGE_LABEL_Y);
     lv_obj_set_style_text_color(label, lv_color_hex(SETTINGS_PAGE_TEXT_COLOR), LV_PART_MAIN);
-    lv_obj_set_style_text_font(label, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
+    lv_obj_set_style_text_font(label, ui_style_font(UI_STYLE_FONT_HOME_SIDE), LV_PART_MAIN);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
     lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
     lv_label_set_text(label, settings_page_text(state, spec->text_key));

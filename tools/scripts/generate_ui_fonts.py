@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 
 
-FONT_SIZES = (24, 28, 40)
+FONT_SIZES = (18, 20, 24, 28, 32, 40)
 SOURCE_FONT_NAME = "SourceHan-Regular_arial_cn.ttf"
 RECIPE_DB_NAME = "recipelib.db"
 STATIC_UI_TEXT = "用户1234SettingsBackU设置语言亮度清洗关联开休眠详细信息"

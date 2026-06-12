@@ -4,12 +4,15 @@ add_library(ep_app STATIC
   selftest/app_selftest.c
   ui/app_ui.c
   ui/page_manager.c
+  ui/pages/boot_page.c
   ui/pages/home_page.c
   ui/pages/settings_common.c
   ui/pages/settings_page.c
   ui/pages/settings_language_page.c
   ui/pages/settings_sleep_page.c
   ui/pages/settings_brightness_page.c
+  ui/pages/settings_cleaning_page.c
+  ui/pages/settings_details_page.c
   services/beep_service.c
   services/lcd_sleep_service.c
   services/power_board_service.c

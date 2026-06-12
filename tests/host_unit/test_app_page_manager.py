@@ -104,6 +104,10 @@ def test_page_manager_exposes_history_back_navigation():
 def test_home_page_builds_recipe_carousel_from_portrait_images():
     home_page = _read("app/ui/pages/home_page.c")
     app_cmake = _read("app/CMakeLists.txt")
+    slot_block = home_page[
+        home_page.index("static void home_page_create_slot") :
+        home_page.index("static void home_page_create_carousel")
+    ]
 
     assert "lv_obj_create(NULL)" in home_page
     assert "HOME_PAGE_BG_IMAGE_NAME" in home_page
@@ -146,6 +150,9 @@ def test_home_page_builds_recipe_carousel_from_portrait_images():
     assert "if (refresh_content)" in home_page
     assert "home_page_apply_carousel_layout(state, false)" in home_page
     assert "home_page_apply_carousel_layout(state, true)" in home_page
+    assert "is_center ? ui_style_font(UI_STYLE_FONT_HOME_USER)" in slot_block
+    assert "ui_style_font(UI_STYLE_FONT_DETAILS_MENU_TITLE)" in slot_block
+    assert "UI_STYLE_FONT_HOME_CENTER" not in slot_block
     assert "EP_HOME_CAROUSEL_DISABLE_LIVE_SCALE" not in home_page
 
     assert "ep_components_recipe_parser" in app_cmake
@@ -374,6 +381,10 @@ def test_home_page_user_switcher_centers_row_content_and_uses_gray_internal_line
 
 def test_home_page_user_switcher_uses_requested_row_colors_and_resources():
     home_page = _read("app/ui/pages/home_page.c")
+    user_dropdown_block = home_page[
+        home_page.index("static void home_page_create_user_dropdown") :
+        home_page.index("static void home_page_create_user_switcher")
+    ]
 
     assert "HOME_PAGE_USER_SELECTED_COLOR 0xFFFFFF" in home_page
     assert "HOME_PAGE_USER_UNSELECTED_COLOR 0x2F2B29" in home_page
@@ -386,6 +397,8 @@ def test_home_page_user_switcher_uses_requested_row_colors_and_resources():
     assert "static const char *const home_page_user_names[HOME_PAGE_USER_COUNT]" in home_page
     assert '"用户1"' in home_page
     assert '"用户4"' in home_page
+    assert "ui_style_font(UI_STYLE_FONT_HOME_SIDE)" in user_dropdown_block
+    assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" not in user_dropdown_block
 
     assert (REPO_ROOT / "resources/host/images/avatar_user_1.png").exists()
     assert (REPO_ROOT / "resources/host/images/avatar_user_2.png").exists()
@@ -405,16 +418,79 @@ def test_home_page_user_switcher_updates_top_avatar_after_selection():
 def test_app_ui_registers_home_page_through_page_manager():
     app_ui = _read("app/ui/app_ui.c")
     app_cmake = _read("app/CMakeLists.txt")
+    app_pages = _read("app/ui/pages/app_pages.h")
+    boot_page = _read("app/ui/pages/boot_page.c")
 
     assert '#include "page_manager.h"' in app_ui
     assert '#include "pages/app_pages.h"' in app_ui
+    assert '#include "pages/boot_page.h"' in app_ui
     assert '#include "pages/home_page.h"' in app_ui
     assert "page_manager_init(NULL)" in app_ui
+    assert "APP_PAGE_BOOT" in app_pages
+    assert "page_manager_register(APP_PAGE_BOOT" in app_ui
+    assert "boot_page_create" in app_ui
     assert "page_manager_register(APP_PAGE_HOME" in app_ui
-    assert "page_manager_switch(APP_PAGE_HOME" in app_ui
+    assert "page_manager_switch(APP_PAGE_BOOT" in app_ui
+    assert "page_manager_switch(APP_PAGE_HOME" not in app_ui
+    assert "boot_page_create(page_manager_page_ctx_t *ctx)" in boot_page
 
     assert "ui/page_manager.c" in app_cmake
+    assert "ui/pages/boot_page.c" in app_cmake
     assert "ui/pages/home_page.c" in app_cmake
+
+
+def test_boot_page_runs_logo_and_startup_sequence():
+    boot_page = _read("app/ui/pages/boot_page.c")
+    boot_header = _read("app/ui/pages/boot_page.h")
+    export_cmake = _read("cmake/modules/ep_export_targets.cmake")
+    host_cmake = _read("platforms/host/posix/CMakeLists.txt")
+
+    assert "boot_page_create(page_manager_page_ctx_t *ctx)" in boot_header
+    assert "BOOT_PAGE_BG_IMAGE_NAME" not in boot_page
+    assert "#define BOOT_PAGE_LOGO_IMAGE_NAME \"boot_logo.png\"" in boot_page
+    assert "#define BOOT_PAGE_SPINNER_IMAGE_NAME \"boot_loading.png\"" in boot_page
+    assert "#define BOOT_PAGE_DONE_IMAGE_NAME \"boot_done.png\"" in boot_page
+    assert "#define BOOT_PAGE_LOGO_DELAY_MS 2000u" in boot_page
+    assert "#define BOOT_PAGE_STAGE_DELAY_MS 2000u" in boot_page
+    assert "#define BOOT_PAGE_SPINNER_PERIOD_MS 80u" in boot_page
+    assert "#define BOOT_PAGE_STAGE_COUNT 4u" in boot_page
+    assert "#define BOOT_PAGE_STAGE_CARD_WIDTH 144" in boot_page
+    assert "#define BOOT_PAGE_STAGE_CARD_HEIGHT 155" in boot_page
+    assert "#define BOOT_PAGE_STAGE_CARD_RADIUS 16" in boot_page
+    assert "#define BOOT_PAGE_STAGE_BORDER_COLOR 0x666666" in boot_page
+    assert "#define BOOT_PAGE_STAGE_ICON_Y 24" in boot_page
+    assert "#define BOOT_PAGE_STAGE_TEXT_CONTAINER_Y 94" in boot_page
+    assert "boot_page_create_background" not in boot_page
+    assert "ep_platform_lvgl_image_src(BOOT_PAGE_BG_IMAGE_NAME" not in boot_page
+    assert "home_bg.png" not in boot_page
+    assert "boot_bg.png" not in boot_page
+    assert "lv_arc_create" not in boot_page
+    assert "boot_page_create_bottom_arc" not in boot_page
+    assert "stage_icon_holders[BOOT_PAGE_STAGE_COUNT]" in boot_page
+    assert "lv_obj_set_pos(icon_holder, BOOT_PAGE_STAGE_ICON_X, BOOT_PAGE_STAGE_ICON_Y)" in boot_page
+    assert "lv_obj_center(icon)" in boot_page
+    assert "lv_image_set_pivot(icon, BOOT_PAGE_STAGE_ICON_SIZE / 2, BOOT_PAGE_STAGE_ICON_SIZE / 2)" in boot_page
+    assert "lv_obj_set_pos(label_container, BOOT_PAGE_STAGE_TEXT_CONTAINER_X, BOOT_PAGE_STAGE_TEXT_CONTAINER_Y)" in boot_page
+    assert "lv_obj_set_width(label, BOOT_PAGE_STAGE_TEXT_CONTAINER_WIDTH)" in boot_page
+    assert "lv_obj_set_height(label, LV_SIZE_CONTENT)" in boot_page
+    assert "lv_obj_center(label)" in boot_page
+    assert "static const boot_stage_t boot_page_stages[]" in boot_page
+    for label in ["自检", "加热", "清洗", "复位"]:
+        assert label in boot_page
+    assert "lv_timer_create(boot_page_timer_cb, BOOT_PAGE_LOGO_DELAY_MS" in boot_page
+    assert "lv_timer_create(boot_page_spinner_timer_cb, BOOT_PAGE_SPINNER_PERIOD_MS" in boot_page
+    assert "lv_timer_set_period(state->timer, BOOT_PAGE_STAGE_DELAY_MS)" in boot_page
+    assert "lv_timer_reset(state->timer)" in boot_page
+    assert "lv_image_set_rotation(state->stage_icons[state->active_stage], state->spinner_rotation)" in boot_page
+    assert "boot_page_delete_spinner_timer(state)" in boot_page
+    assert "lv_image_set_src(state->stage_icons[stage_index], state->done_src)" in boot_page
+    assert "page_manager_switch(APP_PAGE_HOME, LV_SCR_LOAD_ANIM_NONE, 0, false)" in boot_page
+    assert "lv_timer_del(state->timer)" in boot_page
+    assert "app/ui/pages/boot_page.c" in export_cmake
+    assert "app/ui/pages/boot_page.c" in host_cmake
+    assert (REPO_ROOT / "resources/host/images/boot_logo.png").exists()
+    assert (REPO_ROOT / "resources/host/images/boot_loading.png").exists()
+    assert (REPO_ROOT / "resources/host/images/boot_done.png").exists()
 
 
 def test_app_ui_registers_settings_page_and_home_can_navigate_to_it():
@@ -453,11 +529,15 @@ def test_app_ui_registers_settings_page_and_home_can_navigate_to_it():
     assert "ui/pages/settings_language_page.c" in app_cmake
     assert "ui/pages/settings_sleep_page.c" in app_cmake
     assert "ui/pages/settings_brightness_page.c" in app_cmake
+    assert "ui/pages/settings_details_page.c" in app_cmake
+    assert "ui/pages/settings_cleaning_page.c" in app_cmake
     for source in [
         "app/ui/pages/settings_common.c",
         "app/ui/pages/settings_language_page.c",
         "app/ui/pages/settings_sleep_page.c",
         "app/ui/pages/settings_brightness_page.c",
+        "app/ui/pages/settings_details_page.c",
+        "app/ui/pages/settings_cleaning_page.c",
     ]:
         assert source in export_cmake
         assert source in host_cmake
@@ -468,6 +548,14 @@ def test_settings_page_matches_reference_layout_and_resources():
     settings_common = _read("app/ui/pages/settings_common.c")
     settings_common_header = _read("app/ui/pages/settings_common.h")
     app_cmake = _read("app/CMakeLists.txt")
+    title_block = settings_page[
+        settings_page.index("static bool settings_page_create_title") :
+        settings_page.index("static bool settings_page_create_back_button")
+    ]
+    button_block = settings_page[
+        settings_page.index("static bool settings_page_create_button(") :
+        settings_page.index("static bool settings_page_create_buttons")
+    ]
 
     assert '#include "ep_platform_paths.h"' in settings_page
     assert '#include "multi_lang.h"' in settings_page
@@ -512,8 +600,10 @@ def test_settings_page_matches_reference_layout_and_resources():
     assert "settings_page_create_scroll_spacer(state)" in settings_page
     assert "lv_obj_set_pos(button, spec->x, spec->y)" in settings_page
     assert "ep_platform_lvgl_image_src(spec->icon_name" in settings_page
-    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" in settings_page
-    assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" in settings_page
+    assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" in title_block
+    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" not in title_block
+    assert "ui_style_font(UI_STYLE_FONT_HOME_SIDE)" in button_block
+    assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" not in button_block
 
     for key in [
         "MULTI_LANG_KEY_SETTING",
@@ -586,6 +676,14 @@ def test_settings_selection_list_reusable_metrics_and_language_options():
     assert "#define SETTINGS_SELECTION_LIST_UNSELECTED_COLOR SETTINGS_PAGE_BUTTON_COLOR" in common_header
     assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in common_header
     assert "settings_selection_list_create(" in common
+    assert "settings_common_create_title(" in common
+    assert "ui_style_font(UI_STYLE_FONT_HOME_SIDE)" in common
+    assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" in common
+    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" not in common
+    assert "#define SETTINGS_LANGUAGE_TITLE_TEXT \"语言\"" in language_page
+    assert "settings_language_create_title(state)" in language_page
+    assert "settings_common_create_title(state->screen, SETTINGS_LANGUAGE_TITLE_TEXT)" in language_page
+    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" not in language_page
     assert "settings_selection_option_index(settings_language_options" in language_page
     assert "SETTINGS_PAGE_LANGUAGE)" in language_page
     assert "settings_language_options[]" in language_page
@@ -618,10 +716,14 @@ def test_sleep_page_is_registered_and_reachable():
 def test_sleep_page_reuses_selection_list_with_sleep_options():
     sleep_page = _read("app/ui/pages/settings_sleep_page.c")
 
+    assert "#define SETTINGS_SLEEP_TITLE_TEXT \"休眠\"" in sleep_page
     assert "settings_sleep_options[]" in sleep_page
     assert "settings_sleep_default_index" in sleep_page
     assert "SETTINGS_SLEEP_DEFAULT_VALUE" in sleep_page
     assert "#define SETTINGS_SLEEP_VISIBLE_ROWS 4" in sleep_page
+    assert "settings_sleep_create_title(state)" in sleep_page
+    assert "settings_common_create_title(state->screen, SETTINGS_SLEEP_TITLE_TEXT)" in sleep_page
+    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" not in sleep_page
     assert "settings_selection_option_index(settings_sleep_options" in sleep_page
     for label in ["10mins", "30mins", "1h", "2h"]:
         assert label in sleep_page
@@ -647,6 +749,10 @@ def test_brightness_page_is_registered_and_reachable():
 
 def test_brightness_page_matches_reference_layout_and_resources():
     brightness_page = _read("app/ui/pages/settings_brightness_page.c")
+    title_block = brightness_page[
+        brightness_page.index("static bool settings_brightness_create_title") :
+        brightness_page.index("static bool settings_brightness_create_icon_button")
+    ]
 
     assert "#define SETTINGS_BRIGHTNESS_TITLE_X 372" in brightness_page
     assert "#define SETTINGS_BRIGHTNESS_TITLE_Y 90" in brightness_page
@@ -661,9 +767,316 @@ def test_brightness_page_matches_reference_layout_and_resources():
     assert "settings_brightness_level_clicked" in brightness_page
     assert "settings_brightness_create_levels(control, state)" in brightness_page
     assert "i <= state->selected_index" in brightness_page
+    assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" in title_block
+    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" not in title_block
 
     assert (REPO_ROOT / "resources/host/images/settings_brightness_min_icon.png").exists()
     assert (REPO_ROOT / "resources/host/images/settings_brightness_max_icon.png").exists()
+
+
+def test_details_page_is_registered_and_reachable():
+    app_pages = _read("app/ui/pages/app_pages.h")
+    app_ui = _read("app/ui/app_ui.c")
+    settings_page = _read("app/ui/pages/settings_page.c")
+    settings_header = _read("app/ui/pages/settings_page.h")
+    details_page = _read("app/ui/pages/settings_details_page.c")
+
+    assert "APP_PAGE_DETAILS" in app_pages
+    assert "page_manager_register(APP_PAGE_DETAILS" in app_ui
+    assert "settings_details_page_create" in app_ui
+    assert "settings_details_page_create(page_manager_page_ctx_t *ctx)" in settings_header
+    assert "settings_details_page_destroy(page_manager_page_ctx_t *ctx)" in settings_header
+    assert "settings_details_page_event(page_manager_page_ctx_t *ctx" in settings_header
+    assert "page_manager_switch(APP_PAGE_DETAILS" in settings_page
+    assert "SETTINGS_PAGE_ACTION_DETAILS" in settings_page
+    assert "settings_details_page_create(page_manager_page_ctx_t *ctx)" in details_page
+
+
+def test_cleaning_page_is_registered_and_reachable():
+    app_pages = _read("app/ui/pages/app_pages.h")
+    app_ui = _read("app/ui/app_ui.c")
+    settings_page = _read("app/ui/pages/settings_page.c")
+    settings_header = _read("app/ui/pages/settings_page.h")
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+
+    assert "APP_PAGE_CLEANING" in app_pages
+    assert "page_manager_register(APP_PAGE_CLEANING" in app_ui
+    assert "settings_cleaning_page_create" in app_ui
+    assert "settings_cleaning_page_create(page_manager_page_ctx_t *ctx)" in settings_header
+    assert "settings_cleaning_page_destroy(page_manager_page_ctx_t *ctx)" in settings_header
+    assert "settings_cleaning_page_event(page_manager_page_ctx_t *ctx" in settings_header
+    assert "page_manager_switch(APP_PAGE_CLEANING" in settings_page
+    assert "SETTINGS_PAGE_ACTION_CLEAN" in settings_page
+    assert "settings_cleaning_page_create(page_manager_page_ctx_t *ctx)" in cleaning_page
+
+
+def test_cleaning_page_matches_details_style_layout():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    title_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_title") :
+        cleaning_page.index("static bool settings_cleaning_create_action_button")
+    ]
+
+    assert "#define SETTINGS_CLEANING_TITLE_TEXT \"清洗\"" in cleaning_page
+    assert "#define SETTINGS_CLEANING_HEADER_HEIGHT 96" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MENU_WIDTH 240" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MENU_ITEM_COUNT 3u" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MENU_ROW_HEIGHT 64" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MENU_SELECTED_COLOR 0x000000" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MENU_UNSELECTED_COLOR SETTINGS_PAGE_BUTTON_COLOR" in cleaning_page
+    assert "#define SETTINGS_CLEANING_CONTENT_X SETTINGS_CLEANING_MENU_WIDTH" in cleaning_page
+    assert "#define SETTINGS_CLEANING_CONTENT_WIDTH 560" in cleaning_page
+    assert "#define SETTINGS_CLEANING_CONTENT_HEIGHT 384" in cleaning_page
+    assert "#define SETTINGS_CLEANING_CARD_WIDTH 496" in cleaning_page
+    assert "#define SETTINGS_CLEANING_CARD_HEIGHT 72" in cleaning_page
+    assert "#define SETTINGS_CLEANING_CARD_RADIUS 12" in cleaning_page
+    assert "#define SETTINGS_CLEANING_ACTION_BUTTON_COLOR 0xB56A2E" in cleaning_page
+    assert "#define SETTINGS_CLEANING_LEVEL_GROUP_WIDTH 416" in cleaning_page
+    assert "#define SETTINGS_CLEANING_LEVEL_GROUP_HEIGHT 32" in cleaning_page
+    assert "#define SETTINGS_CLEANING_LEVEL_ICON_AREA_WIDTH 44" in cleaning_page
+    assert "#define SETTINGS_CLEANING_LEVEL_TRACK_WIDTH 304" in cleaning_page
+    assert "#define SETTINGS_CLEANING_LEVEL_TRACK_HEIGHT 10" in cleaning_page
+    assert "#define SETTINGS_CLEANING_LEVEL_KNOB_SIZE 30" in cleaning_page
+    assert "#define SETTINGS_CLEANING_LEVEL_MAX_LABEL_WIDTH 68" in cleaning_page
+    assert "settings_cleaning_create_menu" in cleaning_page
+    assert "settings_cleaning_create_content" in cleaning_page
+    assert "settings_cleaning_refresh_menu" in cleaning_page
+    assert "settings_common_create_icon_button(screen" in cleaning_page
+    assert "UI_STYLE_FONT_HOME_USER" in title_block
+    assert "UI_STYLE_FONT_DETAILS_MENU_TITLE" in cleaning_page
+    assert "UI_STYLE_FONT_DETAILS_MENU_VALUE" in cleaning_page
+
+    for text in [
+        "日常清洗",
+        "机器维护清洁",
+        "除垢等级",
+        "冲泡器简易清洗",
+        "奶泡器简易清洗",
+        "奶泡器深度清洗",
+        "冲泡器深度清洁（加药片）",
+        "奶泡器深度清洁（加药片）",
+        "除垢",
+        "立即除垢",
+        "2级",
+        "5级",
+    ]:
+        assert text in cleaning_page
+
+
+def test_cleaning_page_daily_maintenance_and_descaling_content():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    daily_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_daily_clean") :
+        cleaning_page.index("static bool settings_cleaning_create_maintenance_clean")
+    ]
+    maintenance_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_maintenance_clean") :
+        cleaning_page.index("static bool settings_cleaning_create_descaling_level")
+    ]
+    progress_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_descaling_progress") :
+        cleaning_page.index("static bool settings_cleaning_create_descaling_level")
+    ]
+    descaling_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_descaling_level") :
+        cleaning_page.index("static bool settings_cleaning_create_content_for_tab")
+    ]
+
+    assert "SETTINGS_CLEANING_TAB_DAILY" in cleaning_page
+    assert "SETTINGS_CLEANING_TAB_MAINTENANCE" in cleaning_page
+    assert "SETTINGS_CLEANING_TAB_DESCALING_LEVEL" in cleaning_page
+    assert "settings_cleaning_daily_items[]" in cleaning_page
+    assert "settings_cleaning_maintenance_items[]" in cleaning_page
+    assert "settings_cleaning_create_clean_card" in cleaning_page
+    assert "sizeof(settings_cleaning_daily_items) / sizeof(settings_cleaning_daily_items[0])" in daily_block
+    assert "sizeof(settings_cleaning_maintenance_items) / sizeof(settings_cleaning_maintenance_items[0])" in maintenance_block
+    assert "settings_cleaning_create_clean_card(state, &settings_cleaning_daily_items[i], i)" in daily_block
+    assert "settings_cleaning_create_clean_card(state, &settings_cleaning_maintenance_items[i], i)" in maintenance_block
+    assert "settings_cleaning_create_descaling_progress" in descaling_block
+    assert "settings_cleaning_create_descaling_progress_group" in cleaning_page
+    assert "lv_slider_create" not in cleaning_page
+    assert "LV_PART_KNOB" not in cleaning_page
+    assert "LV_PART_INDICATOR" not in cleaning_page
+    assert "descaling_level" in cleaning_page
+    assert "descaling_progress_fill" in cleaning_page
+    assert "descaling_knob" in cleaning_page
+    assert "descaling_value_label" in cleaning_page
+    assert "settings_cleaning_level_for_point" in cleaning_page
+    assert "settings_cleaning_set_descaling_level" in cleaning_page
+    assert "settings_cleaning_descaling_progress_event" in cleaning_page
+    assert "lv_indev_get_point(lv_indev_active(), &point)" in cleaning_page
+    assert "lv_obj_add_event_cb(group, settings_cleaning_descaling_progress_event, LV_EVENT_PRESSED, state)" in cleaning_page
+    assert "lv_obj_add_event_cb(group, settings_cleaning_descaling_progress_event, LV_EVENT_PRESSING, state)" in cleaning_page
+    assert "lv_obj_add_event_cb(track, settings_cleaning_descaling_progress_event, LV_EVENT_PRESSED, state)" in cleaning_page
+    assert "lv_obj_add_event_cb(knob, settings_cleaning_descaling_progress_event, LV_EVENT_PRESSING, state)" in cleaning_page
+    assert "lv_label_set_text_fmt(state->descaling_value_label, \"%d级\", state->descaling_level)" in cleaning_page
+    assert "SETTINGS_CLEANING_LEVEL_PROGRESS_WIDTH" in cleaning_page
+    assert "SETTINGS_CLEANING_LEVEL_KNOB_X" in cleaning_page
+    assert "SETTINGS_CLEANING_MAINTENANCE_DESCALING_ICON_NAME \"settings_details_descaling_icon.png\"" in cleaning_page
+    assert "settings_cleaning_descaling_icon.png" in cleaning_page
+    assert "settings_details_descaling_icon.png" in cleaning_page
+    assert "settings_icon_clean.png" in cleaning_page
+    assert "SETTINGS_CLEANING_LEVEL_GOLD_COLOR" in cleaning_page
+    assert "settings_cleaning_create_gold_label" in progress_block
+    assert (
+        "SETTINGS_CLEANING_LEVEL_MAX_LABEL_WIDTH,\n"
+        "                                            SETTINGS_CLEANING_LEVEL_MAX_LABEL_HEIGHT,\n"
+        "                                            UI_STYLE_FONT_DETAILS_MENU_VALUE,\n"
+        "                                            LV_TEXT_ALIGN_CENTER"
+    ) in progress_block
+    assert "lv_obj_add_event_cb(row, settings_cleaning_menu_row_clicked" in cleaning_page
+    assert "settings_cleaning_create_content_for_tab(state)" in cleaning_page
+    assert (REPO_ROOT / "resources/host/images/settings_cleaning_descaling_icon.png").exists()
+    assert (REPO_ROOT / "resources/host/images/settings_details_descaling_icon.png").exists()
+
+
+def test_details_page_menu_and_drink_statistics_layout():
+    details_page = _read("app/ui/pages/settings_details_page.c")
+    title_block = details_page[
+        details_page.index("static bool settings_details_create_title") :
+        details_page.index("static bool settings_details_load_recipe_image")
+    ]
+
+    assert "#define SETTINGS_DETAILS_TITLE_TEXT \"详细信息\"" in details_page
+    assert "#define SETTINGS_DETAILS_DRINK_IMAGE_NATIVE_SIZE 240" in details_page
+    assert "#define SETTINGS_DETAILS_DRINK_IMAGE_SCALE ((SETTINGS_DETAILS_DRINK_IMAGE_SIZE * 256) / SETTINGS_DETAILS_DRINK_IMAGE_NATIVE_SIZE)" in details_page
+    assert "#define SETTINGS_DETAILS_HEADER_HEIGHT 96" in details_page
+    assert "#define SETTINGS_DETAILS_MENU_WIDTH 240" in details_page
+    assert "#define SETTINGS_DETAILS_MENU_ITEM_COUNT 3u" in details_page
+    assert "SETTINGS_DETAILS_MENU_TOP_RIGHT_RADIUS" not in details_page
+    assert "SETTINGS_DETAILS_MENU_TOP_RIGHT_CUTOUT_SIZE" not in details_page
+    assert "SETTINGS_DETAILS_MENU_TOP_RIGHT_ROUND_SIZE" not in details_page
+    assert "#define SETTINGS_DETAILS_CONTENT_X SETTINGS_DETAILS_MENU_WIDTH" in details_page
+    assert "#define SETTINGS_DETAILS_CONTENT_WIDTH 560" in details_page
+    assert "#define SETTINGS_DETAILS_CONTENT_HEIGHT 404" in details_page
+    assert "#define SETTINGS_DETAILS_DRINK_CARD_WIDTH 236" in details_page
+    assert "#define SETTINGS_DETAILS_DRINK_CARD_HEIGHT 96" in details_page
+    assert "#define SETTINGS_DETAILS_DRINK_CARD_GAP_X 24" in details_page
+    assert "#define SETTINGS_DETAILS_DRINK_CARD_GAP_Y 24" in details_page
+    assert "#define SETTINGS_DETAILS_DRINK_IMAGE_SIZE 64" in details_page
+    assert "SETTINGS_DETAILS_TAB_DRINKS" in details_page
+    assert "settings_details_create_drink_statistics" in details_page
+    assert "lv_obj_set_scroll_dir(state->content, LV_DIR_VER)" in details_page
+    assert "lv_obj_set_scrollbar_mode(state->content, LV_SCROLLBAR_MODE_AUTO)" in details_page
+    assert "UI_STYLE_FONT_HOME_USER" in title_block
+    assert "UI_STYLE_FONT_DETAILS_DRINK" in details_page
+    assert "UI_STYLE_FONT_DETAILS_MENU_TITLE" in details_page
+    assert "UI_STYLE_FONT_DETAILS_MENU_VALUE" in details_page
+    assert "lv_image_set_scale(image, SETTINGS_DETAILS_DRINK_IMAGE_SCALE)" in details_page
+    assert "lv_image_set_pivot(image, 0, 0)" in details_page
+    assert "settings_details_drinks[]" in details_page
+    menu_block = details_page[
+        details_page.index("static bool settings_details_create_menu(settings_details_page_state_t *state)") :
+        details_page.index("static bool settings_details_create_content(settings_details_page_state_t *state)")
+    ]
+    assert "settings_details_create_menu_top_right_corner" not in details_page
+    assert "menu_top_right_cutout" not in details_page
+    assert "menu_top_right_round" not in details_page
+    data_block = details_page[
+        details_page.index("static const settings_details_menu_item_t settings_details_menu_items[]") :
+        details_page.index("static const settings_details_drink_t settings_details_drinks[]")
+    ]
+    assert "SETTINGS_DETAILS_TAB_FACTORY" not in data_block
+    assert "恢复出厂设置" not in data_block
+    for text in ["饮品杯数统计", "234344", "意式浓缩", "意式大杯", "美式咖啡", "卡布奇诺", "拿铁咖啡", "拿铁玛琪雅朵"]:
+        assert text in details_page
+
+
+def test_details_page_descaling_and_machine_info_states():
+    details_page = _read("app/ui/pages/settings_details_page.c")
+    descaling_block = details_page[
+        details_page.index("static bool settings_details_create_descaling") :
+        details_page.index("static void settings_details_factory_button_clicked")
+    ]
+    machine_block = details_page[
+        details_page.index("static bool settings_details_create_machine_info") :
+        details_page.index("static bool settings_details_create_content_for_tab")
+    ]
+
+    assert "SETTINGS_DETAILS_TAB_DESCALING" in details_page
+    assert "SETTINGS_DETAILS_TAB_MACHINE" in details_page
+    assert "settings_details_create_descaling" in details_page
+    assert "settings_details_create_machine_info" in details_page
+    assert "settings_details_descaling_icon.png" in details_page
+    assert "#define SETTINGS_DETAILS_DESCALING_CARD_HEIGHT 96" in details_page
+    assert "#define SETTINGS_DETAILS_DESCALING_CARD_RADIUS 16" in details_page
+    assert "#define SETTINGS_DETAILS_INFO_CARD_WIDTH 496" in details_page
+    assert "#define SETTINGS_DETAILS_INFO_CARD_HEIGHT 215" in details_page
+    assert "#define SETTINGS_DETAILS_INFO_CARD_RADIUS 16" in details_page
+    assert "型号:" in details_page
+    assert "HMI版本号:" in details_page
+    assert "OS版本号:" in details_page
+    assert "CTR版本号:" in details_page
+    assert "SN号:" in details_page
+    assert "CM01" in details_page
+    assert "V1.0.0" in details_page
+    assert "V1.0.1" in details_page
+    assert "HSUIDF29023209023" in details_page
+    assert "settings_details_factory_button_clicked" in details_page
+    assert "SETTINGS_DETAILS_INFO_CARD_WIDTH, SETTINGS_DETAILS_DESCALING_CARD_HEIGHT" in descaling_block
+    assert "lv_obj_set_style_radius(card, SETTINGS_DETAILS_DESCALING_CARD_RADIUS" in descaling_block
+    assert descaling_block.count("UI_STYLE_FONT_DETAILS_MENU_VALUE") == 2
+    assert "UI_STYLE_FONT_HOME_USER" not in descaling_block
+    assert "UI_STYLE_FONT_HOME_SIDE" not in descaling_block
+    assert machine_block.count("UI_STYLE_FONT_DETAILS_MENU_TITLE") == 2
+    assert "UI_STYLE_FONT_HOME_SIDE" in machine_block
+    assert "UI_STYLE_FONT_HOME_USER" not in machine_block
+    assert (REPO_ROOT / "resources/host/images/settings_details_descaling_icon.png").exists()
+
+
+def test_details_page_factory_reset_modal():
+    details_page = _read("app/ui/pages/settings_details_page.c")
+    modal_button_block = details_page[
+        details_page.index("static bool settings_details_create_modal_button") :
+        details_page.index("static bool settings_details_create_factory_modal")
+    ]
+    modal_block = details_page[
+        details_page.index("static bool settings_details_create_factory_modal") :
+        details_page.index("void settings_details_page_destroy")
+    ]
+
+    assert "settings_details_create_factory_modal" in details_page
+    assert "settings_details_show_factory_modal" in details_page
+    assert "settings_details_factory_cancel_clicked" in details_page
+    assert "settings_details_factory_confirm_clicked" in details_page
+    assert "是否恢复出厂设置" in details_page
+    assert "取消" in details_page
+    assert "确认" in details_page
+    assert "#define SETTINGS_DETAILS_MODAL_BUTTON_WIDTH 240" in details_page
+    assert "#define SETTINGS_DETAILS_MODAL_BUTTON_HEIGHT 64" in details_page
+    assert "#define SETTINGS_DETAILS_MODAL_CONFIRM_COLOR 0xB56A2E" in details_page
+    assert "UI_STYLE_FONT_DETAILS_MODAL" in modal_block
+    assert "UI_STYLE_FONT_HOME_SIDE" in modal_button_block
+    assert "UI_STYLE_FONT_HOME_USER" not in modal_block
+    assert "UI_STYLE_FONT_HOME_USER" not in modal_button_block
+
+
+def test_ui_style_exposes_20pt_details_drink_font():
+    header = _read("components/ui_style/include/ui_style.h")
+    source = _read("components/ui_style/src/ui_style.c")
+    cmake = _read("components/ui_style/CMakeLists.txt")
+    export_cmake = _read("cmake/modules/ep_export_targets.cmake")
+
+    assert "UI_STYLE_FONT_DETAILS_DRINK" in header
+    assert "UI_STYLE_FONT_DETAILS_MENU_TITLE" in header
+    assert "UI_STYLE_FONT_DETAILS_MENU_VALUE" in header
+    assert "UI_STYLE_FONT_DETAILS_MODAL" in header
+    assert "LV_FONT_DECLARE(ui_font_source_han_18)" in source
+    assert "LV_FONT_DECLARE(ui_font_source_han_20)" in source
+    assert "LV_FONT_DECLARE(ui_font_source_han_32)" in source
+    assert "{UI_STYLE_FONT_DETAILS_MENU_VALUE, 18u, &ui_font_source_han_18, NULL}" in source
+    assert "{UI_STYLE_FONT_DETAILS_DRINK, 20u, &ui_font_source_han_20, NULL}" in source
+    assert "{UI_STYLE_FONT_DETAILS_MENU_TITLE, 20u, &ui_font_source_han_20, NULL}" in source
+    assert "{UI_STYLE_FONT_DETAILS_MODAL, 32u, &ui_font_source_han_32, NULL}" in source
+    assert "src/ui_font_source_han_18.c" in cmake
+    assert "src/ui_font_source_han_20.c" in cmake
+    assert "src/ui_font_source_han_32.c" in cmake
+    assert "components/ui_style/src/ui_font_source_han_18.c" in export_cmake
+    assert "components/ui_style/src/ui_font_source_han_20.c" in export_cmake
+    assert "components/ui_style/src/ui_font_source_han_32.c" in export_cmake
+    assert (REPO_ROOT / "components/ui_style/src/ui_font_source_han_18.c").exists()
+    assert (REPO_ROOT / "components/ui_style/src/ui_font_source_han_20.c").exists()
+    assert (REPO_ROOT / "components/ui_style/src/ui_font_source_han_32.c").exists()
 
 
 def test_settings_and_user_borders_are_gray():

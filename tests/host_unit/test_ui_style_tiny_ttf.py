@@ -18,8 +18,11 @@ def test_ui_style_component_uses_static_font_assets():
     cmake = REPO_ROOT / "components/ui_style/CMakeLists.txt"
     font = REPO_ROOT / "resources/host/fonts/SourceHan-Regular_arial_cn.ttf"
     generated_fonts = [
+        REPO_ROOT / "components/ui_style/src/ui_font_source_han_18.c",
+        REPO_ROOT / "components/ui_style/src/ui_font_source_han_20.c",
         REPO_ROOT / "components/ui_style/src/ui_font_source_han_24.c",
         REPO_ROOT / "components/ui_style/src/ui_font_source_han_28.c",
+        REPO_ROOT / "components/ui_style/src/ui_font_source_han_32.c",
         REPO_ROOT / "components/ui_style/src/ui_font_source_han_40.c",
     ]
 
@@ -37,16 +40,26 @@ def test_ui_style_component_uses_static_font_assets():
     host_cmake = _read("platforms/host/posix/CMakeLists.txt")
     export_cmake = _read("cmake/modules/ep_export_targets.cmake")
 
+    assert "UI_STYLE_FONT_DETAILS_MENU_VALUE" in header_text
     assert "UI_STYLE_FONT_HOME_SIDE" in header_text
+    assert "UI_STYLE_FONT_DETAILS_DRINK" in header_text
+    assert "UI_STYLE_FONT_DETAILS_MENU_TITLE" in header_text
+    assert "UI_STYLE_FONT_DETAILS_MODAL" in header_text
     assert "UI_STYLE_FONT_HOME_CENTER" in header_text
     assert "int ui_style_init(void);" in header_text
     assert "const lv_font_t *ui_style_font(ui_style_font_id_t font_id);" in header_text
 
+    assert "LV_FONT_DECLARE(ui_font_source_han_18)" in source_text
+    assert "LV_FONT_DECLARE(ui_font_source_han_20)" in source_text
     assert "LV_FONT_DECLARE(ui_font_source_han_24)" in source_text
     assert "LV_FONT_DECLARE(ui_font_source_han_28)" in source_text
+    assert "LV_FONT_DECLARE(ui_font_source_han_32)" in source_text
     assert "LV_FONT_DECLARE(ui_font_source_han_40)" in source_text
+    assert "ui_font_source_han_18" in source_text
+    assert "ui_font_source_han_20" in source_text
     assert "ui_font_source_han_24" in source_text
     assert "ui_font_source_han_28" in source_text
+    assert "ui_font_source_han_32" in source_text
     assert "ui_font_source_han_40" in source_text
     assert "LV_FONT_DEFAULT" in source_text
     assert "#if LV_USE_FREETYPE" in source_text
@@ -59,15 +72,21 @@ def test_ui_style_component_uses_static_font_assets():
     assert "lv_tiny_ttf_create_file_ex" not in source_text
 
     assert "add_library(ep_components_ui_style STATIC" in cmake_text
+    assert "src/ui_font_source_han_18.c" in cmake_text
+    assert "src/ui_font_source_han_20.c" in cmake_text
     assert "src/ui_font_source_han_24.c" in cmake_text
     assert "src/ui_font_source_han_28.c" in cmake_text
+    assert "src/ui_font_source_han_32.c" in cmake_text
     assert "src/ui_font_source_han_40.c" in cmake_text
     assert "ep_thirdparty_lvgl" in cmake_text
     assert "add_subdirectory(components/ui_style)" in root_cmake
     assert "ep_components_ui_style" in host_cmake
     assert "components/ui_style/src/ui_style.c" in export_cmake
+    assert "components/ui_style/src/ui_font_source_han_18.c" in export_cmake
+    assert "components/ui_style/src/ui_font_source_han_20.c" in export_cmake
     assert "components/ui_style/src/ui_font_source_han_24.c" in export_cmake
     assert "components/ui_style/src/ui_font_source_han_28.c" in export_cmake
+    assert "components/ui_style/src/ui_font_source_han_32.c" in export_cmake
     assert "components/ui_style/src/ui_font_source_han_40.c" in export_cmake
     assert "components/ui_style/include" in export_cmake
 
@@ -93,8 +112,11 @@ def test_ui_style_font_generator_keeps_static_fonts_reproducible():
     assert "lv_font_conv" in generator_text
     assert "用户1234" in generator_text
     assert "设置语言亮度清洗关联开休眠详细信息" in generator_text
+    assert "18" in generator_text
+    assert "20" in generator_text
     assert "24" in generator_text
     assert "28" in generator_text
+    assert "32" in generator_text
     assert "40" in generator_text
 
 
@@ -105,8 +127,8 @@ def test_home_page_applies_ui_style_fonts_to_chinese_labels():
     assert '#include "ui_style.h"' in home_page
     assert "ui_style_init()" in home_page
     assert "ui_style_font(UI_STYLE_FONT_HOME_SIDE)" in home_page
-    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" in home_page
     assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" in home_page
+    assert "ui_style_font(UI_STYLE_FONT_DETAILS_MENU_TITLE)" in home_page
     assert "lv_obj_set_style_text_font(slot->label" in home_page
     assert "lv_obj_set_style_text_font(label" in home_page
     assert "ep_components_ui_style" in app_cmake
@@ -179,8 +201,11 @@ def test_ui_style_loads_fonts_without_tiny_ttf_runtime(tmp_path):
             str(REPO_ROOT / "components/ui/src/ep_ui.c"),
             str(REPO_ROOT / "components/ui_style/src/ui_style.c"),
             str(REPO_ROOT / "platforms/host/posix/paths/ep_host_platform_paths.c"),
+            str(REPO_ROOT / "components/ui_style/src/ui_font_source_han_18.c"),
+            str(REPO_ROOT / "components/ui_style/src/ui_font_source_han_20.c"),
             str(REPO_ROOT / "components/ui_style/src/ui_font_source_han_24.c"),
             str(REPO_ROOT / "components/ui_style/src/ui_font_source_han_28.c"),
+            str(REPO_ROOT / "components/ui_style/src/ui_font_source_han_32.c"),
             str(REPO_ROOT / "components/ui_style/src/ui_font_source_han_40.c"),
             str(REPO_ROOT / "third_party/prebuilt/lvgl/host_macos/lib/liblvgl.a"),
             "-L/opt/homebrew/opt/freetype/lib",

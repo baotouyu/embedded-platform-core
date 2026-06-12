@@ -131,7 +131,7 @@ static bool settings_brightness_create_title(settings_brightness_page_state_t *s
     lv_obj_set_size(title, SETTINGS_BRIGHTNESS_TITLE_WIDTH, SETTINGS_BRIGHTNESS_TITLE_HEIGHT);
     lv_obj_set_pos(title, SETTINGS_BRIGHTNESS_TITLE_X, SETTINGS_BRIGHTNESS_TITLE_Y);
     lv_obj_set_style_text_color(title, lv_color_hex(SETTINGS_PAGE_TEXT_COLOR), LV_PART_MAIN);
-    lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_HOME_CENTER), LV_PART_MAIN);
+    lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
     lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_long_mode(title, LV_LABEL_LONG_CLIP);
     lv_label_set_text(title, SETTINGS_BRIGHTNESS_TITLE_TEXT);

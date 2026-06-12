@@ -3,6 +3,7 @@
 #include "ep_log.h"
 #include "page_manager.h"
 #include "pages/app_pages.h"
+#include "pages/boot_page.h"
 #include "pages/home_page.h"
 #include "pages/settings_page.h"
 
@@ -11,6 +12,11 @@ int app_ui_create(void)
     int rc;
 
     rc = page_manager_init(NULL);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = page_manager_register(APP_PAGE_BOOT, boot_page_create, boot_page_event, boot_page_destroy);
     if (rc != 0) {
         return rc;
     }
@@ -49,7 +55,23 @@ int app_ui_create(void)
         return rc;
     }
 
-    rc = page_manager_switch(APP_PAGE_HOME, LV_SCR_LOAD_ANIM_NONE, 0, false);
+    rc = page_manager_register(APP_PAGE_CLEANING,
+                               settings_cleaning_page_create,
+                               settings_cleaning_page_event,
+                               settings_cleaning_page_destroy);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = page_manager_register(APP_PAGE_DETAILS,
+                               settings_details_page_create,
+                               settings_details_page_event,
+                               settings_details_page_destroy);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = page_manager_switch(APP_PAGE_BOOT, LV_SCR_LOAD_ANIM_NONE, 0, false);
     if (rc != 0) {
         return rc;
     }

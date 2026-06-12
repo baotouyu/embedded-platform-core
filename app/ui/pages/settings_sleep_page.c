@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 
+#define SETTINGS_SLEEP_TITLE_TEXT "休眠"
 #define SETTINGS_SLEEP_DEFAULT_VALUE "30mins"
 #define SETTINGS_SLEEP_VISIBLE_ROWS 4
 
@@ -28,6 +29,11 @@ static void settings_sleep_confirm_clicked(lv_event_t *event)
 {
     (void)event;
     (void)page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180);
+}
+
+static bool settings_sleep_create_title(settings_selection_page_state_t *state)
+{
+    return state != NULL && settings_common_create_title(state->screen, SETTINGS_SLEEP_TITLE_TEXT);
 }
 
 void settings_sleep_page_destroy(page_manager_page_ctx_t *ctx)
@@ -87,6 +93,7 @@ lv_obj_t *settings_sleep_page_create(page_manager_page_ctx_t *ctx)
                                             SETTINGS_PAGE_CONFIRM_Y,
                                             SETTINGS_PAGE_CONFIRM_SIZE,
                                             settings_sleep_confirm_clicked) ||
+        !settings_sleep_create_title(state) ||
         !settings_selection_list_create(screen,
                                         &state->list,
                                         settings_sleep_options,

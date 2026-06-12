@@ -11,8 +11,11 @@
 
 #define UI_STYLE_FONT_FILE_NAME "SourceHan-Regular_arial_cn.ttf"
 
+LV_FONT_DECLARE(ui_font_source_han_18)
+LV_FONT_DECLARE(ui_font_source_han_20)
 LV_FONT_DECLARE(ui_font_source_han_24)
 LV_FONT_DECLARE(ui_font_source_han_28)
+LV_FONT_DECLARE(ui_font_source_han_32)
 LV_FONT_DECLARE(ui_font_source_han_40)
 
 typedef struct {
@@ -25,6 +28,10 @@ typedef struct {
 } ui_style_font_entry_t;
 
 static ui_style_font_entry_t ui_style_fonts[UI_STYLE_FONT_COUNT] = {
+    {UI_STYLE_FONT_DETAILS_MENU_VALUE, 18u, &ui_font_source_han_18, NULL},
+    {UI_STYLE_FONT_DETAILS_DRINK, 20u, &ui_font_source_han_20, NULL},
+    {UI_STYLE_FONT_DETAILS_MENU_TITLE, 20u, &ui_font_source_han_20, NULL},
+    {UI_STYLE_FONT_DETAILS_MODAL, 32u, &ui_font_source_han_32, NULL},
     {UI_STYLE_FONT_HOME_SIDE, 24u, &ui_font_source_han_24, NULL},
     {UI_STYLE_FONT_HOME_USER, 28u, &ui_font_source_han_28, NULL},
     {UI_STYLE_FONT_HOME_CENTER, 40u, &ui_font_source_han_40, NULL},
@@ -44,6 +51,10 @@ static ui_style_font_entry_t *ui_style_find_entry(ui_style_font_id_t font_id)
 #if LV_USE_FREETYPE
 static void ui_style_restore_static_fonts(void)
 {
+    ui_style_fonts[UI_STYLE_FONT_DETAILS_MENU_VALUE].font = &ui_font_source_han_18;
+    ui_style_fonts[UI_STYLE_FONT_DETAILS_DRINK].font = &ui_font_source_han_20;
+    ui_style_fonts[UI_STYLE_FONT_DETAILS_MENU_TITLE].font = &ui_font_source_han_20;
+    ui_style_fonts[UI_STYLE_FONT_DETAILS_MODAL].font = &ui_font_source_han_32;
     ui_style_fonts[UI_STYLE_FONT_HOME_SIDE].font = &ui_font_source_han_24;
     ui_style_fonts[UI_STYLE_FONT_HOME_USER].font = &ui_font_source_han_28;
     ui_style_fonts[UI_STYLE_FONT_HOME_CENTER].font = &ui_font_source_han_40;

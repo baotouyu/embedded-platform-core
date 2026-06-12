@@ -130,12 +130,15 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
     demos/lvgl_demo_main.c
     ${CMAKE_SOURCE_DIR}/app/ui/app_ui.c
     ${CMAKE_SOURCE_DIR}/app/ui/page_manager.c
+    ${CMAKE_SOURCE_DIR}/app/ui/pages/boot_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/home_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_common.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_language_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_sleep_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_brightness_page.c
+    ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_cleaning_page.c
+    ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_details_page.c
     paths/ep_host_platform_paths.c
     ui_port/ep_host_ui_port.c
     osal_port/ep_host_osal_time.c

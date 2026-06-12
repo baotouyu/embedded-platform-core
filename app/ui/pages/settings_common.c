@@ -62,6 +62,31 @@ bool settings_common_create_icon_button(lv_obj_t *screen,
     return true;
 }
 
+bool settings_common_create_title(lv_obj_t *screen, const char *text)
+{
+    lv_obj_t *title;
+
+    if (screen == NULL || text == NULL) {
+        return false;
+    }
+
+    title = lv_label_create(screen);
+    if (title == NULL) {
+        return false;
+    }
+
+    lv_obj_remove_style_all(title);
+    lv_obj_set_size(title, SETTINGS_SUBPAGE_TITLE_WIDTH, SETTINGS_SUBPAGE_TITLE_HEIGHT);
+    lv_obj_set_pos(title, SETTINGS_SUBPAGE_TITLE_X, SETTINGS_SUBPAGE_TITLE_Y);
+    lv_obj_set_style_text_color(title, lv_color_hex(SETTINGS_PAGE_TEXT_COLOR), LV_PART_MAIN);
+    lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_label_set_long_mode(title, LV_LABEL_LONG_CLIP);
+    lv_label_set_text(title, text);
+
+    return true;
+}
+
 void settings_selection_list_refresh(settings_selection_list_t *list)
 {
     if (list == NULL) {
@@ -183,7 +208,7 @@ bool settings_selection_list_create(lv_obj_t *parent,
         lv_obj_remove_style_all(label);
         lv_obj_set_size(label, SETTINGS_SELECTION_LIST_WIDTH, SETTINGS_SELECTION_LIST_ROW_HEIGHT);
         lv_obj_set_pos(label, 0, 0);
-        lv_obj_set_style_text_font(label, ui_style_font(UI_STYLE_FONT_HOME_CENTER), LV_PART_MAIN);
+        lv_obj_set_style_text_font(label, ui_style_font(UI_STYLE_FONT_HOME_SIDE), LV_PART_MAIN);
         lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         lv_obj_set_style_pad_top(label, 8, LV_PART_MAIN);
         lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);

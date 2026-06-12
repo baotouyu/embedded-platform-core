@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 
+#define SETTINGS_LANGUAGE_TITLE_TEXT "语言"
 #define SETTINGS_PAGE_LANGUAGE "zh-CN"
 
 static const settings_selection_option_t settings_language_options[] = {
@@ -28,6 +29,11 @@ static void settings_language_confirm_clicked(lv_event_t *event)
 {
     (void)event;
     (void)page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180);
+}
+
+static bool settings_language_create_title(settings_selection_page_state_t *state)
+{
+    return state != NULL && settings_common_create_title(state->screen, SETTINGS_LANGUAGE_TITLE_TEXT);
 }
 
 void settings_language_page_destroy(page_manager_page_ctx_t *ctx)
@@ -87,6 +93,7 @@ lv_obj_t *settings_language_page_create(page_manager_page_ctx_t *ctx)
                                             SETTINGS_PAGE_CONFIRM_Y,
                                             SETTINGS_PAGE_CONFIRM_SIZE,
                                             settings_language_confirm_clicked) ||
+        !settings_language_create_title(state) ||
         !settings_selection_list_create(screen,
                                         &state->list,
                                         settings_language_options,

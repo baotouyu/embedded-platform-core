@@ -27,5 +27,17 @@ void settings_brightness_page_event(page_manager_page_ctx_t *ctx,
                                     uint32_t code,
                                     uint32_t wparam,
                                     uint32_t lparam);
+lv_obj_t *settings_cleaning_page_create(page_manager_page_ctx_t *ctx);
+void settings_cleaning_page_destroy(page_manager_page_ctx_t *ctx);
+void settings_cleaning_page_event(page_manager_page_ctx_t *ctx,
+                                  uint32_t code,
+                                  uint32_t wparam,
+                                  uint32_t lparam);
+lv_obj_t *settings_details_page_create(page_manager_page_ctx_t *ctx);
+void settings_details_page_destroy(page_manager_page_ctx_t *ctx);
+void settings_details_page_event(page_manager_page_ctx_t *ctx,
+                                 uint32_t code,
+                                 uint32_t wparam,
+                                 uint32_t lparam);
 
 #endif
