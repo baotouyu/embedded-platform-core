@@ -930,6 +930,282 @@ def test_cleaning_page_daily_maintenance_and_descaling_content():
     assert (REPO_ROOT / "resources/host/images/settings_details_descaling_icon.png").exists()
 
 
+def test_cleaning_page_quick_rinse_status_flow():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    daily_block = cleaning_page[
+        cleaning_page.index("static const settings_cleaning_action_item_t settings_cleaning_daily_items[]") :
+        cleaning_page.index("static const settings_cleaning_action_item_t settings_cleaning_maintenance_items[]")
+    ]
+    status_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_rinse_status") :
+        cleaning_page.index("static bool settings_cleaning_create_daily_clean")
+    ]
+
+    assert "#define SETTINGS_CLEANING_RINSE_DURATION_MS 10000u" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_TICK_MS 1000u" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_RETURN_DELAY_MS 1000u" in cleaning_page
+    assert "SETTINGS_CLEANING_RINSE_COMPLETE_ICON_NAME \"Frame-2.png\"" in cleaning_page
+    assert "SETTINGS_CLEANING_RINSE_INTERRUPTED_ICON_NAME \"Frame-3.png\"" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_PAGE_WIDTH SETTINGS_PAGE_SCREEN_WIDTH" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_PAGE_HEIGHT SETTINGS_PAGE_SCREEN_HEIGHT" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_BUTTON_WIDTH 236" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_BUTTON_HEIGHT 74" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_BUTTON_X 482" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_BUTTON_Y 203" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_BUTTON_LABEL_X 34" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_BUTTON_LABEL_WIDTH 132" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_RUNNING_LABEL_X 0" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_RUNNING_LABEL_WIDTH SETTINGS_CLEANING_RINSE_BUTTON_WIDTH" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_HELPER_X 540" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_HELPER_Y 139" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_STATUS_ICON_X 168" in cleaning_page
+    assert "#define SETTINGS_CLEANING_RINSE_STATUS_ICON_Y 20" in cleaning_page
+    assert "settings_cleaning_create_rinse_graphic" not in cleaning_page
+    assert "SETTINGS_CLEANING_RINSE_GRAPHIC" not in cleaning_page
+    assert "lv_arc_create" not in cleaning_page
+    assert "{\"冲泡器简易清洗\", \"清洗\", SETTINGS_CLEANING_CARD_ICON_NAME, true, false, false, NULL," in daily_block
+    assert "{\"奶泡器简易清洗\", \"清洗\", SETTINGS_CLEANING_CARD_ICON_NAME, true, false, false, NULL," in daily_block
+    assert "{\"奶泡器深度清洗\", \"立即除垢\", SETTINGS_CLEANING_CARD_ICON_NAME, false, true, false, NULL," in daily_block
+    assert "settings_cleaning_create_clean_card(state, &settings_cleaning_daily_items[i], i)" in cleaning_page
+    assert "lv_obj_add_event_cb(card, settings_cleaning_quick_rinse_clicked, LV_EVENT_CLICKED, state)" in cleaning_page
+    assert "lv_obj_add_event_cb(button, settings_cleaning_quick_rinse_clicked, LV_EVENT_CLICKED, state)" in cleaning_page
+    assert "settings_cleaning_start_quick_rinse(state)" in cleaning_page
+    assert "state->rinse_overlay = lv_obj_create(state->screen)" in status_block
+    assert "lv_obj_set_size(state->rinse_overlay, SETTINGS_CLEANING_RINSE_PAGE_WIDTH, SETTINGS_CLEANING_RINSE_PAGE_HEIGHT)" in status_block
+    assert "lv_obj_set_style_bg_color(state->rinse_overlay, lv_color_hex(SETTINGS_PAGE_BG_COLOR), LV_PART_MAIN)" in status_block
+    assert "state->rinse_timer = lv_timer_create(settings_cleaning_rinse_timer_cb" in cleaning_page
+    assert "settings_cleaning_schedule_rinse_return(state)" in cleaning_page
+    assert "settings_cleaning_rinse_return_timer_cb" in cleaning_page
+    assert "lv_timer_set_cb(state->rinse_timer, settings_cleaning_rinse_return_timer_cb)" in cleaning_page
+    assert "lv_timer_set_period(state->rinse_timer, SETTINGS_CLEANING_RINSE_RETURN_DELAY_MS)" in cleaning_page
+    assert "lv_timer_reset(state->rinse_timer)" in cleaning_page
+    assert "lv_timer_set_repeat_count(state->rinse_timer, 1)" in cleaning_page
+    assert "SETTINGS_CLEANING_RINSE_TICK_MS" in status_block
+    assert "lv_timer_set_repeat_count(state->rinse_timer, -1)" in cleaning_page
+    assert "settings_cleaning_stop_rinse_timer(state)" in cleaning_page
+    assert "settings_cleaning_set_rinse_status(state, SETTINGS_CLEANING_RINSE_RUNNING, 0)" in cleaning_page
+    assert "settings_cleaning_set_rinse_status(state, SETTINGS_CLEANING_RINSE_COMPLETE, 100)" in cleaning_page
+    assert "settings_cleaning_set_rinse_status(state, SETTINGS_CLEANING_RINSE_INTERRUPTED, state->rinse_progress)" in cleaning_page
+    assert "settings_cleaning_set_rinse_final_layout(state, false)" in cleaning_page
+    assert "settings_cleaning_set_rinse_final_layout(state, true)" in cleaning_page
+    assert "lv_obj_set_width(state->rinse_button_label, SETTINGS_CLEANING_RINSE_RUNNING_LABEL_WIDTH)" in cleaning_page
+    assert "lv_obj_set_x(state->rinse_button_label, SETTINGS_CLEANING_RINSE_RUNNING_LABEL_X)" in cleaning_page
+    assert "lv_obj_set_width(state->rinse_button_label, SETTINGS_CLEANING_RINSE_BUTTON_LABEL_WIDTH)" in cleaning_page
+    assert "lv_obj_set_x(state->rinse_button_label, SETTINGS_CLEANING_RINSE_BUTTON_LABEL_X)" in cleaning_page
+    assert "state->rinse_icon = lv_image_create(button)" in cleaning_page
+    assert "lv_obj_set_pos(state->rinse_icon, SETTINGS_CLEANING_RINSE_STATUS_ICON_X, SETTINGS_CLEANING_RINSE_STATUS_ICON_Y)" in cleaning_page
+    assert (
+        "SETTINGS_CLEANING_RINSE_BUTTON_LABEL_X,\n"
+        "                                                               SETTINGS_CLEANING_RINSE_BUTTON_LABEL_Y,\n"
+        "                                                               SETTINGS_CLEANING_RINSE_BUTTON_LABEL_WIDTH,"
+    ) in cleaning_page
+    assert "state->rinse_icon = lv_image_create(state->rinse_overlay)" not in cleaning_page
+    assert "lv_label_set_text_fmt(state->rinse_button_label, \"清洗中 %d %%\", state->rinse_progress)" in cleaning_page
+    assert "lv_label_set_text(state->rinse_button_label, \"清洗完成\")" in cleaning_page
+    assert "lv_label_set_text(state->rinse_button_label, \"清洗中断\")" in cleaning_page
+    assert "请返回重试" in cleaning_page
+    assert "UI_STYLE_FONT_DETAILS_MODAL" in status_block
+    assert "UI_STYLE_FONT_HOME_SIDE" in status_block
+    assert (REPO_ROOT / "resources/host/images/Frame-2.png").exists()
+    assert (REPO_ROOT / "resources/host/images/Frame-3.png").exists()
+
+
+def test_cleaning_page_milk_frother_deep_clean_prepare_flow():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    daily_block = cleaning_page[
+        cleaning_page.index("static const settings_cleaning_action_item_t settings_cleaning_daily_items[]") :
+        cleaning_page.index("static const settings_cleaning_action_item_t settings_cleaning_maintenance_items[]")
+    ]
+    prepare_block = cleaning_page[
+        cleaning_page.index("static int32_t settings_cleaning_prepare_progress_width_for_time") :
+        cleaning_page.index("static bool settings_cleaning_create_clean_card")
+    ]
+
+    assert "#define SETTINGS_CLEANING_PREPARE_ICON_BOX_WIDTH 240" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_ICON_BOX_HEIGHT 240" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_ICON_BOX_X 56" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_ICON_BOX_Y 117" in cleaning_page
+    assert "SETTINGS_CLEANING_PREPARE_ICON_NAME \"Frame-4.png\"" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PANEL_WIDTH 416" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PANEL_HEIGHT 376" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PANEL_X 336" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PANEL_Y 52" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PROMPT_WIDTH 264" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PROMPT_HEIGHT 64" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PROMPT_X 76" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_PROMPT_Y 25" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_BUTTON_WIDTH 192" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_BUTTON_HEIGHT 64" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_CANCEL_X 0" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_START_X 224" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_BUTTON_Y 312" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_TIME_DEFAULT_SEC 32" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_TIME_MAX_SEC 60" in cleaning_page
+    assert "#define SETTINGS_CLEANING_PREPARE_TIME_MAX_LABEL_Y 224" in cleaning_page
+    assert "prepare_time_sec" in cleaning_page
+    assert "settings_cleaning_set_prepare_time" in cleaning_page
+    assert "settings_cleaning_prepare_time_event" in cleaning_page
+    assert "lv_indev_get_point(lv_indev_active(), &point)" in prepare_block
+    assert "settings_cleaning_create_prepare_time_progress" in prepare_block
+    assert "SETTINGS_CLEANING_DESCALING_ICON_NAME" in prepare_block
+    assert "settings_cleaning_load_icon(state, SETTINGS_CLEANING_PREPARE_ICON_NAME" in prepare_block
+    assert "请向奶泡器中加入清水,\\n并设置清洗时间" in cleaning_page
+    assert "清洗时间" in cleaning_page
+    assert "32s" in cleaning_page
+    assert "60s" in cleaning_page
+    assert "取消" in cleaning_page
+    assert "开始清洗" in cleaning_page
+    assert "UI_STYLE_FONT_HOME_SIDE" in prepare_block
+    assert "{\"奶泡器深度清洗\", \"立即除垢\", SETTINGS_CLEANING_CARD_ICON_NAME, false, true, false, NULL," in daily_block
+    assert "settings_cleaning_prepare_clicked" in cleaning_page
+    assert "lv_obj_add_event_cb(card, settings_cleaning_prepare_clicked, LV_EVENT_CLICKED, state)" in cleaning_page
+    assert "lv_obj_add_event_cb(button, settings_cleaning_prepare_clicked, LV_EVENT_CLICKED, state)" in cleaning_page
+    assert "settings_cleaning_delete_prepare_overlay(state)" in cleaning_page
+    assert "settings_cleaning_start_quick_rinse(state)" in prepare_block
+    assert "settings_cleaning_create_daily_clean(state)" in prepare_block
+    assert (REPO_ROOT / "resources/host/images/Frame-4.png").exists()
+
+
+def test_cleaning_page_brewer_deep_clean_tablet_and_water_flow():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    maintenance_items_block = cleaning_page[
+        cleaning_page.index("static const settings_cleaning_action_item_t settings_cleaning_maintenance_items[]") :
+        cleaning_page.index("static void settings_cleaning_delete_prepare_overlay")
+    ]
+    maintenance_prepare_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_maintenance_prepare_overlay") :
+        cleaning_page.index("static bool settings_cleaning_create_clean_card")
+    ]
+    rinse_return_block = cleaning_page[
+        cleaning_page.index("static void settings_cleaning_rinse_return_timer_cb") :
+        cleaning_page.index("static void settings_cleaning_schedule_rinse_return")
+    ]
+
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_NAME \"Frame-5.png\"" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_BOX_WIDTH 240" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_BOX_HEIGHT 240" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_BOX_X 56" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_BOX_Y 120" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_PROMPT_X 404" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_PROMPT_Y 160" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_PROMPT_WIDTH 312" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_PROMPT_HEIGHT 32" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_CANCEL_X 352" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_NEXT_X 576" in cleaning_page
+    assert "#define SETTINGS_CLEANING_MAINTENANCE_PREPARE_BUTTON_Y 256" in cleaning_page
+    assert "{\"冲泡器深度清洁（加药片）\", \"清洗\", SETTINGS_CLEANING_CARD_ICON_NAME, false, false, true," in maintenance_items_block
+    assert "\"请向冲泡器中加入清水和药片\", \"请向奶罐加入清水\", SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_NAME," in maintenance_items_block
+    assert "SETTINGS_CLEANING_RINSE_AFTER_RETURN}" in maintenance_items_block
+    assert "settings_cleaning_create_maintenance_prepare_overlay(" in cleaning_page
+    assert "settings_cleaning_create_maintenance_prepare_overlay(" in rinse_return_block
+    assert "SETTINGS_CLEANING_MAINTENANCE_PREPARE_WATER" in rinse_return_block
+    assert "SETTINGS_CLEANING_RINSE_AFTER_RETURN" in rinse_return_block
+    assert "SETTINGS_CLEANING_RINSE_AFTER_SHOW_MAINTENANCE_WATER" in cleaning_page
+    assert "state->selected_tab == SETTINGS_CLEANING_TAB_MAINTENANCE" in cleaning_page
+    assert "请向冲泡器中加入清水和药片" in maintenance_prepare_block
+    assert "请向奶罐加入清水" in maintenance_prepare_block
+    assert "下一步" in maintenance_prepare_block
+    assert "settings_cleaning_start_rinse(state, state->maintenance_prepare_after_action)" in cleaning_page
+    assert "settings_cleaning_start_rinse(state, SETTINGS_CLEANING_RINSE_AFTER_RETURN)" in cleaning_page
+    assert "completed_status == SETTINGS_CLEANING_RINSE_COMPLETE" in rinse_return_block
+    assert (REPO_ROOT / "resources/host/images/Frame-5.png").exists()
+
+
+def test_cleaning_page_maintenance_tablet_rinse_preserves_after_action():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    delete_rinse_start = cleaning_page.index(
+        "static void settings_cleaning_delete_rinse_overlay",
+        cleaning_page.index("static void settings_cleaning_stop_rinse_timer"),
+    )
+    start_rinse_block = cleaning_page[
+        cleaning_page.index("static void settings_cleaning_start_rinse") :
+        cleaning_page.index("static void settings_cleaning_start_quick_rinse")
+    ]
+
+    create_rinse_index = start_rinse_block.index("(void)settings_cleaning_create_rinse_status(state)")
+    assign_after_action_index = start_rinse_block.index("state->rinse_after_action = after_action")
+
+    assert create_rinse_index < assign_after_action_index
+    assert "settings_cleaning_delete_rinse_overlay(state)" in cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_rinse_status") :
+        cleaning_page.index("static void settings_cleaning_start_rinse")
+    ]
+    assert "state->rinse_after_action = SETTINGS_CLEANING_RINSE_AFTER_RETURN" in cleaning_page[
+        delete_rinse_start : cleaning_page.index("static void settings_cleaning_delete_prepare_overlay",
+                                                 delete_rinse_start)
+    ]
+
+
+def test_cleaning_page_milk_frother_maintenance_tablet_and_water_flow():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    maintenance_items_block = cleaning_page[
+        cleaning_page.index("static const settings_cleaning_action_item_t settings_cleaning_maintenance_items[]") :
+        cleaning_page.index("static void settings_cleaning_delete_prepare_overlay")
+    ]
+    maintenance_prepare_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_maintenance_prepare_overlay") :
+        cleaning_page.index("static bool settings_cleaning_create_clean_card")
+    ]
+    maintenance_clicked_block = cleaning_page[
+        cleaning_page.index("static void settings_cleaning_maintenance_prepare_clicked") :
+        cleaning_page.index("static bool settings_cleaning_create_clean_card")
+    ]
+
+    assert "{\"奶泡器深度清洁（加药片）\", \"清洗\", SETTINGS_CLEANING_CARD_ICON_NAME, false, false, true," in maintenance_items_block
+    assert "\"请向奶泡器中加入清水和药品\", \"请向奶罐加入清水\", SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_NAME," in maintenance_items_block
+    assert "SETTINGS_CLEANING_RINSE_AFTER_SHOW_MAINTENANCE_WATER}" in maintenance_items_block
+    assert "{\"冲泡器深度清洁（加药片）\", \"清洗\", SETTINGS_CLEANING_CARD_ICON_NAME, false, false, true," in maintenance_items_block
+    assert "\"请向冲泡器中加入清水和药片\", \"请向奶罐加入清水\", SETTINGS_CLEANING_MAINTENANCE_PREPARE_ICON_NAME," in maintenance_items_block
+    assert "SETTINGS_CLEANING_RINSE_AFTER_RETURN}" in maintenance_items_block
+    assert "const settings_cleaning_action_item_t *item" in maintenance_clicked_block
+    assert "settings_cleaning_create_maintenance_prepare_overlay(" in maintenance_clicked_block
+    assert "SETTINGS_CLEANING_MAINTENANCE_PREPARE_TABLET" in maintenance_clicked_block
+    assert "item->maintenance_prepare_prompt" in maintenance_clicked_block
+    assert "item->maintenance_prepare_water_prompt" in maintenance_clicked_block
+    assert "item->maintenance_prepare_icon_name" in maintenance_clicked_block
+    assert "item->maintenance_prepare_after_action" in maintenance_clicked_block
+    assert "请向奶泡器中加入清水和药品" in maintenance_items_block
+    assert "tablet_prompt" in maintenance_prepare_block
+    assert "请向奶罐加入清水" in maintenance_prepare_block
+    assert "next_text = step == SETTINGS_CLEANING_MAINTENANCE_PREPARE_WATER ? \"清水\" : \"下一步\"" in maintenance_prepare_block
+    assert "lv_obj_add_event_cb(card, settings_cleaning_maintenance_prepare_clicked, LV_EVENT_CLICKED, (void *)item)" in cleaning_page
+    assert "lv_obj_add_event_cb(button, settings_cleaning_maintenance_prepare_clicked, LV_EVENT_CLICKED, (void *)item)" in cleaning_page
+
+
+def test_cleaning_page_descaling_prepare_tablet_and_water_flow():
+    cleaning_page = _read("app/ui/pages/settings_cleaning_page.c")
+    maintenance_items_block = cleaning_page[
+        cleaning_page.index("static const settings_cleaning_action_item_t settings_cleaning_maintenance_items[]") :
+        cleaning_page.index("static void settings_cleaning_delete_prepare_overlay")
+    ]
+    maintenance_prepare_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_maintenance_prepare_overlay") :
+        cleaning_page.index("static bool settings_cleaning_create_clean_card")
+    ]
+    maintenance_icon_block = cleaning_page[
+        cleaning_page.index("static bool settings_cleaning_create_maintenance_prepare_icon_box") :
+        cleaning_page.index("static bool settings_cleaning_create_maintenance_prepare_button")
+    ]
+    rinse_return_block = cleaning_page[
+        cleaning_page.index("static void settings_cleaning_rinse_return_timer_cb") :
+        cleaning_page.index("static void settings_cleaning_schedule_rinse_return")
+    ]
+
+    assert "{\"除垢\", \"立即除垢\", SETTINGS_CLEANING_MAINTENANCE_DESCALING_ICON_NAME, false, false, true," in maintenance_items_block
+    assert "\"请向水箱中加入清水和清洁剂\"" in maintenance_items_block
+    assert "\"再向水箱加入清水\"" in maintenance_items_block
+    assert "\"Frame-6.png\"" in maintenance_items_block
+    assert "SETTINGS_CLEANING_RINSE_AFTER_SHOW_MAINTENANCE_WATER" in maintenance_items_block
+    assert "maintenance_prepare_icon_name" in cleaning_page
+    assert "maintenance_prepare_water_prompt" in cleaning_page
+    assert "state->maintenance_prepare_icon_name" in maintenance_icon_block
+    assert "state->maintenance_prepare_water_prompt" in maintenance_prepare_block
+    assert "请向水箱中加入清水和清洁剂" in maintenance_items_block
+    assert "再向水箱加入清水" in maintenance_items_block
+    assert "SETTINGS_CLEANING_MAINTENANCE_PREPARE_WATER" in rinse_return_block
+    assert (REPO_ROOT / "resources/host/images/Frame-6.png").exists()
+
+
 def test_details_page_menu_and_drink_statistics_layout():
     details_page = _read("app/ui/pages/settings_details_page.c")
     title_block = details_page[
