@@ -20,7 +20,7 @@ int app_ui_create(void)
         return rc;
     }
 
-    rc = page_manager_register(APP_PAGE_SETTINGS, settings_page_create, settings_page_event, NULL);
+    rc = page_manager_register(APP_PAGE_SETTINGS, settings_page_create, settings_page_event, settings_page_destroy);
     if (rc != 0) {
         return rc;
     }

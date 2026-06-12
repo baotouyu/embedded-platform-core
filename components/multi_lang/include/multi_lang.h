@@ -53,10 +53,16 @@
 #define MULTI_LANG_KEY_DESCALING_NOW "Descaling_now"                                             // 立即除垢
 #define MULTI_LANG_KEY_ENTER "Enter"                                                             // 进入
 #define MULTI_LANG_KEY_LANGUAGE "Language"                                                       // 语言
+#define MULTI_LANG_KEY_WIFI "settings_wifi"                                                      // Wi-Fi
+#define MULTI_LANG_KEY_BRIGHTNESS "settings_brightness"                                          // 亮度
 #define MULTI_LANG_KEY_DRINK_SETTING "Drink_setting"                                             // 饮品设置
 #define MULTI_LANG_KEY_SHUTDOWN_TIMER "Shutdown_timer"                                           // 定时关机
+#define MULTI_LANG_KEY_SLEEP "settings_sleep"                                                    // 休眠
 #define MULTI_LANG_KEY_STANDBY_BACKLIGHT "Standby_backlight_setting"                             // 待机背光设置
 #define MULTI_LANG_KEY_SOUND "Sound"                                                             // 声音
+#define MULTI_LANG_KEY_ON "settings_on"                                                          // 开
+#define MULTI_LANG_KEY_APP_LINK "settings_app_link"                                              // App关联
+#define MULTI_LANG_KEY_DETAILS "settings_details"                                                // 详细信息
 #define MULTI_LANG_KEY_CLEANING_LEVEL "Cleaning_level"                                           // 除垢等级
 #define MULTI_LANG_KEY_ENGINEERING_SETTING "Engineering_setting"                                 // 工程设置
 #define MULTI_LANG_KEY_USER_GROUP_SETTING "User_group_setting"                                   // 用户组设置

@@ -24,6 +24,7 @@ target_include_directories(ep_app
     ${CMAKE_SOURCE_DIR}/components/event/include
     ${CMAKE_SOURCE_DIR}/components/timer/include
     ${CMAKE_SOURCE_DIR}/components/recipe_parser/include
+    ${CMAKE_SOURCE_DIR}/components/multi_lang/include
     ${CMAKE_SOURCE_DIR}/components/ui_style/include
     ${CMAKE_SOURCE_DIR}/platforms/include
     ${CMAKE_SOURCE_DIR}/hal/include
@@ -37,6 +38,7 @@ target_link_libraries(ep_app
     ep_components_event
     ep_components_timer
     ep_components_recipe_parser
+    ep_components_multi_lang
     ep_components_ui_style
     ep_platform_api
 )

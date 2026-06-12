@@ -145,6 +145,7 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
       ${CMAKE_SOURCE_DIR}/app/ui
       ${CMAKE_SOURCE_DIR}/app/ui/pages
       ${CMAKE_SOURCE_DIR}/components/log/include
+      ${CMAKE_SOURCE_DIR}/components/multi_lang/include
       ${CMAKE_SOURCE_DIR}/components/recipe_parser/include
       ${CMAKE_SOURCE_DIR}/components/ui/include
       ${CMAKE_SOURCE_DIR}/components/ui_style/include
@@ -162,6 +163,7 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
     PRIVATE
       ep_components_ui
       ep_components_log
+      ep_components_multi_lang
       ep_components_recipe_parser
       ep_components_ui_style
       ep_platform_api

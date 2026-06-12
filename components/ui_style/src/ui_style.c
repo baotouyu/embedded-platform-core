@@ -2,25 +2,32 @@
 
 #include "ep_osal_err.h"
 #include "ep_platform_paths.h"
-#include "src/libs/tiny_ttf/lv_tiny_ttf.h"
 
-#include <stdbool.h>
+#if LV_USE_FREETYPE
+#include "src/libs/freetype/lv_freetype.h"
+#endif
+
 #include <stddef.h>
 
 #define UI_STYLE_FONT_FILE_NAME "SourceHan-Regular_arial_cn.ttf"
-#define UI_STYLE_FONT_CACHE_SIZE (64u * 1024u)
+
+LV_FONT_DECLARE(ui_font_source_han_24)
+LV_FONT_DECLARE(ui_font_source_han_28)
+LV_FONT_DECLARE(ui_font_source_han_40)
 
 typedef struct {
     ui_style_font_id_t id;
-    int32_t size;
-    lv_font_t *font;
+    uint32_t size;
+    const lv_font_t *font;
+#if LV_USE_FREETYPE
+    lv_font_t *freetype_font;
+#endif
 } ui_style_font_entry_t;
 
-static bool ui_style_initialized;
 static ui_style_font_entry_t ui_style_fonts[UI_STYLE_FONT_COUNT] = {
-    {UI_STYLE_FONT_HOME_SIDE, 24, NULL},
-    {UI_STYLE_FONT_HOME_USER, 28, NULL},
-    {UI_STYLE_FONT_HOME_CENTER, 40, NULL},
+    {UI_STYLE_FONT_HOME_SIDE, 24u, &ui_font_source_han_24, NULL},
+    {UI_STYLE_FONT_HOME_USER, 28u, &ui_font_source_han_28, NULL},
+    {UI_STYLE_FONT_HOME_CENTER, 40u, &ui_font_source_han_40, NULL},
 };
 
 static ui_style_font_entry_t *ui_style_find_entry(ui_style_font_id_t font_id)
@@ -34,23 +41,35 @@ static ui_style_font_entry_t *ui_style_find_entry(ui_style_font_id_t font_id)
     return NULL;
 }
 
+#if LV_USE_FREETYPE
+static void ui_style_restore_static_fonts(void)
+{
+    ui_style_fonts[UI_STYLE_FONT_HOME_SIDE].font = &ui_font_source_han_24;
+    ui_style_fonts[UI_STYLE_FONT_HOME_USER].font = &ui_font_source_han_28;
+    ui_style_fonts[UI_STYLE_FONT_HOME_CENTER].font = &ui_font_source_han_40;
+}
+#endif
+
 void ui_style_deinit(void)
 {
+#if LV_USE_FREETYPE
     for (size_t i = 0u; i < UI_STYLE_FONT_COUNT; ++i) {
-        if (ui_style_fonts[i].font != NULL) {
-            lv_tiny_ttf_destroy(ui_style_fonts[i].font);
-            ui_style_fonts[i].font = NULL;
+        if (ui_style_fonts[i].freetype_font != NULL) {
+            lv_freetype_font_delete(ui_style_fonts[i].freetype_font);
+            ui_style_fonts[i].freetype_font = NULL;
         }
     }
-    ui_style_initialized = false;
+    ui_style_restore_static_fonts();
+#endif
 }
 
 int ui_style_init(void)
 {
+#if LV_USE_FREETYPE
     char font_path[160];
     int rc;
 
-    if (ui_style_initialized) {
+    if (ui_style_fonts[0].freetype_font != NULL) {
         return EP_OK;
     }
 
@@ -59,19 +78,21 @@ int ui_style_init(void)
         return rc;
     }
 
-    lv_tiny_ttf_init();
     for (size_t i = 0u; i < UI_STYLE_FONT_COUNT; ++i) {
-        ui_style_fonts[i].font = lv_tiny_ttf_create_file_ex(
+        ui_style_fonts[i].freetype_font = lv_freetype_font_create(
             font_path,
+            LV_FREETYPE_FONT_RENDER_MODE_BITMAP,
             ui_style_fonts[i].size,
-            UI_STYLE_FONT_CACHE_SIZE);
-        if (ui_style_fonts[i].font == NULL) {
+            LV_FREETYPE_FONT_STYLE_NORMAL);
+        if (ui_style_fonts[i].freetype_font == NULL) {
             ui_style_deinit();
             return EP_ERR_BUSY;
         }
-    }
 
-    ui_style_initialized = true;
+        ui_style_fonts[i].font = ui_style_fonts[i].freetype_font;
+    }
+#endif
+
     return EP_OK;
 }
 

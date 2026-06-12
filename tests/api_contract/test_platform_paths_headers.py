@@ -37,6 +37,7 @@ def test_platform_paths_header_compiles_standalone(tmp_path):
                 int (*image_fn)(const char *, char *, size_t) = ep_platform_image_path;
                 int (*lvgl_image_fn)(const char *, char *, size_t) = ep_platform_lvgl_image_src;
                 int (*font_fn)(const char *, char *, size_t) = ep_platform_font_path;
+                int (*lvgl_font_fn)(const char *, char *, size_t) = ep_platform_lvgl_font_src;
                 int (*theme_fn)(const char *, char *, size_t) = ep_platform_theme_path;
 
                 return (
@@ -46,6 +47,7 @@ def test_platform_paths_header_compiles_standalone(tmp_path):
                     image_fn &&
                     lvgl_image_fn &&
                     font_fn &&
+                    lvgl_font_fn &&
                     theme_fn
                 ) ? 0 : 1;
             }

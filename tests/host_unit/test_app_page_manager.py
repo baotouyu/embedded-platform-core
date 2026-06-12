@@ -292,6 +292,25 @@ def test_home_page_snap_uses_directional_step_to_avoid_commit_jitter():
     assert "HOME_PAGE_RIGHT_SNAP_STEP" not in home_page
 
 
+def test_home_page_keeps_titles_visible_while_carousel_is_moving():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert "labels_visible" not in home_page
+    assert "home_page_set_carousel_labels_visible" not in home_page
+
+    pressing = home_page[
+        home_page.index("if (code == LV_EVENT_PRESSING && state->dragging)") :
+        home_page.index("if (code == LV_EVENT_RELEASED && state->dragging)")
+    ]
+    assert "LV_OBJ_FLAG_HIDDEN" not in pressing
+
+    finish_snap = home_page[
+        home_page.index("static void home_page_finish_snap_animation") :
+        home_page.index("static void home_page_apply_snap_progress")
+    ]
+    assert "LV_OBJ_FLAG_HIDDEN" not in finish_snap
+
+
 def test_home_page_has_reference_positioned_user_switcher():
     home_page = _read("app/ui/pages/home_page.c")
 
@@ -385,6 +404,7 @@ def test_app_ui_registers_settings_page_and_home_can_navigate_to_it():
     assert "page_manager_register(APP_PAGE_SETTINGS" in app_ui
     assert "settings_page_create" in app_ui
     assert "settings_page_event" in app_ui
+    assert "settings_page_destroy" in app_ui
 
     assert "HOME_PAGE_SETTINGS_TEXT" in home_page
     assert "lv_button_create(screen)" in home_page
@@ -392,11 +412,97 @@ def test_app_ui_registers_settings_page_and_home_can_navigate_to_it():
     assert "page_manager_switch(APP_PAGE_SETTINGS" in home_page
 
     assert "settings_page_create(page_manager_page_ctx_t *ctx)" in settings_page
-    assert "SETTINGS_PAGE_TITLE_TEXT" in settings_page
-    assert "SETTINGS_PAGE_BACK_TEXT" in settings_page
+    assert "SETTINGS_PAGE_TITLE_KEY" in settings_page
+    assert "SETTINGS_PAGE_BACK_ICON_NAME" in settings_page
     assert "settings_page_back_clicked" in settings_page
     assert "page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180)" in settings_page
     assert "page_manager_switch(APP_PAGE_HOME" not in settings_page
     assert "settings_page_event(page_manager_page_ctx_t *ctx" in settings_header
+    assert "settings_page_destroy(page_manager_page_ctx_t *ctx" in settings_header
 
     assert "ui/pages/settings_page.c" in app_cmake
+
+
+def test_settings_page_matches_reference_layout_and_resources():
+    settings_page = _read("app/ui/pages/settings_page.c")
+    app_cmake = _read("app/CMakeLists.txt")
+
+    assert '#include "ep_platform_paths.h"' in settings_page
+    assert '#include "multi_lang.h"' in settings_page
+    assert '#include "ui_style.h"' in settings_page
+    assert "#define SETTINGS_PAGE_SCREEN_WIDTH 800" in settings_page
+    assert "#define SETTINGS_PAGE_SCREEN_HEIGHT 480" in settings_page
+    assert "#define SETTINGS_PAGE_CONTENT_HEIGHT 696" in settings_page
+    assert "#define SETTINGS_PAGE_BACK_X 32" in settings_page
+    assert "#define SETTINGS_PAGE_BACK_Y 32" in settings_page
+    assert "#define SETTINGS_PAGE_BACK_SIZE 48" in settings_page
+    assert "#define SETTINGS_PAGE_TITLE_Y 48" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_CONTAINER_Y 140" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_CONTAINER_HEIGHT (SETTINGS_PAGE_SCREEN_HEIGHT - SETTINGS_PAGE_BUTTON_CONTAINER_Y)" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_CONTENT_HEIGHT (SETTINGS_PAGE_CONTENT_HEIGHT - SETTINGS_PAGE_BUTTON_CONTAINER_Y)" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_WIDTH 356" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_HEIGHT 112" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_RADIUS 56" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_GAP_X 40" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_GAP_Y 24" in settings_page
+    assert "#define SETTINGS_PAGE_LEFT_X 24" in settings_page
+    assert "#define SETTINGS_PAGE_RIGHT_X (SETTINGS_PAGE_LEFT_X + SETTINGS_PAGE_BUTTON_WIDTH + SETTINGS_PAGE_BUTTON_GAP_X)" in settings_page
+    assert "#define SETTINGS_PAGE_ROW_0_Y 0" in settings_page
+    assert "#define SETTINGS_PAGE_ROW_STEP (SETTINGS_PAGE_BUTTON_HEIGHT + SETTINGS_PAGE_BUTTON_GAP_Y)" in settings_page
+    assert "#define SETTINGS_PAGE_ICON_SIZE 80" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_BORDER_COLOR 0x43382D" in settings_page
+
+    assert "typedef struct {" in settings_page
+    assert "settings_page_button_spec_t" in settings_page
+    assert "settings_page_items[]" in settings_page
+    assert 'SETTINGS_PAGE_LANG_DB_NAME "recipelib.db"' in settings_page
+    assert 'SETTINGS_PAGE_LANGUAGE "zh-CN"' in settings_page
+    assert "multi_lang_open_db(" in settings_page
+    assert "multi_lang_set_language(" in settings_page
+    assert "multi_lang_get_text(" in settings_page
+    assert "multi_lang_close(" in settings_page
+    assert "lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE)" in settings_page
+    assert "lv_obj_set_scroll_dir(container, LV_DIR_VER)" in settings_page
+    assert "lv_obj_set_scrollbar_mode(container, LV_SCROLLBAR_MODE_OFF)" in settings_page
+    assert "lv_obj_set_size(container, SETTINGS_PAGE_SCREEN_WIDTH, SETTINGS_PAGE_BUTTON_CONTAINER_HEIGHT)" in settings_page
+    assert "lv_obj_set_pos(container, 0, SETTINGS_PAGE_BUTTON_CONTAINER_Y)" in settings_page
+    assert "settings_page_create_scroll_spacer(state)" in settings_page
+    assert "lv_obj_set_pos(button, spec->x, spec->y)" in settings_page
+    assert "ep_platform_lvgl_image_src(spec->icon_name" in settings_page
+    assert "ui_style_font(UI_STYLE_FONT_HOME_CENTER)" in settings_page
+    assert "ui_style_font(UI_STYLE_FONT_HOME_USER)" in settings_page
+
+    for key in [
+        "MULTI_LANG_KEY_SETTING",
+        "MULTI_LANG_KEY_LANGUAGE",
+        "MULTI_LANG_KEY_WIFI",
+        "MULTI_LANG_KEY_BRIGHTNESS",
+        "MULTI_LANG_KEY_ON",
+        "MULTI_LANG_KEY_RINSE",
+        "MULTI_LANG_KEY_SLEEP",
+        "MULTI_LANG_KEY_APP_LINK",
+        "MULTI_LANG_KEY_DETAILS",
+    ]:
+        assert key in settings_page
+
+    for text in ["设置", "语言", "亮度", "开", "清洗", "休眠", "关联", "详细信息"]:
+        assert f'"{text}"' not in settings_page
+
+    expected_icons = [
+        "settings_icon_language.png",
+        "settings_icon_wifi.png",
+        "settings_icon_brightness.png",
+        "settings_icon_volume.png",
+        "settings_icon_clean.png",
+        "settings_icon_sleep.png",
+        "settings_icon_app_link.png",
+        "settings_icon_info.png",
+        "settings_icon_back.png",
+    ]
+    for icon_name in expected_icons:
+        assert f'"{icon_name}"' in settings_page
+        assert (REPO_ROOT / "resources/host/images" / icon_name).exists()
+
+    assert "components/multi_lang/include" in app_cmake
+    assert "ep_components_multi_lang" in app_cmake

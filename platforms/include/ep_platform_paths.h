@@ -12,6 +12,7 @@ int ep_platform_lvgl_image_src(const char *name, char *buffer, size_t buffer_siz
 int ep_platform_recipe_path(const char *name, char *buffer, size_t buffer_size);
 int ep_platform_lvgl_recipe_src(const char *name, char *buffer, size_t buffer_size);
 int ep_platform_font_path(const char *name, char *buffer, size_t buffer_size);
+int ep_platform_lvgl_font_src(const char *name, char *buffer, size_t buffer_size);
 int ep_platform_theme_path(const char *name, char *buffer, size_t buffer_size);
 
 #endif

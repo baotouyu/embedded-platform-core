@@ -102,6 +102,14 @@ def test_rtos_platform_paths_are_queryable(tmp_path):
                     return 14;
                 }
 
+                if (ep_platform_lvgl_font_src("main.ttf", path, sizeof(path)) != EP_OK) {
+                    return 20;
+                }
+
+                if (strcmp(path, "L:/rodata/ep/resources/fonts/main.ttf") != 0) {
+                    return 21;
+                }
+
                 if (ep_platform_theme_path("default.bin", path, sizeof(path)) != EP_OK) {
                     return 15;
                 }
@@ -120,6 +128,14 @@ def test_rtos_platform_paths_are_queryable(tmp_path):
 
                 if (small[0] != '\\0') {
                     return 19;
+                }
+
+                if (ep_platform_lvgl_font_src("main.ttf", small, sizeof(small)) != EP_ERR_INVAL) {
+                    return 22;
+                }
+
+                if (small[0] != '\\0') {
+                    return 23;
                 }
 
                 return 0;
@@ -242,6 +258,14 @@ def test_host_platform_paths_are_queryable(tmp_path):
                     return 8;
                 }
 
+                if (ep_platform_lvgl_font_src("main.ttf", path, sizeof(path)) != EP_OK) {
+                    return 30;
+                }
+
+                if (strcmp(path, "A:resources/host/fonts/main.ttf") != 0) {
+                    return 31;
+                }
+
                 if (ep_platform_recipe_path("latte.png", path, sizeof(path)) != EP_OK) {
                     return 26;
                 }
@@ -300,6 +324,14 @@ def test_host_platform_paths_are_queryable(tmp_path):
 
                 if (small[0] != '\\0') {
                     return 25;
+                }
+
+                if (ep_platform_lvgl_font_src("main.ttf", small, sizeof(small)) != EP_ERR_INVAL) {
+                    return 32;
+                }
+
+                if (small[0] != '\\0') {
+                    return 33;
                 }
 
                 return 0;

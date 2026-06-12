@@ -13,6 +13,56 @@ struct multi_lang_store {
     char *language;
 };
 
+typedef struct {
+    const char *language;
+    const char *key;
+    const char *text;
+} multi_lang_builtin_fallback_t;
+
+static const multi_lang_builtin_fallback_t multi_lang_builtin_fallbacks[] = {
+    {"en", MULTI_LANG_KEY_SETTING, "Settings"},
+    {"en", MULTI_LANG_KEY_LANGUAGE, "Language"},
+    {"en", MULTI_LANG_KEY_WIFI, "Wi-Fi"},
+    {"en", MULTI_LANG_KEY_BRIGHTNESS, "Brightness"},
+    {"en", MULTI_LANG_KEY_ON, "On"},
+    {"en", MULTI_LANG_KEY_RINSE, "Clean"},
+    {"en", MULTI_LANG_KEY_SLEEP, "Sleep"},
+    {"en", MULTI_LANG_KEY_APP_LINK, "App Link"},
+    {"en", MULTI_LANG_KEY_DETAILS, "Details"},
+    {"zh-CN", MULTI_LANG_KEY_SETTING, "设置"},
+    {"zh-CN", MULTI_LANG_KEY_LANGUAGE, "语言"},
+    {"zh-CN", MULTI_LANG_KEY_WIFI, "Wi-Fi"},
+    {"zh-CN", MULTI_LANG_KEY_BRIGHTNESS, "亮度"},
+    {"zh-CN", MULTI_LANG_KEY_ON, "开"},
+    {"zh-CN", MULTI_LANG_KEY_RINSE, "清洗"},
+    {"zh-CN", MULTI_LANG_KEY_SLEEP, "休眠"},
+    {"zh-CN", MULTI_LANG_KEY_APP_LINK, "App关联"},
+    {"zh-CN", MULTI_LANG_KEY_DETAILS, "详细信息"},
+};
+
+static const char *multi_lang_get_builtin_text(const char *language, const char *key)
+{
+    size_t fallback_count;
+
+    if (language == 0 || key == 0) {
+        return 0;
+    }
+
+    fallback_count = sizeof(multi_lang_builtin_fallbacks) / sizeof(multi_lang_builtin_fallbacks[0]);
+    for (size_t i = 0; i < fallback_count; ++i) {
+        if (strcmp(multi_lang_builtin_fallbacks[i].language, language) == 0 &&
+            strcmp(multi_lang_builtin_fallbacks[i].key, key) == 0) {
+            return multi_lang_builtin_fallbacks[i].text;
+        }
+    }
+
+    if (strcmp(language, MULTI_LANG_DEFAULT) != 0) {
+        return multi_lang_get_builtin_text(MULTI_LANG_DEFAULT, key);
+    }
+
+    return 0;
+}
+
 static void multi_lang_clear_cache(multi_lang_store_t *store)
 {
     if (store == 0) {
@@ -176,6 +226,12 @@ int multi_lang_get_text(
 
     text_item = cJSON_GetObjectItemCaseSensitive(store->language_json, key);
     if (!cJSON_IsString(text_item) || text_item->valuestring == 0) {
+        const char *builtin_text = multi_lang_get_builtin_text(store->language, key);
+        if (builtin_text != 0) {
+            *out_text = builtin_text;
+            return EP_OK;
+        }
+
         *out_text = key;
         return EP_ERR_INVAL;
     }

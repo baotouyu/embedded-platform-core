@@ -1,5 +1,8 @@
 add_library(ep_components_ui_style STATIC
   src/ui_style.c
+  src/ui_font_source_han_24.c
+  src/ui_font_source_han_28.c
+  src/ui_font_source_han_40.c
 )
 
 target_include_directories(ep_components_ui_style
@@ -13,6 +16,5 @@ target_include_directories(ep_components_ui_style
 
 target_link_libraries(ep_components_ui_style
   PRIVATE
-    ep_platform_api
     ep_thirdparty_lvgl
 )

@@ -203,6 +203,22 @@ int ep_platform_font_path(const char *name, char *buffer, size_t buffer_size)
         buffer_size);
 }
 
+int ep_platform_lvgl_font_src(const char *name, char *buffer, size_t buffer_size)
+{
+    char font_path[160];
+    int rc;
+
+    rc = ep_platform_font_path(name, font_path, sizeof(font_path));
+    if (rc != EP_OK) {
+        if (buffer != NULL && buffer_size > 0u) {
+            buffer[0] = '\0';
+        }
+        return rc;
+    }
+
+    return ep_rtos_lvgl_src_from_path(font_path, buffer, buffer_size);
+}
+
 int ep_platform_theme_path(const char *name, char *buffer, size_t buffer_size)
 {
     return ep_rtos_resource_category_path(

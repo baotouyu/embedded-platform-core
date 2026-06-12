@@ -33,12 +33,23 @@ def test_multi_lang_component_uses_neutral_names():
     assert "MULTI_LANG_H" in header_text
     assert "MULTI_LANG_DEFAULT" in header_text
     assert "MULTI_LANG_KEY_CANCEL" in header_text
+    assert "MULTI_LANG_KEY_WIFI" in header_text
+    assert "MULTI_LANG_KEY_BRIGHTNESS" in header_text
+    assert "MULTI_LANG_KEY_APP_LINK" in header_text
+    assert "MULTI_LANG_KEY_SLEEP" in header_text
+    assert "MULTI_LANG_KEY_ON" in header_text
+    assert "MULTI_LANG_KEY_DETAILS" in header_text
     assert "typedef struct multi_lang_store multi_lang_store_t;" in header_text
     assert "multi_lang_open_db" in header_text
     assert "multi_lang_close" in header_text
     assert "multi_lang_set_language" in header_text
     assert "multi_lang_get_text" in header_text
     assert '#include "multi_lang.h"' in source_text
+    assert "multi_lang_builtin_fallbacks[]" in source_text
+    assert "multi_lang_get_builtin_text" in source_text
+    assert '{"zh-CN", MULTI_LANG_KEY_SETTING' in source_text
+    assert '{"zh-CN", MULTI_LANG_KEY_BRIGHTNESS' in source_text
+    assert '{"zh-CN", MULTI_LANG_KEY_APP_LINK' in source_text
     assert "resources/host/recipe/recipelib.db" not in source_text
     assert "add_library(ep_components_multi_lang STATIC" in cmake_text
     assert "ep_thirdparty_cjson" in cmake_text
@@ -114,6 +125,16 @@ def test_multi_lang_loads_interface_translations_from_recipelib(tmp_path):
                 if (strcmp(text, "missing_test_key") != 0) {{
                     multi_lang_close(store);
                     return 6;
+                }}
+
+                if (multi_lang_get_text(store, MULTI_LANG_KEY_BRIGHTNESS, &text) != EP_OK) {{
+                    multi_lang_close(store);
+                    return 7;
+                }}
+
+                if (strcmp(text, "Brightness") != 0) {{
+                    multi_lang_close(store);
+                    return 8;
                 }}
 
                 multi_lang_close(store);

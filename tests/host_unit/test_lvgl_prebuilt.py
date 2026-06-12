@@ -48,6 +48,8 @@ def test_lvgl_host_macos_package_declares_sdl2_backend():
     assert "render_mode=direct" in manifest_text
     assert "renderer=accelerated" in manifest_text
     assert "frame_period_ms=16" in manifest_text
+    assert "#define LV_CACHE_DEF_SIZE (8 * 1024 * 1024)" in lv_conf
+    assert "cache_size=8mb" in manifest_text
 
 
 def test_lvgl_host_macos_package_declares_local_asset_support():
@@ -58,7 +60,8 @@ def test_lvgl_host_macos_package_declares_local_asset_support():
     assert "local_assets=enabled" in manifest_text
     assert "filesystem=stdio:A" in manifest_text
     assert "image_decoders=lodepng,tjpgd,bmp" in manifest_text
-    assert "font_loader=tiny_ttf_file" in manifest_text
+    assert "font_loader=freetype,tiny_ttf_file" in manifest_text
+    assert "freetype.version=" in manifest_text
     assert "#define LV_USE_FS_STDIO 1" in lv_conf
     assert "#define LV_FS_STDIO_LETTER 'A'" in lv_conf
     assert '#define LV_FS_STDIO_PATH ""' in lv_conf
@@ -68,9 +71,10 @@ def test_lvgl_host_macos_package_declares_local_asset_support():
     assert "#define LV_USE_BMP 1" in lv_conf
     assert "#define LV_USE_TINY_TTF 1" in lv_conf
     assert "#define LV_TINY_TTF_FILE_SUPPORT 1" in lv_conf
+    assert "#define LV_USE_FREETYPE 1" in lv_conf
+    assert "#define LV_FREETYPE_CACHE_FT_GLYPH_CNT 512" in lv_conf
     assert "#define LV_USE_LIBPNG 0" in lv_conf
     assert "#define LV_USE_LIBJPEG_TURBO 0" in lv_conf
-    assert "#define LV_USE_FREETYPE 0" in lv_conf
 
 
 def test_lvgl_host_macos_static_library_is_tracked_by_git():
@@ -122,6 +126,10 @@ def test_lvgl_prebuilt_cmake_wires_sdl2_from_manifest():
     assert 'set(EP_SDL2_INCLUDE_DIR "${EP_SDL2_PREFIX}/include")' in module
     assert "INTERFACE_COMPILE_OPTIONS" in module
     assert "INTERFACE_LINK_OPTIONS" in module
+    assert "EP_LVGL_ENABLE_FREETYPE" in module
+    assert "font_loader=freetype" in module
+    assert "find_package(Freetype REQUIRED)" in module
+    assert "Freetype::Freetype" in module
     assert "INTERFACE_INCLUDE_DIRECTORIES" in module
 
 
@@ -229,6 +237,7 @@ def test_lvgl_prebuilt_cmake_smoke_links_local_asset_modules(tmp_path):
             #include "src/libs/tjpgd/lv_tjpgd.h"
             #include "src/libs/bmp/lv_bmp.h"
             #include "src/libs/tiny_ttf/lv_tiny_ttf.h"
+            #include "src/libs/freetype/lv_freetype.h"
 
             int main(void)
             {
@@ -236,6 +245,11 @@ def test_lvgl_prebuilt_cmake_smoke_links_local_asset_modules(tmp_path):
                 void (*jpg_decoder_init)(void) = lv_tjpgd_init;
                 void (*bmp_decoder_init)(void) = lv_bmp_init;
                 void (*tiny_ttf_init)(void) = lv_tiny_ttf_init;
+                lv_result_t (*freetype_init)(uint32_t) = lv_freetype_init;
+                lv_font_t * (*create_freetype_font)(const char *,
+                                                    lv_freetype_font_render_mode_t,
+                                                    uint32_t,
+                                                    lv_freetype_font_style_t) = lv_freetype_font_create;
                 lv_font_t * (*create_font_from_file)(const char *, int32_t) = lv_tiny_ttf_create_file;
 
                 lv_init();
@@ -244,6 +258,8 @@ def test_lvgl_prebuilt_cmake_smoke_links_local_asset_modules(tmp_path):
                 (void)jpg_decoder_init;
                 (void)bmp_decoder_init;
                 (void)tiny_ttf_init;
+                (void)freetype_init;
+                (void)create_freetype_font;
                 (void)create_font_from_file;
 
                 lv_deinit();
