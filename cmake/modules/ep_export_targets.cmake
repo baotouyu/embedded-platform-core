@@ -6,7 +6,11 @@ add_library(ep_app_core_export STATIC
   ${CMAKE_SOURCE_DIR}/app/ui/app_ui.c
   ${CMAKE_SOURCE_DIR}/app/ui/page_manager.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/home_page.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_common.c
   ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_page.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_language_page.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_sleep_page.c
+  ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_brightness_page.c
   ${CMAKE_SOURCE_DIR}/app/services/beep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/lcd_sleep_service.c
   ${CMAKE_SOURCE_DIR}/app/services/power_board_service.c

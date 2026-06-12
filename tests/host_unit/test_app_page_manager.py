@@ -424,6 +424,8 @@ def test_app_ui_registers_settings_page_and_home_can_navigate_to_it():
     settings_page = _read("app/ui/pages/settings_page.c")
     settings_header = _read("app/ui/pages/settings_page.h")
     app_cmake = _read("app/CMakeLists.txt")
+    export_cmake = _read("cmake/modules/ep_export_targets.cmake")
+    host_cmake = _read("platforms/host/posix/CMakeLists.txt")
 
     assert "APP_PAGE_SETTINGS" in app_pages
     assert '#include "pages/settings_page.h"' in app_ui
@@ -447,21 +449,35 @@ def test_app_ui_registers_settings_page_and_home_can_navigate_to_it():
     assert "settings_page_destroy(page_manager_page_ctx_t *ctx" in settings_header
 
     assert "ui/pages/settings_page.c" in app_cmake
+    assert "ui/pages/settings_common.c" in app_cmake
+    assert "ui/pages/settings_language_page.c" in app_cmake
+    assert "ui/pages/settings_sleep_page.c" in app_cmake
+    assert "ui/pages/settings_brightness_page.c" in app_cmake
+    for source in [
+        "app/ui/pages/settings_common.c",
+        "app/ui/pages/settings_language_page.c",
+        "app/ui/pages/settings_sleep_page.c",
+        "app/ui/pages/settings_brightness_page.c",
+    ]:
+        assert source in export_cmake
+        assert source in host_cmake
 
 
 def test_settings_page_matches_reference_layout_and_resources():
     settings_page = _read("app/ui/pages/settings_page.c")
+    settings_common = _read("app/ui/pages/settings_common.c")
+    settings_common_header = _read("app/ui/pages/settings_common.h")
     app_cmake = _read("app/CMakeLists.txt")
 
     assert '#include "ep_platform_paths.h"' in settings_page
     assert '#include "multi_lang.h"' in settings_page
     assert '#include "ui_style.h"' in settings_page
-    assert "#define SETTINGS_PAGE_SCREEN_WIDTH 800" in settings_page
-    assert "#define SETTINGS_PAGE_SCREEN_HEIGHT 480" in settings_page
+    assert "#define SETTINGS_PAGE_SCREEN_WIDTH 800" in settings_common_header
+    assert "#define SETTINGS_PAGE_SCREEN_HEIGHT 480" in settings_common_header
     assert "#define SETTINGS_PAGE_CONTENT_HEIGHT 696" in settings_page
-    assert "#define SETTINGS_PAGE_BACK_X 32" in settings_page
-    assert "#define SETTINGS_PAGE_BACK_Y 32" in settings_page
-    assert "#define SETTINGS_PAGE_BACK_SIZE 48" in settings_page
+    assert "#define SETTINGS_PAGE_BACK_X 32" in settings_common_header
+    assert "#define SETTINGS_PAGE_BACK_Y 32" in settings_common_header
+    assert "#define SETTINGS_PAGE_BACK_SIZE 48" in settings_common_header
     assert "#define SETTINGS_PAGE_TITLE_Y 48" in settings_page
     assert "#define SETTINGS_PAGE_BUTTON_CONTAINER_Y 140" in settings_page
     assert "#define SETTINGS_PAGE_BUTTON_CONTAINER_HEIGHT (SETTINGS_PAGE_SCREEN_HEIGHT - SETTINGS_PAGE_BUTTON_CONTAINER_Y)" in settings_page
@@ -476,7 +492,7 @@ def test_settings_page_matches_reference_layout_and_resources():
     assert "#define SETTINGS_PAGE_ROW_0_Y 0" in settings_page
     assert "#define SETTINGS_PAGE_ROW_STEP (SETTINGS_PAGE_BUTTON_HEIGHT + SETTINGS_PAGE_BUTTON_GAP_Y)" in settings_page
     assert "#define SETTINGS_PAGE_ICON_SIZE 80" in settings_page
-    assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in settings_page
+    assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in settings_common_header
     assert "#define SETTINGS_PAGE_BUTTON_BORDER_COLOR 0x666666" in settings_page
 
     assert "typedef struct {" in settings_page
@@ -488,7 +504,7 @@ def test_settings_page_matches_reference_layout_and_resources():
     assert "multi_lang_set_language(" in settings_page
     assert "multi_lang_get_text(" in settings_page
     assert "multi_lang_close(" in settings_page
-    assert "lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE)" in settings_page
+    assert "lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE)" in settings_common
     assert "lv_obj_set_scroll_dir(container, LV_DIR_VER)" in settings_page
     assert "lv_obj_set_scrollbar_mode(container, LV_SCROLLBAR_MODE_OFF)" in settings_page
     assert "lv_obj_set_size(container, SETTINGS_PAGE_SCREEN_WIDTH, SETTINGS_PAGE_BUTTON_CONTAINER_HEIGHT)" in settings_page
@@ -515,7 +531,7 @@ def test_settings_page_matches_reference_layout_and_resources():
     for text in ["设置", "语言", "亮度", "开", "清洗", "休眠", "关联", "详细信息"]:
         assert f'"{text}"' not in settings_page
 
-    expected_icons = [
+    settings_page_icons = [
         "settings_icon_language.png",
         "settings_icon_wifi.png",
         "settings_icon_brightness.png",
@@ -524,80 +540,130 @@ def test_settings_page_matches_reference_layout_and_resources():
         "settings_icon_sleep.png",
         "settings_icon_app_link.png",
         "settings_icon_info.png",
+    ]
+    for icon_name in settings_page_icons:
+        assert f'"{icon_name}"' in settings_page
+        assert (REPO_ROOT / "resources/host/images" / icon_name).exists()
+
+    shared_icons = [
         "settings_icon_back.png",
         "settings_icon_confirm.png",
     ]
-    for icon_name in expected_icons:
-        assert f'"{icon_name}"' in settings_page
+    for icon_name in shared_icons:
+        assert f'"{icon_name}"' in settings_common_header
         assert (REPO_ROOT / "resources/host/images" / icon_name).exists()
 
     assert "components/multi_lang/include" in app_cmake
     assert "ep_components_multi_lang" in app_cmake
+    assert "settings_selection_list_create(" not in settings_page
+    assert "settings_language_page_create" not in settings_page
+    assert "settings_sleep_page_create" not in settings_page
 
 
 def test_language_page_is_registered_and_reachable():
     app_pages = _read("app/ui/pages/app_pages.h")
     app_ui = _read("app/ui/app_ui.c")
     settings_page = _read("app/ui/pages/settings_page.c")
+    language_page = _read("app/ui/pages/settings_language_page.c")
 
     assert "APP_PAGE_LANGUAGE" in app_pages
     assert "page_manager_register(APP_PAGE_LANGUAGE" in app_ui
     assert "settings_language_page_create" in app_ui
     assert "page_manager_switch(APP_PAGE_LANGUAGE" in settings_page
     assert "SETTINGS_PAGE_ACTION_LANGUAGE" in settings_page
+    assert "settings_language_page_create(page_manager_page_ctx_t *ctx)" in language_page
 
 
 def test_settings_selection_list_reusable_metrics_and_language_options():
-    settings_page = _read("app/ui/pages/settings_page.c")
+    common = _read("app/ui/pages/settings_common.c")
+    common_header = _read("app/ui/pages/settings_common.h")
+    language_page = _read("app/ui/pages/settings_language_page.c")
 
-    assert "#define SETTINGS_SELECTION_LIST_WIDTH 369" in settings_page
-    assert "#define SETTINGS_SELECTION_LIST_ROW_HEIGHT 64" in settings_page
-    assert "#define SETTINGS_SELECTION_LIST_RADIUS 12" in settings_page
-    assert "#define SETTINGS_SELECTION_LIST_Y 160" in settings_page
-    assert "#define SETTINGS_SELECTION_LIST_UNSELECTED_COLOR SETTINGS_PAGE_BUTTON_COLOR" in settings_page
-    assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in settings_page
-    assert "settings_selection_list_create(" in settings_page
-    assert "settings_selection_option_index(settings_language_options" in settings_page
-    assert "SETTINGS_PAGE_LANGUAGE)" in settings_page
-    assert "settings_language_options[]" in settings_page
+    assert "#define SETTINGS_SELECTION_LIST_WIDTH 369" in common_header
+    assert "#define SETTINGS_SELECTION_LIST_ROW_HEIGHT 64" in common_header
+    assert "#define SETTINGS_SELECTION_LIST_RADIUS 12" in common_header
+    assert "#define SETTINGS_SELECTION_LIST_Y 160" in common_header
+    assert "#define SETTINGS_SELECTION_LIST_UNSELECTED_COLOR SETTINGS_PAGE_BUTTON_COLOR" in common_header
+    assert "#define SETTINGS_PAGE_BUTTON_COLOR 0x2F2B29" in common_header
+    assert "settings_selection_list_create(" in common
+    assert "settings_selection_option_index(settings_language_options" in language_page
+    assert "SETTINGS_PAGE_LANGUAGE)" in language_page
+    assert "settings_language_options[]" in language_page
     for label in ["English", "简体中文", "Français", "Italiano", "Deutsch", "Русский"]:
-        assert label in settings_page
+        assert label in language_page
 
 
 def test_language_page_confirm_and_back_return_to_settings():
-    settings_page = _read("app/ui/pages/settings_page.c")
+    language_page = _read("app/ui/pages/settings_language_page.c")
 
-    assert "settings_language_back_clicked" in settings_page
-    assert "settings_language_confirm_clicked" in settings_page
-    assert settings_page.count("page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180)") >= 3
+    assert "settings_language_back_clicked" in language_page
+    assert "settings_language_confirm_clicked" in language_page
+    assert language_page.count("page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180)") >= 2
 
 
 def test_sleep_page_is_registered_and_reachable():
     app_pages = _read("app/ui/pages/app_pages.h")
     app_ui = _read("app/ui/app_ui.c")
     settings_page = _read("app/ui/pages/settings_page.c")
+    sleep_page = _read("app/ui/pages/settings_sleep_page.c")
 
     assert "APP_PAGE_SLEEP" in app_pages
     assert "page_manager_register(APP_PAGE_SLEEP" in app_ui
     assert "settings_sleep_page_create" in app_ui
     assert "page_manager_switch(APP_PAGE_SLEEP" in settings_page
     assert "SETTINGS_PAGE_ACTION_SLEEP" in settings_page
+    assert "settings_sleep_page_create(page_manager_page_ctx_t *ctx)" in sleep_page
 
 
 def test_sleep_page_reuses_selection_list_with_sleep_options():
-    settings_page = _read("app/ui/pages/settings_page.c")
+    sleep_page = _read("app/ui/pages/settings_sleep_page.c")
 
-    assert "settings_sleep_options[]" in settings_page
-    assert "settings_sleep_default_index" in settings_page
-    assert "SETTINGS_SLEEP_DEFAULT_VALUE" in settings_page
-    assert "#define SETTINGS_SLEEP_VISIBLE_ROWS 4" in settings_page
-    assert "settings_selection_option_index(settings_sleep_options" in settings_page
+    assert "settings_sleep_options[]" in sleep_page
+    assert "settings_sleep_default_index" in sleep_page
+    assert "SETTINGS_SLEEP_DEFAULT_VALUE" in sleep_page
+    assert "#define SETTINGS_SLEEP_VISIBLE_ROWS 4" in sleep_page
+    assert "settings_selection_option_index(settings_sleep_options" in sleep_page
     for label in ["10mins", "30mins", "1h", "2h"]:
-        assert label in settings_page
-    assert "settings_sleep_back_clicked" in settings_page
-    assert "settings_sleep_confirm_clicked" in settings_page
-    assert "SETTINGS_SLEEP_VISIBLE_ROWS))" in settings_page
-    assert settings_page.count("settings_selection_list_create(screen") >= 2
+        assert label in sleep_page
+    assert "settings_sleep_back_clicked" in sleep_page
+    assert "settings_sleep_confirm_clicked" in sleep_page
+    assert "SETTINGS_SLEEP_VISIBLE_ROWS))" in sleep_page
+    assert "settings_selection_list_create(screen" in sleep_page
+
+
+def test_brightness_page_is_registered_and_reachable():
+    app_pages = _read("app/ui/pages/app_pages.h")
+    app_ui = _read("app/ui/app_ui.c")
+    settings_page = _read("app/ui/pages/settings_page.c")
+    brightness_page = _read("app/ui/pages/settings_brightness_page.c")
+
+    assert "APP_PAGE_BRIGHTNESS" in app_pages
+    assert "page_manager_register(APP_PAGE_BRIGHTNESS" in app_ui
+    assert "settings_brightness_page_create" in app_ui
+    assert "page_manager_switch(APP_PAGE_BRIGHTNESS" in settings_page
+    assert "SETTINGS_PAGE_ACTION_BRIGHTNESS" in settings_page
+    assert "settings_brightness_page_create(page_manager_page_ctx_t *ctx)" in brightness_page
+
+
+def test_brightness_page_matches_reference_layout_and_resources():
+    brightness_page = _read("app/ui/pages/settings_brightness_page.c")
+
+    assert "#define SETTINGS_BRIGHTNESS_TITLE_X 372" in brightness_page
+    assert "#define SETTINGS_BRIGHTNESS_TITLE_Y 90" in brightness_page
+    assert "#define SETTINGS_BRIGHTNESS_CONTROL_X 166" in brightness_page
+    assert "#define SETTINGS_BRIGHTNESS_CONTROL_Y 230" in brightness_page
+    assert "#define SETTINGS_BRIGHTNESS_CONTROL_WIDTH 524" in brightness_page
+    assert "#define SETTINGS_BRIGHTNESS_SEGMENT_COUNT 5u" in brightness_page
+    assert "#define SETTINGS_BRIGHTNESS_SEGMENT_BORDER_WIDTH 3" in brightness_page
+    assert "#define SETTINGS_BRIGHTNESS_DEFAULT_INDEX 0u" in brightness_page
+    assert "settings_brightness_min_icon.png" in brightness_page
+    assert "settings_brightness_max_icon.png" in brightness_page
+    assert "settings_brightness_level_clicked" in brightness_page
+    assert "settings_brightness_create_levels(control, state)" in brightness_page
+    assert "i <= state->selected_index" in brightness_page
+
+    assert (REPO_ROOT / "resources/host/images/settings_brightness_min_icon.png").exists()
+    assert (REPO_ROOT / "resources/host/images/settings_brightness_max_icon.png").exists()
 
 
 def test_settings_and_user_borders_are_gray():

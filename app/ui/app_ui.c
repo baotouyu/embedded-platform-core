@@ -41,6 +41,14 @@ int app_ui_create(void)
         return rc;
     }
 
+    rc = page_manager_register(APP_PAGE_BRIGHTNESS,
+                               settings_brightness_page_create,
+                               settings_brightness_page_event,
+                               settings_brightness_page_destroy);
+    if (rc != 0) {
+        return rc;
+    }
+
     rc = page_manager_switch(APP_PAGE_HOME, LV_SCR_LOAD_ANIM_NONE, 0, false);
     if (rc != 0) {
         return rc;
