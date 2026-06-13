@@ -26,6 +26,7 @@
 #define RUNNING_PAGE_RECIPE_ANCHOR_BAND_MIN_HEIGHT 8u
 #define RUNNING_PAGE_IMAGE_SCALE_BASE 256u
 #define RUNNING_PAGE_RECIPE_TARGET_CENTER_X (RUNNING_PAGE_STRENGTH_RING_X + RUNNING_PAGE_STRENGTH_RING_WIDTH / 2)
+#define RUNNING_PAGE_RECIPE_TARGET_CENTER_OFFSET_X (-10)
 #define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y 50
 #define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y (RUNNING_PAGE_STRENGTH_RING_Y + RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y)
 #define RUNNING_PAGE_STRENGTH_CONTROL_X 32
@@ -569,7 +570,8 @@ static running_page_recipe_layout_t running_page_recipe_image_layout(const lv_im
     }
 
     visible_bottom_y = bounds->y2 + 1u;
-    layout.x = RUNNING_PAGE_RECIPE_TARGET_CENTER_X - running_page_scaled_floor(bounds->bottom_anchor_x, layout.scale);
+    layout.x = RUNNING_PAGE_RECIPE_TARGET_CENTER_X + RUNNING_PAGE_RECIPE_TARGET_CENTER_OFFSET_X -
+               running_page_scaled_floor(bounds->bottom_anchor_x, layout.scale);
     layout.y = RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y - running_page_scaled_floor(visible_bottom_y, layout.scale);
 
     return layout;
