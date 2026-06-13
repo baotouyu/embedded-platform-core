@@ -1449,8 +1449,8 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_X (RUNNING_PAGE_STRENGTH_RING_X + 84)" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_WIDTH 76" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_HEIGHT 66" in running_page
-    assert "#define RUNNING_PAGE_START_X 144" in running_page
-    assert "#define RUNNING_PAGE_START_Y 392" in running_page
+    assert "#define RUNNING_PAGE_START_X 114" in running_page
+    assert "#define RUNNING_PAGE_START_Y (SETTINGS_PAGE_SCREEN_HEIGHT - 44 - RUNNING_PAGE_START_SIZE)" in running_page
     assert "#define RUNNING_PAGE_START_SIZE 60" in running_page
     for icon_name in [
         "running_start.png",
