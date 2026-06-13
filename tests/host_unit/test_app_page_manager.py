@@ -1406,7 +1406,7 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_RECIPE_IMAGE_SIZE 180" in running_page
     assert "#define RUNNING_PAGE_RECIPE_ALPHA_THRESHOLD 8u" in running_page
     assert "#define RUNNING_PAGE_RECIPE_TARGET_CENTER_X" in running_page
-    assert "#define RUNNING_PAGE_RECIPE_TARGET_CENTER_OFFSET_X (-10)" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_TARGET_CENTER_OFFSET_X (-5)" in running_page
     assert "#define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y 50" in running_page
     assert "#define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y" in running_page
     assert "char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
