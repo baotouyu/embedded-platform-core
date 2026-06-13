@@ -1430,11 +1430,16 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "RUNNING_PAGE_STRENGTH_MEDIUM" in running_page
     assert "RUNNING_PAGE_STRENGTH_STRONG" in running_page
     assert "RUNNING_PAGE_STRENGTH_DEFAULT RUNNING_PAGE_STRENGTH_MEDIUM" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_TEXT_X 176" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_TEXT_Y 136" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_BUTTON_Y 112" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_MINUS_X 32" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_PLUS_X 296" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_CONTROL_X 32" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_CONTROL_Y 112" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_CONTROL_WIDTH 224" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT 44" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_MINUS_X 0" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_PLUS_X (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE)" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_TEXT_X RUNNING_PAGE_STRENGTH_BUTTON_SIZE" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_TEXT_Y 0" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_TEXT_WIDTH (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE * 2)" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_TEXT_HEIGHT RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_X 63" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_Y 271" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_X (RUNNING_PAGE_STRENGTH_RING_X + 26)" in running_page
@@ -1455,7 +1460,17 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
         assert (REPO_ROOT / "resources/host/images" / icon_name).exists()
     for text in ["清淡", "适中", "浓郁"]:
         assert text in running_page
+    assert "lv_obj_t *strength_control" in running_page
     assert "running_page_create_strength_controls(state)" in running_page
+    assert "state->strength_control = lv_obj_create(state->screen)" in running_page
+    assert "lv_obj_set_pos(state->strength_control, RUNNING_PAGE_STRENGTH_CONTROL_X, RUNNING_PAGE_STRENGTH_CONTROL_Y)" in running_page
+    assert "lv_obj_set_size(state->strength_control," in running_page
+    assert "RUNNING_PAGE_STRENGTH_CONTROL_WIDTH" in running_page
+    assert "RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT" in running_page
+    assert "lv_button_create(parent)" in running_page
+    assert "lv_obj_set_pos(button, x, 0)" in running_page
+    assert "lv_label_create(state->strength_control)" in running_page
+    assert "lv_obj_set_pos(state->strength_label, RUNNING_PAGE_STRENGTH_TEXT_X, RUNNING_PAGE_STRENGTH_TEXT_Y)" in running_page
     assert "running_page_strength_minus_clicked" in running_page
     assert "running_page_strength_plus_clicked" in running_page
     assert "running_page_refresh_strength(state)" in running_page

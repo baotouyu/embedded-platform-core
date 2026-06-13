@@ -28,14 +28,17 @@
 #define RUNNING_PAGE_RECIPE_TARGET_CENTER_X (RUNNING_PAGE_STRENGTH_RING_X + RUNNING_PAGE_STRENGTH_RING_WIDTH / 2)
 #define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y 50
 #define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y (RUNNING_PAGE_STRENGTH_RING_Y + RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y)
-#define RUNNING_PAGE_STRENGTH_TEXT_X 176
-#define RUNNING_PAGE_STRENGTH_TEXT_Y 136
-#define RUNNING_PAGE_STRENGTH_TEXT_WIDTH 80
-#define RUNNING_PAGE_STRENGTH_TEXT_HEIGHT 44
-#define RUNNING_PAGE_STRENGTH_BUTTON_Y 112
-#define RUNNING_PAGE_STRENGTH_MINUS_X 32
-#define RUNNING_PAGE_STRENGTH_PLUS_X 296
+#define RUNNING_PAGE_STRENGTH_CONTROL_X 32
+#define RUNNING_PAGE_STRENGTH_CONTROL_Y 112
+#define RUNNING_PAGE_STRENGTH_CONTROL_WIDTH 224
+#define RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT 44
 #define RUNNING_PAGE_STRENGTH_BUTTON_SIZE 44
+#define RUNNING_PAGE_STRENGTH_MINUS_X 0
+#define RUNNING_PAGE_STRENGTH_PLUS_X (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE)
+#define RUNNING_PAGE_STRENGTH_TEXT_X RUNNING_PAGE_STRENGTH_BUTTON_SIZE
+#define RUNNING_PAGE_STRENGTH_TEXT_Y 0
+#define RUNNING_PAGE_STRENGTH_TEXT_WIDTH (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE * 2)
+#define RUNNING_PAGE_STRENGTH_TEXT_HEIGHT RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT
 #define RUNNING_PAGE_STRENGTH_RING_X 63
 #define RUNNING_PAGE_STRENGTH_RING_Y 271
 #define RUNNING_PAGE_STRENGTH_RING_WIDTH 160
@@ -78,6 +81,7 @@ typedef struct {
 
 typedef struct {
     lv_obj_t *screen;
+    lv_obj_t *strength_control;
     lv_obj_t *strength_label;
     lv_obj_t *strength_overlay;
     char bg_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
@@ -251,7 +255,8 @@ static bool running_page_create_image(lv_obj_t *parent,
     return true;
 }
 
-static bool running_page_create_strength_button(running_page_state_t *state,
+static bool running_page_create_strength_button(lv_obj_t *parent,
+                                                running_page_state_t *state,
                                                 const char *icon_name,
                                                 char *src,
                                                 size_t src_size,
@@ -261,18 +266,18 @@ static bool running_page_create_strength_button(running_page_state_t *state,
     lv_obj_t *button;
     lv_obj_t *icon;
 
-    if (state == NULL || state->screen == NULL) {
+    if (parent == NULL || state == NULL) {
         return false;
     }
 
-    button = lv_button_create(state->screen);
+    button = lv_button_create(parent);
     if (button == NULL) {
         return false;
     }
 
     lv_obj_remove_style_all(button);
     lv_obj_set_size(button, RUNNING_PAGE_STRENGTH_BUTTON_SIZE, RUNNING_PAGE_STRENGTH_BUTTON_SIZE);
-    lv_obj_set_pos(button, x, RUNNING_PAGE_STRENGTH_BUTTON_Y);
+    lv_obj_set_pos(button, x, 0);
     lv_obj_set_style_bg_opa(button, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_border_opa(button, LV_OPA_TRANSP, LV_PART_MAIN);
     lv_obj_set_style_shadow_opa(button, LV_OPA_TRANSP, LV_PART_MAIN);
@@ -339,28 +344,42 @@ static void running_page_create_strength_controls(running_page_state_t *state)
         return;
     }
 
-    (void)running_page_create_strength_button(state,
+    state->strength_control = lv_obj_create(state->screen);
+    if (state->strength_control == NULL) {
+        return;
+    }
+
+    lv_obj_remove_style_all(state->strength_control);
+    lv_obj_set_size(state->strength_control,
+                    RUNNING_PAGE_STRENGTH_CONTROL_WIDTH,
+                    RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT);
+    lv_obj_set_pos(state->strength_control, RUNNING_PAGE_STRENGTH_CONTROL_X, RUNNING_PAGE_STRENGTH_CONTROL_Y);
+    lv_obj_clear_flag(state->strength_control, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_style_bg_opa(state->strength_control, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_opa(state->strength_control, LV_OPA_TRANSP, LV_PART_MAIN);
+
+    (void)running_page_create_strength_button(state->strength_control,
+                                              state,
                                               RUNNING_PAGE_STRENGTH_MINUS_ICON_NAME,
                                               state->strength_minus_src,
                                               sizeof(state->strength_minus_src),
                                               RUNNING_PAGE_STRENGTH_MINUS_X,
                                               running_page_strength_minus_clicked);
-    (void)running_page_create_strength_button(state,
+    (void)running_page_create_strength_button(state->strength_control,
+                                              state,
                                               RUNNING_PAGE_STRENGTH_PLUS_ICON_NAME,
                                               state->strength_plus_src,
                                               sizeof(state->strength_plus_src),
                                               RUNNING_PAGE_STRENGTH_PLUS_X,
                                               running_page_strength_plus_clicked);
 
-    state->strength_label = lv_label_create(state->screen);
+    state->strength_label = lv_label_create(state->strength_control);
     if (state->strength_label != NULL) {
         lv_obj_remove_style_all(state->strength_label);
         lv_obj_set_size(state->strength_label,
                         RUNNING_PAGE_STRENGTH_TEXT_WIDTH,
                         RUNNING_PAGE_STRENGTH_TEXT_HEIGHT);
-        lv_obj_set_pos(state->strength_label,
-                       RUNNING_PAGE_STRENGTH_TEXT_X - RUNNING_PAGE_STRENGTH_TEXT_WIDTH / 2,
-                       RUNNING_PAGE_STRENGTH_TEXT_Y);
+        lv_obj_set_pos(state->strength_label, RUNNING_PAGE_STRENGTH_TEXT_X, RUNNING_PAGE_STRENGTH_TEXT_Y);
         lv_obj_set_style_text_color(state->strength_label, lv_color_white(), LV_PART_MAIN);
         lv_obj_set_style_text_font(state->strength_label, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
         lv_obj_set_style_text_align(state->strength_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
