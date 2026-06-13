@@ -1422,6 +1422,12 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_STRENGTH_PLUS_X 296" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_X 70" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_Y 300" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_X (RUNNING_PAGE_STRENGTH_RING_X + 26)" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_WIDTH 134" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_HEIGHT 80" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_X (RUNNING_PAGE_STRENGTH_RING_X + 84)" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_WIDTH 76" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_HEIGHT 66" in running_page
     for icon_name in [
         "running_minus.png",
         "running_plus.png",
@@ -1438,9 +1444,19 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "running_page_strength_minus_clicked" in running_page
     assert "running_page_strength_plus_clicked" in running_page
     assert "running_page_refresh_strength(state)" in running_page
+    assert "running_page_create_strength_ring(state)" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_light_src)" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_medium_src)" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_strong_src)" in running_page
+    assert "lv_obj_set_pos(state->strength_overlay, RUNNING_PAGE_STRENGTH_RING_LIGHT_X" in running_page
+    assert "RUNNING_PAGE_STRENGTH_RING_LIGHT_WIDTH" in running_page
+    assert "RUNNING_PAGE_STRENGTH_RING_MEDIUM_WIDTH" in running_page
+    assert "RUNNING_PAGE_STRENGTH_RING_STRONG_WIDTH" in running_page
+    assert (
+        running_page.index("running_page_create_strength_ring(state)")
+        < running_page.index("running_page_create_recipe_image(state)")
+        < running_page.index("running_page_create_strength_controls(state)")
+    )
     assert "settings_common_style_screen(screen)" in running_page
     assert "SETTINGS_PAGE_BACK_ICON_NAME" in running_page
     assert "SETTINGS_PAGE_BACK_X" in running_page

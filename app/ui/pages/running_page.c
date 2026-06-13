@@ -34,6 +34,18 @@
 #define RUNNING_PAGE_STRENGTH_RING_Y 300
 #define RUNNING_PAGE_STRENGTH_RING_WIDTH 160
 #define RUNNING_PAGE_STRENGTH_RING_HEIGHT 80
+#define RUNNING_PAGE_STRENGTH_RING_LIGHT_X (RUNNING_PAGE_STRENGTH_RING_X + 84)
+#define RUNNING_PAGE_STRENGTH_RING_LIGHT_Y RUNNING_PAGE_STRENGTH_RING_Y
+#define RUNNING_PAGE_STRENGTH_RING_LIGHT_WIDTH 76
+#define RUNNING_PAGE_STRENGTH_RING_LIGHT_HEIGHT 66
+#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_X (RUNNING_PAGE_STRENGTH_RING_X + 26)
+#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_Y RUNNING_PAGE_STRENGTH_RING_Y
+#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_WIDTH 134
+#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_HEIGHT 80
+#define RUNNING_PAGE_STRENGTH_RING_STRONG_X RUNNING_PAGE_STRENGTH_RING_X
+#define RUNNING_PAGE_STRENGTH_RING_STRONG_Y RUNNING_PAGE_STRENGTH_RING_Y
+#define RUNNING_PAGE_STRENGTH_RING_STRONG_WIDTH 160
+#define RUNNING_PAGE_STRENGTH_RING_STRONG_HEIGHT 80
 
 typedef enum {
     RUNNING_PAGE_STRENGTH_LIGHT = 0,
@@ -117,10 +129,22 @@ static void running_page_refresh_strength(running_page_state_t *state)
 
     lv_obj_clear_flag(state->strength_overlay, LV_OBJ_FLAG_HIDDEN);
     if (state->strength == RUNNING_PAGE_STRENGTH_LIGHT) {
+        lv_obj_set_pos(state->strength_overlay, RUNNING_PAGE_STRENGTH_RING_LIGHT_X, RUNNING_PAGE_STRENGTH_RING_LIGHT_Y);
+        lv_obj_set_size(state->strength_overlay,
+                        RUNNING_PAGE_STRENGTH_RING_LIGHT_WIDTH,
+                        RUNNING_PAGE_STRENGTH_RING_LIGHT_HEIGHT);
         lv_image_set_src(state->strength_overlay, state->strength_ring_light_src);
     } else if (state->strength == RUNNING_PAGE_STRENGTH_MEDIUM) {
+        lv_obj_set_pos(state->strength_overlay, RUNNING_PAGE_STRENGTH_RING_MEDIUM_X, RUNNING_PAGE_STRENGTH_RING_MEDIUM_Y);
+        lv_obj_set_size(state->strength_overlay,
+                        RUNNING_PAGE_STRENGTH_RING_MEDIUM_WIDTH,
+                        RUNNING_PAGE_STRENGTH_RING_MEDIUM_HEIGHT);
         lv_image_set_src(state->strength_overlay, state->strength_ring_medium_src);
     } else {
+        lv_obj_set_pos(state->strength_overlay, RUNNING_PAGE_STRENGTH_RING_STRONG_X, RUNNING_PAGE_STRENGTH_RING_STRONG_Y);
+        lv_obj_set_size(state->strength_overlay,
+                        RUNNING_PAGE_STRENGTH_RING_STRONG_WIDTH,
+                        RUNNING_PAGE_STRENGTH_RING_STRONG_HEIGHT);
         lv_image_set_src(state->strength_overlay, state->strength_ring_strong_src);
     }
 }
@@ -250,6 +274,44 @@ static bool running_page_create_strength_button(running_page_state_t *state,
     return true;
 }
 
+static void running_page_create_strength_ring(running_page_state_t *state)
+{
+    if (state == NULL || state->screen == NULL) {
+        return;
+    }
+
+    if (ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_BASE_IMAGE_NAME,
+                                   state->strength_ring_base_src,
+                                   sizeof(state->strength_ring_base_src)) == EP_OK) {
+        (void)running_page_create_image(state->screen,
+                                        state->strength_ring_base_src,
+                                        RUNNING_PAGE_STRENGTH_RING_X,
+                                        RUNNING_PAGE_STRENGTH_RING_Y,
+                                        RUNNING_PAGE_STRENGTH_RING_WIDTH,
+                                        RUNNING_PAGE_STRENGTH_RING_HEIGHT,
+                                        NULL);
+    }
+
+    (void)ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_LIGHT_IMAGE_NAME,
+                                     state->strength_ring_light_src,
+                                     sizeof(state->strength_ring_light_src));
+    (void)ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_MEDIUM_IMAGE_NAME,
+                                     state->strength_ring_medium_src,
+                                     sizeof(state->strength_ring_medium_src));
+    (void)ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_STRONG_IMAGE_NAME,
+                                     state->strength_ring_strong_src,
+                                     sizeof(state->strength_ring_strong_src));
+
+    (void)running_page_create_image(state->screen,
+                                    state->strength_ring_medium_src,
+                                    RUNNING_PAGE_STRENGTH_RING_MEDIUM_X,
+                                    RUNNING_PAGE_STRENGTH_RING_MEDIUM_Y,
+                                    RUNNING_PAGE_STRENGTH_RING_MEDIUM_WIDTH,
+                                    RUNNING_PAGE_STRENGTH_RING_MEDIUM_HEIGHT,
+                                    &state->strength_overlay);
+    running_page_refresh_strength(state);
+}
+
 static void running_page_create_strength_controls(running_page_state_t *state)
 {
     if (state == NULL || state->screen == NULL) {
@@ -284,35 +346,6 @@ static void running_page_create_strength_controls(running_page_state_t *state)
         lv_label_set_long_mode(state->strength_label, LV_LABEL_LONG_CLIP);
     }
 
-    if (ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_BASE_IMAGE_NAME,
-                                   state->strength_ring_base_src,
-                                   sizeof(state->strength_ring_base_src)) == EP_OK) {
-        (void)running_page_create_image(state->screen,
-                                        state->strength_ring_base_src,
-                                        RUNNING_PAGE_STRENGTH_RING_X,
-                                        RUNNING_PAGE_STRENGTH_RING_Y,
-                                        RUNNING_PAGE_STRENGTH_RING_WIDTH,
-                                        RUNNING_PAGE_STRENGTH_RING_HEIGHT,
-                                        NULL);
-    }
-
-    (void)ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_LIGHT_IMAGE_NAME,
-                                     state->strength_ring_light_src,
-                                     sizeof(state->strength_ring_light_src));
-    (void)ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_MEDIUM_IMAGE_NAME,
-                                     state->strength_ring_medium_src,
-                                     sizeof(state->strength_ring_medium_src));
-    (void)ep_platform_lvgl_image_src(RUNNING_PAGE_STRENGTH_RING_STRONG_IMAGE_NAME,
-                                     state->strength_ring_strong_src,
-                                     sizeof(state->strength_ring_strong_src));
-
-    (void)running_page_create_image(state->screen,
-                                    state->strength_ring_medium_src,
-                                    RUNNING_PAGE_STRENGTH_RING_X,
-                                    RUNNING_PAGE_STRENGTH_RING_Y,
-                                    RUNNING_PAGE_STRENGTH_RING_WIDTH,
-                                    RUNNING_PAGE_STRENGTH_RING_HEIGHT,
-                                    &state->strength_overlay);
     running_page_refresh_strength(state);
 }
 
@@ -378,6 +411,7 @@ lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx)
     lv_obj_set_user_data(screen, state);
     settings_common_style_screen(screen);
     running_page_create_background(state);
+    running_page_create_strength_ring(state);
     running_page_create_recipe_image(state);
     running_page_create_strength_controls(state);
 
