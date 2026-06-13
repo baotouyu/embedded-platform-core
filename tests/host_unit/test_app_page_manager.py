@@ -1401,16 +1401,30 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "char bg_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
     assert "ep_platform_lvgl_image_src(RUNNING_PAGE_BG_IMAGE_NAME" in running_page
     assert "lv_obj_move_background(bg)" in running_page
-    assert "#define RUNNING_PAGE_RECIPE_IMAGE_X 47" in running_page
-    assert "#define RUNNING_PAGE_RECIPE_IMAGE_Y 139" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_IMAGE_FALLBACK_X 47" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_IMAGE_FALLBACK_Y 139" in running_page
     assert "#define RUNNING_PAGE_RECIPE_IMAGE_SIZE 180" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_ALPHA_THRESHOLD 8u" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_TARGET_CENTER_X" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y" in running_page
     assert "char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
     assert "static char running_page_pending_recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
     assert "running_page_set_recipe_image_src(const char *src)" in running_page
     assert "running_page_copy_string(running_page_pending_recipe_image_src" in running_page
     assert "lv_image_decoder_get_info(state->recipe_image_src, &header)" in running_page
-    assert "lv_image_set_scale(image, running_page_recipe_image_scale(&header))" in running_page
-    assert "lv_obj_set_pos(image, RUNNING_PAGE_RECIPE_IMAGE_X, RUNNING_PAGE_RECIPE_IMAGE_Y)" in running_page
+    assert "running_page_recipe_bounds_t" in running_page
+    assert "running_page_recipe_layout_t" in running_page
+    assert "running_page_measure_recipe_bounds" in running_page
+    assert "running_page_recipe_bottom_anchor_x" in running_page
+    assert "RUNNING_PAGE_RECIPE_ANCHOR_BAND_MIN_HEIGHT 8u" in running_page
+    assert "lv_image_decoder_open(&dsc, src, &args)" in running_page
+    assert "lv_image_decoder_close(&dsc)" in running_page
+    assert "LV_COLOR_FORMAT_ARGB8888" in running_page
+    assert "LV_COLOR_FORMAT_RGB565A8" in running_page
+    assert "LV_COLOR_FORMAT_A8" in running_page
+    assert "running_page_recipe_image_layout(&header, &bounds)" in running_page
+    assert "lv_image_set_scale(image, layout.scale)" in running_page
+    assert "lv_obj_set_pos(image, layout.x, layout.y)" in running_page
     assert "RUNNING_PAGE_STRENGTH_LIGHT" in running_page
     assert "RUNNING_PAGE_STRENGTH_MEDIUM" in running_page
     assert "RUNNING_PAGE_STRENGTH_STRONG" in running_page

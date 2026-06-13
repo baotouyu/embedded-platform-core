@@ -7,6 +7,7 @@
 #include "ui_style.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,10 +19,14 @@
 #define RUNNING_PAGE_STRENGTH_RING_LIGHT_IMAGE_NAME "running_ring_light.png"
 #define RUNNING_PAGE_STRENGTH_RING_MEDIUM_IMAGE_NAME "running_ring_medium.png"
 #define RUNNING_PAGE_STRENGTH_RING_STRONG_IMAGE_NAME "running_ring_strong.png"
-#define RUNNING_PAGE_RECIPE_IMAGE_X 47
-#define RUNNING_PAGE_RECIPE_IMAGE_Y 139
+#define RUNNING_PAGE_RECIPE_IMAGE_FALLBACK_X 47
+#define RUNNING_PAGE_RECIPE_IMAGE_FALLBACK_Y 139
 #define RUNNING_PAGE_RECIPE_IMAGE_SIZE 180
+#define RUNNING_PAGE_RECIPE_ALPHA_THRESHOLD 8u
+#define RUNNING_PAGE_RECIPE_ANCHOR_BAND_MIN_HEIGHT 8u
 #define RUNNING_PAGE_IMAGE_SCALE_BASE 256u
+#define RUNNING_PAGE_RECIPE_TARGET_CENTER_X (RUNNING_PAGE_STRENGTH_RING_X + RUNNING_PAGE_STRENGTH_RING_WIDTH / 2)
+#define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y (RUNNING_PAGE_STRENGTH_RING_Y + 42)
 #define RUNNING_PAGE_STRENGTH_TEXT_X 176
 #define RUNNING_PAGE_STRENGTH_TEXT_Y 136
 #define RUNNING_PAGE_STRENGTH_TEXT_WIDTH 80
@@ -54,6 +59,21 @@ typedef enum {
 } running_page_strength_t;
 
 #define RUNNING_PAGE_STRENGTH_DEFAULT RUNNING_PAGE_STRENGTH_MEDIUM
+
+typedef struct {
+    uint32_t x1;
+    uint32_t y1;
+    uint32_t x2;
+    uint32_t y2;
+    uint32_t bottom_anchor_x;
+    bool valid;
+} running_page_recipe_bounds_t;
+
+typedef struct {
+    uint32_t scale;
+    int32_t x;
+    int32_t y;
+} running_page_recipe_layout_t;
 
 typedef struct {
     lv_obj_t *screen;
@@ -361,10 +381,190 @@ static uint32_t running_page_recipe_image_scale(const lv_image_header_t *header)
     return (RUNNING_PAGE_RECIPE_IMAGE_SIZE * RUNNING_PAGE_IMAGE_SCALE_BASE) / max_side;
 }
 
+static uint8_t running_page_pixel_alpha(const lv_draw_buf_t *draw_buf, uint32_t x, uint32_t y)
+{
+    const uint8_t *pixel;
+    uint32_t color_size;
+    uint32_t alpha_offset;
+
+    if (draw_buf == NULL || draw_buf->data == NULL) {
+        return 0u;
+    }
+
+    if (draw_buf->header.cf == LV_COLOR_FORMAT_ARGB8888) {
+        pixel = (const uint8_t *)draw_buf->data + y * draw_buf->header.stride + x * sizeof(lv_color32_t);
+        return pixel[3];
+    }
+
+    if (draw_buf->header.cf == LV_COLOR_FORMAT_XRGB8888 || draw_buf->header.cf == LV_COLOR_FORMAT_RGB888 ||
+        draw_buf->header.cf == LV_COLOR_FORMAT_RGB565) {
+        return 255u;
+    }
+
+    if (draw_buf->header.cf == LV_COLOR_FORMAT_A8) {
+        pixel = (const uint8_t *)draw_buf->data + y * draw_buf->header.stride + x;
+        return pixel[0];
+    }
+
+    if (draw_buf->header.cf == LV_COLOR_FORMAT_RGB565A8) {
+        color_size = draw_buf->header.w * draw_buf->header.h * sizeof(lv_color16_t);
+        alpha_offset = color_size + y * draw_buf->header.w + x;
+        if (alpha_offset < draw_buf->data_size) {
+            return ((const uint8_t *)draw_buf->data)[alpha_offset];
+        }
+    }
+
+    return 255u;
+}
+
+static void running_page_recipe_bounds_init(running_page_recipe_bounds_t *bounds)
+{
+    if (bounds == NULL) {
+        return;
+    }
+
+    bounds->x1 = UINT32_MAX;
+    bounds->y1 = UINT32_MAX;
+    bounds->x2 = 0u;
+    bounds->y2 = 0u;
+    bounds->bottom_anchor_x = 0u;
+    bounds->valid = false;
+}
+
+static uint32_t running_page_recipe_bottom_anchor_x(const lv_draw_buf_t *draw_buf,
+                                                    const running_page_recipe_bounds_t *bounds)
+{
+    uint32_t band_height;
+    uint32_t band_y;
+    uint32_t x;
+    uint32_t y;
+    uint32_t alpha;
+    uint64_t weighted_x;
+    uint64_t total_alpha;
+
+    if (draw_buf == NULL || bounds == NULL || !bounds->valid || bounds->y2 < bounds->y1) {
+        return 0u;
+    }
+
+    band_height = (bounds->y2 - bounds->y1 + 1u) / 4u;
+    if (band_height < RUNNING_PAGE_RECIPE_ANCHOR_BAND_MIN_HEIGHT) {
+        band_height = RUNNING_PAGE_RECIPE_ANCHOR_BAND_MIN_HEIGHT;
+    }
+
+    band_y = bounds->y2 >= band_height ? bounds->y2 - band_height + 1u : bounds->y1;
+    if (band_y < bounds->y1) {
+        band_y = bounds->y1;
+    }
+
+    weighted_x = 0u;
+    total_alpha = 0u;
+    for (y = band_y; y <= bounds->y2; ++y) {
+        for (x = bounds->x1; x <= bounds->x2; ++x) {
+            alpha = running_page_pixel_alpha(draw_buf, x, y);
+            if (alpha <= RUNNING_PAGE_RECIPE_ALPHA_THRESHOLD) {
+                continue;
+            }
+            weighted_x += (uint64_t)x * alpha;
+            total_alpha += alpha;
+        }
+    }
+
+    if (total_alpha == 0u) {
+        return (bounds->x1 + bounds->x2 + 1u) / 2u;
+    }
+
+    return (uint32_t)(weighted_x / total_alpha);
+}
+
+static bool running_page_measure_recipe_bounds(const char *src, running_page_recipe_bounds_t *bounds)
+{
+    lv_image_decoder_args_t args;
+    lv_image_decoder_dsc_t dsc;
+    const lv_draw_buf_t *draw_buf;
+    uint32_t x;
+    uint32_t y;
+
+    if (src == NULL || src[0] == '\0' || bounds == NULL) {
+        return false;
+    }
+
+    running_page_recipe_bounds_init(bounds);
+
+    args = (lv_image_decoder_args_t){0};
+    args.no_cache = true;
+    if (lv_image_decoder_open(&dsc, src, &args) != LV_RESULT_OK) {
+        return false;
+    }
+
+    draw_buf = dsc.decoded;
+    if (draw_buf == NULL || draw_buf->data == NULL || draw_buf->header.w == 0u || draw_buf->header.h == 0u) {
+        lv_image_decoder_close(&dsc);
+        return false;
+    }
+
+    for (y = 0u; y < draw_buf->header.h; ++y) {
+        for (x = 0u; x < draw_buf->header.w; ++x) {
+            if (running_page_pixel_alpha(draw_buf, x, y) <= RUNNING_PAGE_RECIPE_ALPHA_THRESHOLD) {
+                continue;
+            }
+
+            if (x < bounds->x1) {
+                bounds->x1 = x;
+            }
+            if (y < bounds->y1) {
+                bounds->y1 = y;
+            }
+            if (x > bounds->x2) {
+                bounds->x2 = x;
+            }
+            if (y > bounds->y2) {
+                bounds->y2 = y;
+            }
+            bounds->valid = true;
+        }
+    }
+
+    if (bounds->valid) {
+        bounds->bottom_anchor_x = running_page_recipe_bottom_anchor_x(draw_buf, bounds);
+    }
+
+    lv_image_decoder_close(&dsc);
+    return bounds->valid;
+}
+
+static int32_t running_page_scaled_floor(uint32_t value, uint32_t scale)
+{
+    return (int32_t)((value * scale) / RUNNING_PAGE_IMAGE_SCALE_BASE);
+}
+
+static running_page_recipe_layout_t running_page_recipe_image_layout(const lv_image_header_t *header,
+                                                                     const running_page_recipe_bounds_t *bounds)
+{
+    running_page_recipe_layout_t layout;
+    uint32_t visible_bottom_y;
+
+    layout.scale = running_page_recipe_image_scale(header);
+    layout.x = RUNNING_PAGE_RECIPE_IMAGE_FALLBACK_X;
+    layout.y = RUNNING_PAGE_RECIPE_IMAGE_FALLBACK_Y;
+
+    if (header == NULL || header->w == 0u || header->h == 0u || bounds == NULL || !bounds->valid ||
+        bounds->x2 < bounds->x1 || bounds->y2 < bounds->y1) {
+        return layout;
+    }
+
+    visible_bottom_y = bounds->y2 + 1u;
+    layout.x = RUNNING_PAGE_RECIPE_TARGET_CENTER_X - running_page_scaled_floor(bounds->bottom_anchor_x, layout.scale);
+    layout.y = RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y - running_page_scaled_floor(visible_bottom_y, layout.scale);
+
+    return layout;
+}
+
 static void running_page_create_recipe_image(running_page_state_t *state)
 {
     lv_image_header_t header;
     lv_obj_t *image;
+    running_page_recipe_bounds_t bounds;
+    running_page_recipe_layout_t layout;
 
     if (state == NULL || state->screen == NULL || state->recipe_image_src[0] == '\0') {
         return;
@@ -379,10 +579,13 @@ static void running_page_create_recipe_image(running_page_state_t *state)
         return;
     }
 
+    (void)running_page_measure_recipe_bounds(state->recipe_image_src, &bounds);
+    layout = running_page_recipe_image_layout(&header, &bounds);
+
     lv_image_set_src(image, state->recipe_image_src);
     lv_image_set_pivot(image, 0, 0);
-    lv_image_set_scale(image, running_page_recipe_image_scale(&header));
-    lv_obj_set_pos(image, RUNNING_PAGE_RECIPE_IMAGE_X, RUNNING_PAGE_RECIPE_IMAGE_Y);
+    lv_image_set_scale(image, layout.scale);
+    lv_obj_set_pos(image, layout.x, layout.y);
 }
 
 lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx)
