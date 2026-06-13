@@ -1385,6 +1385,7 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "static void home_page_recipe_clicked(lv_event_t *event)" in home_page
     assert "page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true)" in home_page
     assert "lv_obj_add_event_cb(slot->container, home_page_recipe_clicked, LV_EVENT_CLICKED, state)" in home_page
+    assert "lv_obj_add_event_cb(slot->image, home_page_recipe_clicked, LV_EVENT_CLICKED, state)" in home_page
     assert "slot_index == HOME_PAGE_CENTER_SLOT" in home_page
 
     assert "lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx);" in running_header

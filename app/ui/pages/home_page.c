@@ -1241,6 +1241,9 @@ static void home_page_create_slot(
         lv_obj_add_event_cb(slot->image, home_page_carousel_event, LV_EVENT_PRESSING, state);
         lv_obj_add_event_cb(slot->image, home_page_carousel_event, LV_EVENT_RELEASED, state);
         lv_obj_add_event_cb(slot->image, home_page_carousel_event, LV_EVENT_PRESS_LOST, state);
+        if (slot_index == HOME_PAGE_CENTER_SLOT) {
+            lv_obj_add_event_cb(slot->image, home_page_recipe_clicked, LV_EVENT_CLICKED, state);
+        }
     }
 
     slot->label = lv_label_create(slot->container);
