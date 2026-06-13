@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 
+void running_page_set_recipe_image_src(const char *src);
 lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx);
 void running_page_event(page_manager_page_ctx_t *ctx, uint32_t code, uint32_t wparam, uint32_t lparam);
 void running_page_destroy(page_manager_page_ctx_t *ctx);

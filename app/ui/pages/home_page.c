@@ -5,6 +5,7 @@
 #include "ep_simple_recipe.h"
 #include "lvgl.h"
 #include "pages/app_pages.h"
+#include "pages/running_page.h"
 #include "ui_style.h"
 
 #include <stdbool.h>
@@ -267,6 +268,16 @@ static void home_page_settings_clicked(lv_event_t *event)
     (void)page_manager_switch(APP_PAGE_SETTINGS, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
 }
 
+static void home_page_open_running_page(home_page_state_t *state)
+{
+    if (state == NULL || state->recipe_count == 0u) {
+        return;
+    }
+
+    running_page_set_recipe_image_src(state->recipe_src[HOME_PAGE_CENTER_SLOT]);
+    (void)page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
+}
+
 static void home_page_recipe_clicked(lv_event_t *event)
 {
     home_page_state_t *state;
@@ -276,7 +287,7 @@ static void home_page_recipe_clicked(lv_event_t *event)
         return;
     }
 
-    (void)page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
+    home_page_open_running_page(state);
 }
 
 static void home_page_create_settings_button(home_page_state_t *state)

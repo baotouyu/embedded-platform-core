@@ -1383,17 +1383,30 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "ui/pages/running_page.c" in app_cmake
 
     assert "static void home_page_recipe_clicked(lv_event_t *event)" in home_page
+    assert "home_page_open_running_page(state)" in home_page
+    assert "running_page_set_recipe_image_src(state->recipe_src[HOME_PAGE_CENTER_SLOT])" in home_page
     assert "page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true)" in home_page
     assert "lv_obj_add_event_cb(slot->container, home_page_recipe_clicked, LV_EVENT_CLICKED, state)" in home_page
     assert "lv_obj_add_event_cb(slot->image, home_page_recipe_clicked, LV_EVENT_CLICKED, state)" in home_page
     assert "slot_index == HOME_PAGE_CENTER_SLOT" in home_page
 
+    assert "void running_page_set_recipe_image_src(const char *src);" in running_header
     assert "lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx);" in running_header
     assert (
         "void running_page_event(page_manager_page_ctx_t *ctx, uint32_t code, uint32_t wparam, uint32_t lparam);"
         in running_header
     )
     assert "void running_page_destroy(page_manager_page_ctx_t *ctx);" in running_header
+    assert "#define RUNNING_PAGE_RECIPE_IMAGE_X 54" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_IMAGE_Y 180" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_IMAGE_SIZE 180" in running_page
+    assert "char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
+    assert "static char running_page_pending_recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
+    assert "running_page_set_recipe_image_src(const char *src)" in running_page
+    assert "running_page_copy_string(running_page_pending_recipe_image_src" in running_page
+    assert "lv_image_decoder_get_info(state->recipe_image_src, &header)" in running_page
+    assert "lv_image_set_scale(image, running_page_recipe_image_scale(&header))" in running_page
+    assert "lv_obj_set_pos(image, RUNNING_PAGE_RECIPE_IMAGE_X, RUNNING_PAGE_RECIPE_IMAGE_Y)" in running_page
     assert "settings_common_style_screen(screen)" in running_page
     assert "SETTINGS_PAGE_BACK_ICON_NAME" in running_page
     assert "SETTINGS_PAGE_BACK_X" in running_page
