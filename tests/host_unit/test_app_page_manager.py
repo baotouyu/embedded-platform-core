@@ -1411,6 +1411,36 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "lv_image_decoder_get_info(state->recipe_image_src, &header)" in running_page
     assert "lv_image_set_scale(image, running_page_recipe_image_scale(&header))" in running_page
     assert "lv_obj_set_pos(image, RUNNING_PAGE_RECIPE_IMAGE_X, RUNNING_PAGE_RECIPE_IMAGE_Y)" in running_page
+    assert "RUNNING_PAGE_STRENGTH_LIGHT" in running_page
+    assert "RUNNING_PAGE_STRENGTH_MEDIUM" in running_page
+    assert "RUNNING_PAGE_STRENGTH_STRONG" in running_page
+    assert "RUNNING_PAGE_STRENGTH_DEFAULT RUNNING_PAGE_STRENGTH_MEDIUM" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_TEXT_X 176" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_TEXT_Y 136" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_BUTTON_Y 112" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_MINUS_X 32" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_PLUS_X 296" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_X 70" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_Y 300" in running_page
+    for icon_name in [
+        "running_minus.png",
+        "running_plus.png",
+        "running_ring_base.png",
+        "running_ring_light.png",
+        "running_ring_medium.png",
+        "running_ring_strong.png",
+    ]:
+        assert icon_name in running_page
+        assert (REPO_ROOT / "resources/host/images" / icon_name).exists()
+    for text in ["清淡", "适中", "浓郁"]:
+        assert text in running_page
+    assert "running_page_create_strength_controls(state)" in running_page
+    assert "running_page_strength_minus_clicked" in running_page
+    assert "running_page_strength_plus_clicked" in running_page
+    assert "running_page_refresh_strength(state)" in running_page
+    assert "lv_image_set_src(state->strength_overlay, state->strength_ring_light_src)" in running_page
+    assert "lv_image_set_src(state->strength_overlay, state->strength_ring_medium_src)" in running_page
+    assert "lv_image_set_src(state->strength_overlay, state->strength_ring_strong_src)" in running_page
     assert "settings_common_style_screen(screen)" in running_page
     assert "SETTINGS_PAGE_BACK_ICON_NAME" in running_page
     assert "SETTINGS_PAGE_BACK_X" in running_page
