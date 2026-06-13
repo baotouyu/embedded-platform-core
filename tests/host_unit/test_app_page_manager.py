@@ -1398,7 +1398,9 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     )
     assert "void running_page_destroy(page_manager_page_ctx_t *ctx);" in running_header
     assert "#define RUNNING_PAGE_BG_IMAGE_NAME \"running_bg.png\"" in running_page
+    assert "#define RUNNING_PAGE_START_ICON_NAME \"running_start.png\"" in running_page
     assert "char bg_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
+    assert "char start_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
     assert "ep_platform_lvgl_image_src(RUNNING_PAGE_BG_IMAGE_NAME" in running_page
     assert "lv_obj_move_background(bg)" in running_page
     assert "#define RUNNING_PAGE_RECIPE_IMAGE_FALLBACK_X 47" in running_page
@@ -1447,7 +1449,11 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_X (RUNNING_PAGE_STRENGTH_RING_X + 84)" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_WIDTH 76" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_LIGHT_HEIGHT 66" in running_page
+    assert "#define RUNNING_PAGE_START_X 144" in running_page
+    assert "#define RUNNING_PAGE_START_Y 392" in running_page
+    assert "#define RUNNING_PAGE_START_SIZE 60" in running_page
     for icon_name in [
+        "running_start.png",
         "running_minus.png",
         "running_plus.png",
         "running_ring_base.png",
@@ -1476,6 +1482,9 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "running_page_strength_minus_clicked" in running_page
     assert "running_page_strength_plus_clicked" in running_page
     assert "running_page_refresh_strength(state)" in running_page
+    assert "running_page_start_clicked" in running_page
+    assert "running_page_create_start_button(state)" in running_page
+    assert "lv_obj_add_event_cb(button, running_page_start_clicked, LV_EVENT_CLICKED, state)" in running_page
     assert "running_page_create_strength_ring(state)" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_light_src)" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_medium_src)" in running_page
@@ -1487,6 +1496,7 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert (
         running_page.index("running_page_create_strength_ring(state)")
         < running_page.index("running_page_create_recipe_image(state)")
+        < running_page.index("running_page_create_start_button(state)")
         < running_page.index("running_page_create_strength_controls(state)")
     )
     assert "settings_common_style_screen(screen)" in running_page

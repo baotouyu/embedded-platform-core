@@ -13,6 +13,7 @@
 
 #define RUNNING_PAGE_SRC_BUFFER_SIZE 160
 #define RUNNING_PAGE_BG_IMAGE_NAME "running_bg.png"
+#define RUNNING_PAGE_START_ICON_NAME "running_start.png"
 #define RUNNING_PAGE_STRENGTH_MINUS_ICON_NAME "running_minus.png"
 #define RUNNING_PAGE_STRENGTH_PLUS_ICON_NAME "running_plus.png"
 #define RUNNING_PAGE_STRENGTH_RING_BASE_IMAGE_NAME "running_ring_base.png"
@@ -53,6 +54,9 @@
 #define RUNNING_PAGE_STRENGTH_RING_STRONG_Y RUNNING_PAGE_STRENGTH_RING_Y
 #define RUNNING_PAGE_STRENGTH_RING_STRONG_WIDTH 160
 #define RUNNING_PAGE_STRENGTH_RING_STRONG_HEIGHT 80
+#define RUNNING_PAGE_START_X 144
+#define RUNNING_PAGE_START_Y 392
+#define RUNNING_PAGE_START_SIZE 60
 
 typedef enum {
     RUNNING_PAGE_STRENGTH_LIGHT = 0,
@@ -83,6 +87,7 @@ typedef struct {
     lv_obj_t *strength_label;
     lv_obj_t *strength_overlay;
     char bg_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
+    char start_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
     char back_src[SETTINGS_PAGE_SRC_BUFFER_SIZE];
     char strength_minus_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
     char strength_plus_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
@@ -196,6 +201,11 @@ static void running_page_strength_plus_clicked(lv_event_t *event)
 
     state->strength = (running_page_strength_t)(state->strength + 1);
     running_page_refresh_strength(state);
+}
+
+static void running_page_start_clicked(lv_event_t *event)
+{
+    (void)event;
 }
 
 static void running_page_create_background(running_page_state_t *state)
@@ -334,6 +344,45 @@ static void running_page_create_strength_ring(running_page_state_t *state)
                                     RUNNING_PAGE_STRENGTH_RING_MEDIUM_HEIGHT,
                                     &state->strength_overlay);
     running_page_refresh_strength(state);
+}
+
+static void running_page_create_start_button(running_page_state_t *state)
+{
+    lv_obj_t *button;
+    lv_obj_t *icon;
+
+    if (state == NULL || state->screen == NULL) {
+        return;
+    }
+
+    button = lv_button_create(state->screen);
+    if (button == NULL) {
+        return;
+    }
+
+    lv_obj_remove_style_all(button);
+    lv_obj_set_size(button, RUNNING_PAGE_START_SIZE, RUNNING_PAGE_START_SIZE);
+    lv_obj_set_pos(button, RUNNING_PAGE_START_X, RUNNING_PAGE_START_Y);
+    lv_obj_set_style_bg_opa(button, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_opa(button, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(button, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_add_event_cb(button, running_page_start_clicked, LV_EVENT_CLICKED, state);
+
+    if (ep_platform_lvgl_image_src(RUNNING_PAGE_START_ICON_NAME,
+                                   state->start_src,
+                                   sizeof(state->start_src)) != EP_OK) {
+        return;
+    }
+
+    icon = lv_image_create(button);
+    if (icon == NULL) {
+        return;
+    }
+
+    lv_obj_remove_style_all(icon);
+    lv_obj_set_size(icon, RUNNING_PAGE_START_SIZE, RUNNING_PAGE_START_SIZE);
+    lv_image_set_src(icon, state->start_src);
+    lv_obj_align(icon, LV_ALIGN_CENTER, 0, 0);
 }
 
 static void running_page_create_strength_controls(running_page_state_t *state)
@@ -634,6 +683,7 @@ lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx)
     running_page_create_background(state);
     running_page_create_strength_ring(state);
     running_page_create_recipe_image(state);
+    running_page_create_start_button(state);
     running_page_create_strength_controls(state);
 
     if (!settings_common_create_icon_button(screen,
