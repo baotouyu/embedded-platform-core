@@ -1436,10 +1436,7 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT 44" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_MINUS_X 0" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_PLUS_X (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE)" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_TEXT_X RUNNING_PAGE_STRENGTH_BUTTON_SIZE" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_TEXT_Y 0" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_TEXT_WIDTH (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE * 2)" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_TEXT_HEIGHT RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_X 63" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_Y 271" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_X (RUNNING_PAGE_STRENGTH_RING_X + 26)" in running_page
@@ -1469,8 +1466,11 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT" in running_page
     assert "lv_button_create(parent)" in running_page
     assert "lv_obj_set_pos(button, x, 0)" in running_page
+    assert "lv_obj_align(icon, LV_ALIGN_CENTER, 0, 0)" in running_page
     assert "lv_label_create(state->strength_control)" in running_page
-    assert "lv_obj_set_pos(state->strength_label, RUNNING_PAGE_STRENGTH_TEXT_X, RUNNING_PAGE_STRENGTH_TEXT_Y)" in running_page
+    assert "lv_obj_set_width(state->strength_label, RUNNING_PAGE_STRENGTH_TEXT_WIDTH)" in running_page
+    assert "lv_obj_set_height(state->strength_label, LV_SIZE_CONTENT)" in running_page
+    assert "lv_obj_align(state->strength_label, LV_ALIGN_CENTER, 0, 0)" in running_page
     assert "running_page_strength_minus_clicked" in running_page
     assert "running_page_strength_plus_clicked" in running_page
     assert "running_page_refresh_strength(state)" in running_page

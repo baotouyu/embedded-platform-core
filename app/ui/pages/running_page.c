@@ -35,10 +35,7 @@
 #define RUNNING_PAGE_STRENGTH_BUTTON_SIZE 44
 #define RUNNING_PAGE_STRENGTH_MINUS_X 0
 #define RUNNING_PAGE_STRENGTH_PLUS_X (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE)
-#define RUNNING_PAGE_STRENGTH_TEXT_X RUNNING_PAGE_STRENGTH_BUTTON_SIZE
-#define RUNNING_PAGE_STRENGTH_TEXT_Y 0
 #define RUNNING_PAGE_STRENGTH_TEXT_WIDTH (RUNNING_PAGE_STRENGTH_CONTROL_WIDTH - RUNNING_PAGE_STRENGTH_BUTTON_SIZE * 2)
-#define RUNNING_PAGE_STRENGTH_TEXT_HEIGHT RUNNING_PAGE_STRENGTH_CONTROL_HEIGHT
 #define RUNNING_PAGE_STRENGTH_RING_X 63
 #define RUNNING_PAGE_STRENGTH_RING_Y 271
 #define RUNNING_PAGE_STRENGTH_RING_WIDTH 160
@@ -294,8 +291,8 @@ static bool running_page_create_strength_button(lv_obj_t *parent,
 
     lv_obj_remove_style_all(icon);
     lv_obj_set_size(icon, RUNNING_PAGE_STRENGTH_BUTTON_SIZE, RUNNING_PAGE_STRENGTH_BUTTON_SIZE);
-    lv_obj_set_pos(icon, 0, 0);
     lv_image_set_src(icon, src);
+    lv_obj_align(icon, LV_ALIGN_CENTER, 0, 0);
 
     return true;
 }
@@ -376,14 +373,13 @@ static void running_page_create_strength_controls(running_page_state_t *state)
     state->strength_label = lv_label_create(state->strength_control);
     if (state->strength_label != NULL) {
         lv_obj_remove_style_all(state->strength_label);
-        lv_obj_set_size(state->strength_label,
-                        RUNNING_PAGE_STRENGTH_TEXT_WIDTH,
-                        RUNNING_PAGE_STRENGTH_TEXT_HEIGHT);
-        lv_obj_set_pos(state->strength_label, RUNNING_PAGE_STRENGTH_TEXT_X, RUNNING_PAGE_STRENGTH_TEXT_Y);
+        lv_obj_set_width(state->strength_label, RUNNING_PAGE_STRENGTH_TEXT_WIDTH);
+        lv_obj_set_height(state->strength_label, LV_SIZE_CONTENT);
         lv_obj_set_style_text_color(state->strength_label, lv_color_white(), LV_PART_MAIN);
         lv_obj_set_style_text_font(state->strength_label, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
         lv_obj_set_style_text_align(state->strength_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
         lv_label_set_long_mode(state->strength_label, LV_LABEL_LONG_CLIP);
+        lv_obj_align(state->strength_label, LV_ALIGN_CENTER, 0, 0);
     }
 
     running_page_refresh_strength(state);
