@@ -1,5 +1,7 @@
 #include "pages/running_page.h"
 
+#include "ep_osal_err.h"
+#include "ep_platform_paths.h"
 #include "lvgl.h"
 #include "pages/settings_common.h"
 
@@ -7,13 +9,15 @@
 #include <stdlib.h>
 
 #define RUNNING_PAGE_SRC_BUFFER_SIZE 160
+#define RUNNING_PAGE_BG_IMAGE_NAME "running_bg.png"
 #define RUNNING_PAGE_RECIPE_IMAGE_X 54
-#define RUNNING_PAGE_RECIPE_IMAGE_Y 180
+#define RUNNING_PAGE_RECIPE_IMAGE_Y 168
 #define RUNNING_PAGE_RECIPE_IMAGE_SIZE 180
 #define RUNNING_PAGE_IMAGE_SCALE_BASE 256u
 
 typedef struct {
     lv_obj_t *screen;
+    char bg_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
     char back_src[SETTINGS_PAGE_SRC_BUFFER_SIZE];
     char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
 } running_page_state_t;
@@ -45,6 +49,31 @@ static void running_page_back_clicked(lv_event_t *event)
 {
     (void)event;
     (void)page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180);
+}
+
+static void running_page_create_background(running_page_state_t *state)
+{
+    lv_obj_t *bg;
+
+    if (state == NULL || state->screen == NULL) {
+        return;
+    }
+
+    if (ep_platform_lvgl_image_src(RUNNING_PAGE_BG_IMAGE_NAME,
+                                   state->bg_src,
+                                   sizeof(state->bg_src)) != EP_OK) {
+        return;
+    }
+
+    bg = lv_image_create(state->screen);
+    if (bg == NULL) {
+        return;
+    }
+
+    lv_image_set_src(bg, state->bg_src);
+    lv_obj_set_size(bg, SETTINGS_PAGE_SCREEN_WIDTH, SETTINGS_PAGE_SCREEN_HEIGHT);
+    lv_obj_set_pos(bg, 0, 0);
+    lv_obj_move_background(bg);
 }
 
 static uint32_t running_page_recipe_image_scale(const lv_image_header_t *header)
@@ -107,6 +136,7 @@ lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx)
                              running_page_pending_recipe_image_src);
     lv_obj_set_user_data(screen, state);
     settings_common_style_screen(screen);
+    running_page_create_background(state);
     running_page_create_recipe_image(state);
 
     if (!settings_common_create_icon_button(screen,

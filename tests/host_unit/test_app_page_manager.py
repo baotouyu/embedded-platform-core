@@ -1397,8 +1397,12 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
         in running_header
     )
     assert "void running_page_destroy(page_manager_page_ctx_t *ctx);" in running_header
+    assert "#define RUNNING_PAGE_BG_IMAGE_NAME \"running_bg.png\"" in running_page
+    assert "char bg_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
+    assert "ep_platform_lvgl_image_src(RUNNING_PAGE_BG_IMAGE_NAME" in running_page
+    assert "lv_obj_move_background(bg)" in running_page
     assert "#define RUNNING_PAGE_RECIPE_IMAGE_X 54" in running_page
-    assert "#define RUNNING_PAGE_RECIPE_IMAGE_Y 180" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_IMAGE_Y 168" in running_page
     assert "#define RUNNING_PAGE_RECIPE_IMAGE_SIZE 180" in running_page
     assert "char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
     assert "static char running_page_pending_recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
@@ -1413,3 +1417,4 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "SETTINGS_PAGE_BACK_Y" in running_page
     assert "SETTINGS_PAGE_BACK_SIZE" in running_page
     assert "page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180)" in running_page
+    assert (REPO_ROOT / "resources/host/images/running_bg.png").exists()
