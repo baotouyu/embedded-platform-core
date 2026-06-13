@@ -11,6 +11,7 @@ typedef enum {
     APP_PAGE_BRIGHTNESS = 6,
     APP_PAGE_CLEANING = 7,
     APP_PAGE_DETAILS = 8,
+    APP_PAGE_RUNNING = 9,
 } app_page_id_t;
 
 #endif

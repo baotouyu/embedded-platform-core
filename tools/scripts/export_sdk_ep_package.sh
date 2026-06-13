@@ -416,6 +416,7 @@ app/selftest/app_selftest.c
 app/ui/app_ui.c
 app/ui/page_manager.c
 app/ui/pages/home_page.c
+app/ui/pages/running_page.c
 app/ui/pages/settings_page.c
 app/services/beep_service.c
 app/services/lcd_sleep_service.c

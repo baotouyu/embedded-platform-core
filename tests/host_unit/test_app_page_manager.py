@@ -533,6 +533,7 @@ def test_app_ui_registers_settings_page_and_home_can_navigate_to_it():
     assert "ui/pages/settings_cleaning_page.c" in app_cmake
     for source in [
         "app/ui/pages/settings_common.c",
+        "app/ui/pages/running_page.c",
         "app/ui/pages/settings_language_page.c",
         "app/ui/pages/settings_sleep_page.c",
         "app/ui/pages/settings_brightness_page.c",
@@ -1363,3 +1364,38 @@ def test_settings_and_user_borders_are_gray():
     assert "#define HOME_PAGE_USER_DROPDOWN_BORDER_COLOR 0x666666" in home_page
     assert "0x43382D" not in settings_page
     assert "0x3D3734" not in home_page
+
+
+def test_home_recipe_opens_minimal_running_page_with_back_button():
+    app_pages = _read("app/ui/pages/app_pages.h")
+    app_ui = _read("app/ui/app_ui.c")
+    app_cmake = _read("app/CMakeLists.txt")
+    home_page = _read("app/ui/pages/home_page.c")
+    running_header = _read("app/ui/pages/running_page.h")
+    running_page = _read("app/ui/pages/running_page.c")
+
+    assert "APP_PAGE_RUNNING" in app_pages
+    assert '#include "pages/running_page.h"' in app_ui
+    assert "page_manager_register(APP_PAGE_RUNNING" in app_ui
+    assert "running_page_create" in app_ui
+    assert "running_page_event" in app_ui
+    assert "running_page_destroy" in app_ui
+    assert "ui/pages/running_page.c" in app_cmake
+
+    assert "static void home_page_recipe_clicked(lv_event_t *event)" in home_page
+    assert "page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true)" in home_page
+    assert "lv_obj_add_event_cb(slot->container, home_page_recipe_clicked, LV_EVENT_CLICKED, state)" in home_page
+    assert "slot_index == HOME_PAGE_CENTER_SLOT" in home_page
+
+    assert "lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx);" in running_header
+    assert (
+        "void running_page_event(page_manager_page_ctx_t *ctx, uint32_t code, uint32_t wparam, uint32_t lparam);"
+        in running_header
+    )
+    assert "void running_page_destroy(page_manager_page_ctx_t *ctx);" in running_header
+    assert "settings_common_style_screen(screen)" in running_page
+    assert "SETTINGS_PAGE_BACK_ICON_NAME" in running_page
+    assert "SETTINGS_PAGE_BACK_X" in running_page
+    assert "SETTINGS_PAGE_BACK_Y" in running_page
+    assert "SETTINGS_PAGE_BACK_SIZE" in running_page
+    assert "page_manager_back(LV_SCR_LOAD_ANIM_MOVE_RIGHT, 180)" in running_page

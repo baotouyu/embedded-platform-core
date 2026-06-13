@@ -267,6 +267,18 @@ static void home_page_settings_clicked(lv_event_t *event)
     (void)page_manager_switch(APP_PAGE_SETTINGS, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
 }
 
+static void home_page_recipe_clicked(lv_event_t *event)
+{
+    home_page_state_t *state;
+
+    state = (home_page_state_t *)lv_event_get_user_data(event);
+    if (state == NULL || state->recipe_count == 0u || state->snap_timer != NULL) {
+        return;
+    }
+
+    (void)page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
+}
+
 static void home_page_create_settings_button(home_page_state_t *state)
 {
     lv_obj_t *screen;
@@ -1215,6 +1227,9 @@ static void home_page_create_slot(
     lv_obj_add_event_cb(slot->container, home_page_carousel_event, LV_EVENT_PRESSING, state);
     lv_obj_add_event_cb(slot->container, home_page_carousel_event, LV_EVENT_RELEASED, state);
     lv_obj_add_event_cb(slot->container, home_page_carousel_event, LV_EVENT_PRESS_LOST, state);
+    if (slot_index == HOME_PAGE_CENTER_SLOT) {
+        lv_obj_add_event_cb(slot->container, home_page_recipe_clicked, LV_EVENT_CLICKED, state);
+    }
 
     slot->image = lv_image_create(slot->container);
     if (slot->image != NULL) {

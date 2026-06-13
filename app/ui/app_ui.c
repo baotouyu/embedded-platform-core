@@ -5,6 +5,7 @@
 #include "pages/app_pages.h"
 #include "pages/boot_page.h"
 #include "pages/home_page.h"
+#include "pages/running_page.h"
 #include "pages/settings_page.h"
 
 int app_ui_create(void)
@@ -22,6 +23,11 @@ int app_ui_create(void)
     }
 
     rc = page_manager_register(APP_PAGE_HOME, home_page_create, home_page_event, home_page_destroy);
+    if (rc != 0) {
+        return rc;
+    }
+
+    rc = page_manager_register(APP_PAGE_RUNNING, running_page_create, running_page_event, running_page_destroy);
     if (rc != 0) {
         return rc;
     }

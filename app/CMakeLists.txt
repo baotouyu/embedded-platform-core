@@ -6,6 +6,7 @@ add_library(ep_app STATIC
   ui/page_manager.c
   ui/pages/boot_page.c
   ui/pages/home_page.c
+  ui/pages/running_page.c
   ui/pages/settings_common.c
   ui/pages/settings_page.c
   ui/pages/settings_language_page.c

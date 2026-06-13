@@ -132,6 +132,7 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
     ${CMAKE_SOURCE_DIR}/app/ui/page_manager.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/boot_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/home_page.c
+    ${CMAKE_SOURCE_DIR}/app/ui/pages/running_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_common.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_page.c
     ${CMAKE_SOURCE_DIR}/app/ui/pages/settings_language_page.c
