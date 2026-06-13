@@ -2,6 +2,7 @@
 
 #include "ep_osal_err.h"
 #include "ep_platform_paths.h"
+#include "ep_simple_recipe.h"
 #include "lvgl.h"
 #include "pages/settings_common.h"
 #include "ui_style.h"
@@ -10,10 +11,17 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define RUNNING_PAGE_SRC_BUFFER_SIZE 160
+#define RUNNING_PAGE_RECIPE_DB_NAME "recipelib.db"
 #define RUNNING_PAGE_BG_IMAGE_NAME "running_bg.png"
 #define RUNNING_PAGE_START_ICON_NAME "running_start.png"
+#define RUNNING_PAGE_PARAM_ICON_TEMPERATURE_NAME "running_param_temperature.png"
+#define RUNNING_PAGE_PARAM_ICON_PRE_SOAK_NAME "running_param_pre_soak.png"
+#define RUNNING_PAGE_PARAM_ICON_COFFEE_VOLUME_NAME "running_param_coffee_volume.png"
+#define RUNNING_PAGE_PARAM_ICON_HOT_WATER_NAME "running_param_hot_water.png"
+#define RUNNING_PAGE_PARAM_ICON_MILK_NAME "running_param_milk.png"
 #define RUNNING_PAGE_STRENGTH_MINUS_ICON_NAME "running_minus.png"
 #define RUNNING_PAGE_STRENGTH_PLUS_ICON_NAME "running_plus.png"
 #define RUNNING_PAGE_STRENGTH_RING_BASE_IMAGE_NAME "running_ring_base.png"
@@ -30,6 +38,10 @@
 #define RUNNING_PAGE_RECIPE_TARGET_CENTER_OFFSET_X (-5)
 #define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y 50
 #define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y (RUNNING_PAGE_STRENGTH_RING_Y + RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y)
+#define RUNNING_PAGE_TITLE_X RUNNING_PAGE_STRENGTH_CONTROL_X
+#define RUNNING_PAGE_TITLE_Y 72
+#define RUNNING_PAGE_TITLE_WIDTH RUNNING_PAGE_STRENGTH_CONTROL_WIDTH
+#define RUNNING_PAGE_TITLE_HEIGHT 40
 #define RUNNING_PAGE_STRENGTH_CONTROL_X 32
 #define RUNNING_PAGE_STRENGTH_CONTROL_Y 112
 #define RUNNING_PAGE_STRENGTH_CONTROL_WIDTH 224
@@ -57,6 +69,46 @@
 #define RUNNING_PAGE_START_X 114
 #define RUNNING_PAGE_START_Y (SETTINGS_PAGE_SCREEN_HEIGHT - 44 - RUNNING_PAGE_START_SIZE)
 #define RUNNING_PAGE_START_SIZE 60
+#define RUNNING_PAGE_PARAM_KEY_TEMPERATURE "temperature"
+#define RUNNING_PAGE_PARAM_KEY_PRE_SOAK "pre_soak"
+#define RUNNING_PAGE_PARAM_KEY_DISCHARGE "discharge"
+#define RUNNING_PAGE_PARAM_KEY_HOT_WATER "hot_water"
+#define RUNNING_PAGE_PARAM_KEY_MILK_FOAM "milk_foam_volume"
+#define RUNNING_PAGE_PARAM_KEY_MILK_QUANTITY "milk_quantity"
+#define RUNNING_PAGE_PARAM_KEY_COFFEE_POWDER "coffee_powder_quantity"
+#define RUNNING_PAGE_PARAM_KEY_COFFEE_TYPE "coffee_type"
+#define RUNNING_PAGE_PARAM_MAX_ROWS 5u
+#define RUNNING_PAGE_PARAM_ICON_COUNT 5u
+#define RUNNING_PAGE_PARAM_AREA_X 356
+#define RUNNING_PAGE_PARAM_AREA_Y 70
+#define RUNNING_PAGE_PARAM_ROW_GAP 82
+#define RUNNING_PAGE_PARAM_GROUP_WIDTH 444
+#define RUNNING_PAGE_PARAM_GROUP_HEIGHT 74
+#define RUNNING_PAGE_PARAM_SINGLE_AREA_Y ((SETTINGS_PAGE_SCREEN_HEIGHT - RUNNING_PAGE_PARAM_GROUP_HEIGHT) / 2)
+#define RUNNING_PAGE_PARAM_TITLE_X 0
+#define RUNNING_PAGE_PARAM_TITLE_Y 0
+#define RUNNING_PAGE_PARAM_TITLE_WIDTH 132
+#define RUNNING_PAGE_PARAM_TITLE_HEIGHT 32
+#define RUNNING_PAGE_PARAM_ICON_X 0
+#define RUNNING_PAGE_PARAM_ICON_Y 36
+#define RUNNING_PAGE_PARAM_ICON_SIZE 32
+#define RUNNING_PAGE_PARAM_VALUE_X 174
+#define RUNNING_PAGE_PARAM_VALUE_Y RUNNING_PAGE_PARAM_TITLE_Y
+#define RUNNING_PAGE_PARAM_VALUE_WIDTH 130
+#define RUNNING_PAGE_PARAM_VALUE_HEIGHT 32
+#define RUNNING_PAGE_PARAM_TRACK_X 64
+#define RUNNING_PAGE_PARAM_TRACK_Y 48
+#define RUNNING_PAGE_PARAM_TRACK_WIDTH 270
+#define RUNNING_PAGE_PARAM_TRACK_HEIGHT 10
+#define RUNNING_PAGE_PARAM_TRACK_RADIUS 5
+#define RUNNING_PAGE_PARAM_KNOB_SIZE 36
+#define RUNNING_PAGE_PARAM_KNOB_Y (RUNNING_PAGE_PARAM_TRACK_Y - ((RUNNING_PAGE_PARAM_KNOB_SIZE - RUNNING_PAGE_PARAM_TRACK_HEIGHT) / 2))
+#define RUNNING_PAGE_PARAM_MAX_LABEL_X 366
+#define RUNNING_PAGE_PARAM_MAX_LABEL_Y 34
+#define RUNNING_PAGE_PARAM_MAX_LABEL_WIDTH 78
+#define RUNNING_PAGE_PARAM_MAX_LABEL_HEIGHT 32
+#define RUNNING_PAGE_PARAM_TRACK_COLOR 0x4D4D4D
+#define RUNNING_PAGE_PARAM_FILL_COLOR 0xC99868
 
 typedef enum {
     RUNNING_PAGE_STRENGTH_LIGHT = 0,
@@ -82,10 +134,38 @@ typedef struct {
 } running_page_recipe_layout_t;
 
 typedef struct {
+    char recipe_id[EP_SIMPLE_RECIPE_ID_MAX_LEN];
+    char recipe_name[EP_SIMPLE_RECIPE_NAME_MAX_LEN];
+    char image_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
+} running_page_recipe_context_t;
+
+typedef struct {
+    const char *key;
+    const char *title;
+    const char *unit;
+    const char *icon_name;
+} running_page_param_spec_t;
+
+typedef struct {
+    const running_page_param_spec_t *spec;
+    int32_t min;
+    int32_t max;
+    int32_t value;
+    char icon_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
+    lv_obj_t *group;
+    lv_obj_t *fill;
+    lv_obj_t *knob;
+    lv_obj_t *value_label;
+} running_page_param_row_t;
+
+typedef struct {
     lv_obj_t *screen;
     lv_obj_t *strength_control;
     lv_obj_t *strength_label;
     lv_obj_t *strength_overlay;
+    ep_simple_recipe_detail_t recipe_detail;
+    running_page_param_row_t param_rows[RUNNING_PAGE_PARAM_MAX_ROWS];
+    size_t param_row_count;
     char bg_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
     char start_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
     char back_src[SETTINGS_PAGE_SRC_BUFFER_SIZE];
@@ -96,10 +176,21 @@ typedef struct {
     char strength_ring_medium_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
     char strength_ring_strong_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
     char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
+    char recipe_id[EP_SIMPLE_RECIPE_ID_MAX_LEN];
+    char recipe_name[EP_SIMPLE_RECIPE_NAME_MAX_LEN];
     running_page_strength_t strength;
 } running_page_state_t;
 
-static char running_page_pending_recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE];
+static running_page_recipe_context_t running_page_pending_recipe;
+
+static const running_page_param_spec_t running_page_param_specs[] = {
+    {RUNNING_PAGE_PARAM_KEY_TEMPERATURE, "萃取温度", "℃", RUNNING_PAGE_PARAM_ICON_TEMPERATURE_NAME},
+    {RUNNING_PAGE_PARAM_KEY_PRE_SOAK, "预浸泡", "s", RUNNING_PAGE_PARAM_ICON_PRE_SOAK_NAME},
+    {RUNNING_PAGE_PARAM_KEY_DISCHARGE, "咖啡容量", "ml", RUNNING_PAGE_PARAM_ICON_COFFEE_VOLUME_NAME},
+    {RUNNING_PAGE_PARAM_KEY_HOT_WATER, "热水容量", "ml", RUNNING_PAGE_PARAM_ICON_HOT_WATER_NAME},
+    {RUNNING_PAGE_PARAM_KEY_MILK_FOAM, "制作时间", "s", RUNNING_PAGE_PARAM_ICON_MILK_NAME},
+    {RUNNING_PAGE_PARAM_KEY_MILK_QUANTITY, "牛奶容量", "ml", RUNNING_PAGE_PARAM_ICON_MILK_NAME},
+};
 
 static void running_page_copy_string(char *dst, size_t dst_size, const char *src)
 {
@@ -115,11 +206,24 @@ static void running_page_copy_string(char *dst, size_t dst_size, const char *src
     (void)snprintf(dst, dst_size, "%s", src);
 }
 
-void running_page_set_recipe_image_src(const char *src)
+void running_page_set_recipe_context(const ep_simple_recipe_item_t *recipe, const char *image_src)
 {
-    running_page_copy_string(running_page_pending_recipe_image_src,
-                             sizeof(running_page_pending_recipe_image_src),
-                             src);
+    running_page_copy_string(running_page_pending_recipe.image_src,
+                             sizeof(running_page_pending_recipe.image_src),
+                             image_src);
+
+    if (recipe == NULL) {
+        running_page_pending_recipe.recipe_id[0] = '\0';
+        running_page_pending_recipe.recipe_name[0] = '\0';
+        return;
+    }
+
+    running_page_copy_string(running_page_pending_recipe.recipe_id,
+                             sizeof(running_page_pending_recipe.recipe_id),
+                             recipe->id);
+    running_page_copy_string(running_page_pending_recipe.recipe_name,
+                             sizeof(running_page_pending_recipe.recipe_name),
+                             recipe->name);
 }
 
 static void running_page_back_clicked(lv_event_t *event)
@@ -231,6 +335,29 @@ static void running_page_create_background(running_page_state_t *state)
     lv_obj_set_size(bg, SETTINGS_PAGE_SCREEN_WIDTH, SETTINGS_PAGE_SCREEN_HEIGHT);
     lv_obj_set_pos(bg, 0, 0);
     lv_obj_move_background(bg);
+}
+
+static void running_page_create_recipe_title(running_page_state_t *state)
+{
+    lv_obj_t *title;
+
+    if (state == NULL || state->screen == NULL || state->recipe_name[0] == '\0') {
+        return;
+    }
+
+    title = lv_label_create(state->screen);
+    if (title == NULL) {
+        return;
+    }
+
+    lv_obj_remove_style_all(title);
+    lv_obj_set_pos(title, RUNNING_PAGE_TITLE_X, RUNNING_PAGE_TITLE_Y);
+    lv_obj_set_size(title, RUNNING_PAGE_TITLE_WIDTH, RUNNING_PAGE_TITLE_HEIGHT);
+    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_label_set_long_mode(title, LV_LABEL_LONG_CLIP);
+    lv_label_set_text(title, state->recipe_name);
 }
 
 static bool running_page_create_image(lv_obj_t *parent,
@@ -432,6 +559,450 @@ static void running_page_create_strength_controls(running_page_state_t *state)
         lv_obj_align(state->strength_label, LV_ALIGN_CENTER, 0, 0);
     }
 
+    running_page_refresh_strength(state);
+}
+
+static bool running_page_parse_i32(const char *text, int32_t *out_value)
+{
+    char *end;
+    long value;
+
+    if (text == NULL || text[0] == '\0' || out_value == NULL) {
+        return false;
+    }
+
+    value = strtol(text, &end, 10);
+    if (end == text || *end != '\0') {
+        return false;
+    }
+
+    *out_value = (int32_t)value;
+    return true;
+}
+
+static int32_t running_page_clamp_i32(int32_t value, int32_t min, int32_t max)
+{
+    if (value < min) {
+        return min;
+    }
+    if (value > max) {
+        return max;
+    }
+    return value;
+}
+
+static const ep_simple_recipe_param_t *running_page_find_param(const ep_simple_recipe_step_t *step, const char *key)
+{
+    size_t i;
+
+    if (step == NULL || key == NULL) {
+        return NULL;
+    }
+
+    for (i = 0u; i < step->param_count; ++i) {
+        if (strcmp(step->params[i].key, key) == 0) {
+            return &step->params[i];
+        }
+    }
+
+    return NULL;
+}
+
+static bool running_page_param_values_from_recipe(const ep_simple_recipe_param_t *param,
+                                                  int32_t *out_min,
+                                                  int32_t *out_max,
+                                                  int32_t *out_value)
+{
+    int32_t min;
+    int32_t max;
+    int32_t value;
+
+    if (param == NULL || out_min == NULL || out_max == NULL || out_value == NULL) {
+        return false;
+    }
+
+    if (!running_page_parse_i32(param->ctl_val, &value)) {
+        return false;
+    }
+
+    if (!running_page_parse_i32(param->min_val, &min) || !running_page_parse_i32(param->max_val, &max)) {
+        return false;
+    }
+    if (min > max) {
+        int32_t tmp = min;
+        min = max;
+        max = tmp;
+    }
+    if (min == max) {
+        return false;
+    }
+
+    *out_min = min;
+    *out_max = max;
+    *out_value = running_page_clamp_i32(value, min, max);
+    return true;
+}
+
+static bool running_page_param_is_adjustable(const ep_simple_recipe_param_t *param)
+{
+    int32_t min;
+    int32_t max;
+    int32_t value;
+
+    return running_page_param_values_from_recipe(param, &min, &max, &value);
+}
+
+static bool running_page_has_adjustable_strength(const running_page_state_t *state)
+{
+    const ep_simple_recipe_step_t *step;
+
+    if (state == NULL || state->recipe_detail.step_count == 0u) {
+        return false;
+    }
+
+    step = &state->recipe_detail.steps[0];
+    return running_page_param_is_adjustable(running_page_find_param(step, RUNNING_PAGE_PARAM_KEY_COFFEE_POWDER));
+}
+
+static int32_t running_page_param_progress_width_for_value(const running_page_param_row_t *row, int32_t value)
+{
+    int32_t range;
+
+    if (row == NULL || row->max <= row->min) {
+        return 0;
+    }
+
+    value = running_page_clamp_i32(value, row->min, row->max);
+    range = row->max - row->min;
+    return (RUNNING_PAGE_PARAM_TRACK_WIDTH * (value - row->min)) / range;
+}
+
+static int32_t running_page_param_knob_x_for_value(const running_page_param_row_t *row, int32_t value)
+{
+    return RUNNING_PAGE_PARAM_TRACK_X + running_page_param_progress_width_for_value(row, value) -
+           (RUNNING_PAGE_PARAM_KNOB_SIZE / 2);
+}
+
+static int32_t running_page_param_value_for_point(const running_page_param_row_t *row, const lv_point_t *point)
+{
+    lv_area_t group_coords;
+    int32_t relative_x;
+    int32_t range;
+
+    if (row == NULL || row->group == NULL || point == NULL || row->max <= row->min) {
+        return 0;
+    }
+
+    lv_obj_get_coords(row->group, &group_coords);
+    relative_x = point->x - group_coords.x1 - RUNNING_PAGE_PARAM_TRACK_X;
+    if (relative_x <= 0) {
+        return row->min;
+    }
+    if (relative_x >= RUNNING_PAGE_PARAM_TRACK_WIDTH) {
+        return row->max;
+    }
+
+    range = row->max - row->min;
+    return row->min + ((relative_x * range) + (RUNNING_PAGE_PARAM_TRACK_WIDTH / 2)) /
+                          RUNNING_PAGE_PARAM_TRACK_WIDTH;
+}
+
+static void running_page_set_param_value(running_page_param_row_t *row, int32_t value)
+{
+    int32_t progress_width;
+
+    if (row == NULL) {
+        return;
+    }
+
+    row->value = running_page_clamp_i32(value, row->min, row->max);
+    progress_width = running_page_param_progress_width_for_value(row, row->value);
+
+    if (row->fill != NULL) {
+        lv_obj_set_width(row->fill, progress_width);
+    }
+    if (row->knob != NULL) {
+        lv_obj_set_x(row->knob, running_page_param_knob_x_for_value(row, row->value));
+    }
+    if (row->value_label != NULL && row->spec != NULL) {
+        lv_label_set_text_fmt(row->value_label, "%d%s", row->value, row->spec->unit);
+    }
+}
+
+static void running_page_param_event(lv_event_t *event)
+{
+    running_page_param_row_t *row;
+    lv_point_t point;
+
+    row = (running_page_param_row_t *)lv_event_get_user_data(event);
+    if (row == NULL) {
+        return;
+    }
+
+    lv_indev_get_point(lv_indev_active(), &point);
+    running_page_set_param_value(row, running_page_param_value_for_point(row, &point));
+}
+
+static lv_obj_t *running_page_create_progress_segment(lv_obj_t *parent,
+                                                      int32_t x,
+                                                      int32_t y,
+                                                      int32_t width,
+                                                      int32_t height,
+                                                      uint32_t color,
+                                                      int32_t radius)
+{
+    lv_obj_t *segment;
+
+    segment = lv_obj_create(parent);
+    if (segment == NULL) {
+        return NULL;
+    }
+
+    lv_obj_remove_style_all(segment);
+    lv_obj_set_size(segment, width, height);
+    lv_obj_set_pos(segment, x, y);
+    lv_obj_set_style_bg_color(segment, lv_color_hex(color), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(segment, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_radius(segment, radius, LV_PART_MAIN);
+    lv_obj_set_style_border_opa(segment, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(segment, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_clear_flag(segment, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(segment, LV_OBJ_FLAG_CLICKABLE);
+
+    return segment;
+}
+
+static int32_t running_page_param_row_y_for_count(size_t row_index, size_t total_row_count)
+{
+    return total_row_count == 1u ? RUNNING_PAGE_PARAM_SINGLE_AREA_Y :
+                                  RUNNING_PAGE_PARAM_AREA_Y + (int32_t)row_index * RUNNING_PAGE_PARAM_ROW_GAP;
+}
+
+static bool running_page_create_param_row(lv_obj_t *parent,
+                                          running_page_param_row_t *row,
+                                          const running_page_param_spec_t *spec,
+                                          const ep_simple_recipe_param_t *param,
+                                          size_t row_index,
+                                          size_t total_row_count)
+{
+    lv_obj_t *group;
+    lv_obj_t *title;
+    lv_obj_t *icon;
+    lv_obj_t *track;
+    lv_obj_t *max_label;
+    int32_t min;
+    int32_t max;
+    int32_t value;
+
+    if (parent == NULL || row == NULL || spec == NULL ||
+        !running_page_param_values_from_recipe(param, &min, &max, &value)) {
+        return false;
+    }
+
+    *row = (running_page_param_row_t){0};
+    row->spec = spec;
+    row->min = min;
+    row->max = max;
+    row->value = value;
+
+    group = lv_obj_create(parent);
+    if (group == NULL) {
+        return false;
+    }
+    row->group = group;
+    lv_obj_remove_style_all(group);
+    lv_obj_set_size(group, RUNNING_PAGE_PARAM_GROUP_WIDTH, RUNNING_PAGE_PARAM_GROUP_HEIGHT);
+    lv_obj_set_pos(group,
+                   RUNNING_PAGE_PARAM_AREA_X,
+                   running_page_param_row_y_for_count(row_index, total_row_count));
+    lv_obj_set_style_bg_opa(group, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_opa(group, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_clear_flag(group, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(group, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(group, running_page_param_event, LV_EVENT_PRESSED, row);
+    lv_obj_add_event_cb(group, running_page_param_event, LV_EVENT_PRESSING, row);
+
+    title = lv_label_create(group);
+    if (title != NULL) {
+        lv_obj_remove_style_all(title);
+        lv_obj_set_pos(title, RUNNING_PAGE_PARAM_TITLE_X, RUNNING_PAGE_PARAM_TITLE_Y);
+        lv_obj_set_size(title, RUNNING_PAGE_PARAM_TITLE_WIDTH, RUNNING_PAGE_PARAM_TITLE_HEIGHT);
+        lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_DETAILS_MENU_VALUE), LV_PART_MAIN);
+        lv_label_set_long_mode(title, LV_LABEL_LONG_CLIP);
+        lv_label_set_text(title, spec->title);
+    }
+
+    if (ep_platform_lvgl_image_src(spec->icon_name, row->icon_src, sizeof(row->icon_src)) == EP_OK) {
+        icon = lv_image_create(group);
+        if (icon != NULL) {
+            lv_obj_remove_style_all(icon);
+            lv_obj_set_size(icon, RUNNING_PAGE_PARAM_ICON_SIZE, RUNNING_PAGE_PARAM_ICON_SIZE);
+            lv_obj_set_pos(icon, RUNNING_PAGE_PARAM_ICON_X, RUNNING_PAGE_PARAM_ICON_Y);
+            lv_image_set_src(icon, row->icon_src);
+        }
+    }
+
+    row->value_label = lv_label_create(group);
+    if (row->value_label != NULL) {
+        lv_obj_remove_style_all(row->value_label);
+        lv_obj_set_pos(row->value_label, RUNNING_PAGE_PARAM_VALUE_X, RUNNING_PAGE_PARAM_VALUE_Y);
+        lv_obj_set_size(row->value_label, RUNNING_PAGE_PARAM_VALUE_WIDTH, RUNNING_PAGE_PARAM_VALUE_HEIGHT);
+        lv_obj_set_style_text_color(row->value_label, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_font(row->value_label, ui_style_font(UI_STYLE_FONT_HOME_SIDE), LV_PART_MAIN);
+        lv_obj_set_style_text_align(row->value_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    }
+
+    track = running_page_create_progress_segment(group,
+                                                 RUNNING_PAGE_PARAM_TRACK_X,
+                                                 RUNNING_PAGE_PARAM_TRACK_Y,
+                                                 RUNNING_PAGE_PARAM_TRACK_WIDTH,
+                                                 RUNNING_PAGE_PARAM_TRACK_HEIGHT,
+                                                 RUNNING_PAGE_PARAM_TRACK_COLOR,
+                                                 RUNNING_PAGE_PARAM_TRACK_RADIUS);
+    if (track == NULL) {
+        return false;
+    }
+    lv_obj_add_event_cb(track, running_page_param_event, LV_EVENT_PRESSED, row);
+    lv_obj_add_event_cb(track, running_page_param_event, LV_EVENT_PRESSING, row);
+
+    row->fill = running_page_create_progress_segment(track,
+                                                     0,
+                                                     0,
+                                                     1,
+                                                     RUNNING_PAGE_PARAM_TRACK_HEIGHT,
+                                                     RUNNING_PAGE_PARAM_FILL_COLOR,
+                                                     RUNNING_PAGE_PARAM_TRACK_RADIUS);
+    if (row->fill == NULL) {
+        return false;
+    }
+    lv_obj_add_event_cb(row->fill, running_page_param_event, LV_EVENT_PRESSED, row);
+    lv_obj_add_event_cb(row->fill, running_page_param_event, LV_EVENT_PRESSING, row);
+
+    row->knob = running_page_create_progress_segment(group,
+                                                     RUNNING_PAGE_PARAM_TRACK_X,
+                                                     RUNNING_PAGE_PARAM_KNOB_Y,
+                                                     RUNNING_PAGE_PARAM_KNOB_SIZE,
+                                                     RUNNING_PAGE_PARAM_KNOB_SIZE,
+                                                     0xD9D9D9,
+                                                     RUNNING_PAGE_PARAM_KNOB_SIZE / 2);
+    if (row->knob == NULL) {
+        return false;
+    }
+    lv_obj_add_event_cb(row->knob, running_page_param_event, LV_EVENT_PRESSED, row);
+    lv_obj_add_event_cb(row->knob, running_page_param_event, LV_EVENT_PRESSING, row);
+
+    max_label = lv_label_create(group);
+    if (max_label != NULL) {
+        lv_obj_remove_style_all(max_label);
+        lv_obj_set_pos(max_label, RUNNING_PAGE_PARAM_MAX_LABEL_X, RUNNING_PAGE_PARAM_MAX_LABEL_Y);
+        lv_obj_set_size(max_label, RUNNING_PAGE_PARAM_MAX_LABEL_WIDTH, RUNNING_PAGE_PARAM_MAX_LABEL_HEIGHT);
+        lv_obj_set_style_text_color(max_label, lv_color_hex(RUNNING_PAGE_PARAM_FILL_COLOR), LV_PART_MAIN);
+        lv_obj_set_style_text_font(max_label, ui_style_font(UI_STYLE_FONT_DETAILS_MENU_VALUE), LV_PART_MAIN);
+        lv_obj_set_style_text_align(max_label, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+        lv_label_set_text_fmt(max_label, "%d%s", row->max, spec->unit);
+    }
+
+    running_page_set_param_value(row, row->value);
+    return true;
+}
+
+static void running_page_load_recipe_detail(running_page_state_t *state)
+{
+    ep_simple_recipe_store_t *store = NULL;
+    char recipe_db_path[RUNNING_PAGE_SRC_BUFFER_SIZE];
+
+    if (state == NULL || state->recipe_id[0] == '\0') {
+        return;
+    }
+
+    if (ep_platform_recipe_path(RUNNING_PAGE_RECIPE_DB_NAME, recipe_db_path, sizeof(recipe_db_path)) != EP_OK) {
+        return;
+    }
+
+    if (ep_simple_recipe_open_saas2_db(recipe_db_path, &store) != EP_OK) {
+        return;
+    }
+
+    (void)ep_simple_recipe_load_detail(store, state->recipe_id, &state->recipe_detail);
+    ep_simple_recipe_close(store);
+}
+
+static size_t running_page_count_dynamic_params(const ep_simple_recipe_step_t *step)
+{
+    size_t count = 0u;
+    size_t i;
+
+    if (step == NULL) {
+        return 0u;
+    }
+
+    for (i = 0u; i < sizeof(running_page_param_specs) / sizeof(running_page_param_specs[0]); ++i) {
+        const running_page_param_spec_t *spec = &running_page_param_specs[i];
+        const ep_simple_recipe_param_t *param = running_page_find_param(step, spec->key);
+
+        if (running_page_param_is_adjustable(param)) {
+            count++;
+        }
+        if (count >= RUNNING_PAGE_PARAM_MAX_ROWS) {
+            break;
+        }
+    }
+
+    return count;
+}
+
+static void running_page_create_dynamic_params(running_page_state_t *state)
+{
+    const ep_simple_recipe_step_t *step;
+    size_t total_row_count;
+    size_t i;
+
+    if (state == NULL || state->screen == NULL || state->recipe_detail.step_count == 0u) {
+        return;
+    }
+
+    step = &state->recipe_detail.steps[0];
+    total_row_count = running_page_count_dynamic_params(step);
+    for (i = 0u; i < sizeof(running_page_param_specs) / sizeof(running_page_param_specs[0]); ++i) {
+        const running_page_param_spec_t *spec = &running_page_param_specs[i];
+        const ep_simple_recipe_param_t *param = running_page_find_param(step, spec->key);
+
+        if (!running_page_param_is_adjustable(param)) {
+            continue;
+        }
+        if (state->param_row_count >= RUNNING_PAGE_PARAM_MAX_ROWS) {
+            break;
+        }
+        if (running_page_create_param_row(state->screen,
+                                          &state->param_rows[state->param_row_count],
+                                          spec,
+                                          param,
+                                          state->param_row_count,
+                                          total_row_count)) {
+            state->param_row_count++;
+        }
+    }
+}
+
+static void running_page_apply_recipe_strength(running_page_state_t *state)
+{
+    const ep_simple_recipe_step_t *step;
+    const ep_simple_recipe_param_t *param;
+    int32_t strength_value;
+
+    if (state == NULL || state->recipe_detail.step_count == 0u) {
+        return;
+    }
+
+    step = &state->recipe_detail.steps[0];
+    param = running_page_find_param(step, RUNNING_PAGE_PARAM_KEY_COFFEE_POWDER);
+    if (!running_page_param_is_adjustable(param) || !running_page_parse_i32(param->ctl_val, &strength_value)) {
+        return;
+    }
+
+    strength_value = running_page_clamp_i32(strength_value, 1, 3);
+    state->strength = (running_page_strength_t)(RUNNING_PAGE_STRENGTH_LIGHT + (strength_value - 1));
     running_page_refresh_strength(state);
 }
 
@@ -677,14 +1248,28 @@ lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx)
     state->strength = RUNNING_PAGE_STRENGTH_DEFAULT;
     running_page_copy_string(state->recipe_image_src,
                              sizeof(state->recipe_image_src),
-                             running_page_pending_recipe_image_src);
+                             running_page_pending_recipe.image_src);
+    running_page_copy_string(state->recipe_id,
+                             sizeof(state->recipe_id),
+                             running_page_pending_recipe.recipe_id);
+    running_page_copy_string(state->recipe_name,
+                             sizeof(state->recipe_name),
+                             running_page_pending_recipe.recipe_name);
     lv_obj_set_user_data(screen, state);
     settings_common_style_screen(screen);
+    running_page_load_recipe_detail(state);
     running_page_create_background(state);
-    running_page_create_strength_ring(state);
+    running_page_create_recipe_title(state);
+    if (running_page_has_adjustable_strength(state)) {
+        running_page_create_strength_ring(state);
+    }
     running_page_create_recipe_image(state);
     running_page_create_start_button(state);
-    running_page_create_strength_controls(state);
+    if (running_page_has_adjustable_strength(state)) {
+        running_page_create_strength_controls(state);
+        running_page_apply_recipe_strength(state);
+    }
+    running_page_create_dynamic_params(state);
 
     if (!settings_common_create_icon_button(screen,
                                             SETTINGS_PAGE_BACK_ICON_NAME,

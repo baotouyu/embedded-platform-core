@@ -178,6 +178,30 @@ static const lv_point_precise_t home_page_user_arrow_points[] = {
     {18, 0},
 };
 
+static bool home_page_has_saved_selection;
+static size_t home_page_saved_selected_index;
+
+static void home_page_save_selection(const home_page_state_t *state)
+{
+    if (state == NULL || state->recipe_count == 0u) {
+        return;
+    }
+
+    home_page_saved_selected_index = state->selected_index;
+    home_page_has_saved_selection = true;
+}
+
+static void home_page_restore_selection(home_page_state_t *state)
+{
+    if (state == NULL || !home_page_has_saved_selection || state->recipe_count == 0u) {
+        return;
+    }
+
+    if (home_page_saved_selected_index < state->recipe_count) {
+        state->selected_index = home_page_saved_selected_index;
+    }
+}
+
 static int home_page_wrap_index(int index, size_t count)
 {
     int count_i;
@@ -274,7 +298,9 @@ static void home_page_open_running_page(home_page_state_t *state)
         return;
     }
 
-    running_page_set_recipe_image_src(state->recipe_src[HOME_PAGE_CENTER_SLOT]);
+    home_page_save_selection(state);
+    running_page_set_recipe_context(&state->recipes[state->selected_index],
+                                    state->recipe_src[HOME_PAGE_CENTER_SLOT]);
     (void)page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true);
 }
 
@@ -666,6 +692,7 @@ static int home_page_load_recipes(home_page_state_t *state)
 
     state->recipe_count = count;
     state->selected_index = count > 0u ? count / 2u : 0u;
+    home_page_restore_selection(state);
     return count > 0u ? EP_OK : EP_ERR_INVAL;
 }
 
@@ -1318,6 +1345,7 @@ void home_page_destroy(page_manager_page_ctx_t *ctx)
 
     state = (home_page_state_t *)lv_obj_get_user_data(ctx->screen);
     if (state != NULL) {
+        home_page_save_selection(state);
         home_page_cancel_snap_animation(state);
     }
     free(state);

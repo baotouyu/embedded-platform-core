@@ -169,6 +169,26 @@ def test_home_page_uses_platform_recipe_db_path():
     assert "ep_simple_recipe_open_saas2_db(recipe_db_path, &store)" in home_page
 
 
+def test_home_page_restores_last_selected_recipe_after_returning_from_running_page():
+    home_page = _read("app/ui/pages/home_page.c")
+
+    assert "static bool home_page_has_saved_selection" in home_page
+    assert "static size_t home_page_saved_selected_index" in home_page
+    assert "home_page_save_selection(const home_page_state_t *state)" in home_page
+    assert "home_page_restore_selection(home_page_state_t *state)" in home_page
+    assert "home_page_save_selection(state)" in home_page[
+        home_page.index("static void home_page_open_running_page") :
+        home_page.index("static void home_page_recipe_clicked")
+    ]
+    assert "home_page_save_selection(state)" in home_page[
+        home_page.index("void home_page_destroy") :
+        home_page.index("lv_obj_t *home_page_create")
+    ]
+    assert "state->selected_index = count > 0u ? count / 2u : 0u" in home_page
+    assert "home_page_restore_selection(state)" in home_page
+    assert "home_page_saved_selected_index < state->recipe_count" in home_page
+
+
 def test_home_page_preloads_offscreen_carousel_items_before_drag_commit():
     home_page = _read("app/ui/pages/home_page.c")
 
@@ -1384,13 +1404,14 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
 
     assert "static void home_page_recipe_clicked(lv_event_t *event)" in home_page
     assert "home_page_open_running_page(state)" in home_page
-    assert "running_page_set_recipe_image_src(state->recipe_src[HOME_PAGE_CENTER_SLOT])" in home_page
+    assert "running_page_set_recipe_context(&state->recipes[state->selected_index]," in home_page
+    assert "state->recipe_src[HOME_PAGE_CENTER_SLOT]" in home_page
     assert "page_manager_switch(APP_PAGE_RUNNING, LV_SCR_LOAD_ANIM_MOVE_LEFT, 180, true)" in home_page
     assert "lv_obj_add_event_cb(slot->container, home_page_recipe_clicked, LV_EVENT_CLICKED, state)" in home_page
     assert "lv_obj_add_event_cb(slot->image, home_page_recipe_clicked, LV_EVENT_CLICKED, state)" in home_page
     assert "slot_index == HOME_PAGE_CENTER_SLOT" in home_page
 
-    assert "void running_page_set_recipe_image_src(const char *src);" in running_header
+    assert "void running_page_set_recipe_context(const ep_simple_recipe_item_t *recipe, const char *image_src);" in running_header
     assert "lv_obj_t *running_page_create(page_manager_page_ctx_t *ctx);" in running_header
     assert (
         "void running_page_event(page_manager_page_ctx_t *ctx, uint32_t code, uint32_t wparam, uint32_t lparam);"
@@ -1411,10 +1432,21 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_RECIPE_TARGET_CENTER_OFFSET_X (-5)" in running_page
     assert "#define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_OFFSET_Y 50" in running_page
     assert "#define RUNNING_PAGE_RECIPE_TARGET_BOTTOM_Y" in running_page
+    assert "#define RUNNING_PAGE_TITLE_X RUNNING_PAGE_STRENGTH_CONTROL_X" in running_page
+    assert "#define RUNNING_PAGE_TITLE_Y 72" in running_page
+    assert "#define RUNNING_PAGE_TITLE_WIDTH RUNNING_PAGE_STRENGTH_CONTROL_WIDTH" in running_page
+    assert "#define RUNNING_PAGE_TITLE_HEIGHT 40" in running_page
     assert "char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
-    assert "static char running_page_pending_recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
-    assert "running_page_set_recipe_image_src(const char *src)" in running_page
-    assert "running_page_copy_string(running_page_pending_recipe_image_src" in running_page
+    assert "char recipe_id[EP_SIMPLE_RECIPE_ID_MAX_LEN]" in running_page
+    assert "char recipe_name[EP_SIMPLE_RECIPE_NAME_MAX_LEN]" in running_page
+    assert "static running_page_recipe_context_t running_page_pending_recipe" in running_page
+    assert "running_page_set_recipe_context(const ep_simple_recipe_item_t *recipe, const char *image_src)" in running_page
+    assert "running_page_copy_string(running_page_pending_recipe.image_src" in running_page
+    assert "running_page_copy_string(running_page_pending_recipe.recipe_id" in running_page
+    assert "running_page_copy_string(running_page_pending_recipe.recipe_name" in running_page
+    assert "ep_platform_recipe_path(RUNNING_PAGE_RECIPE_DB_NAME" in running_page
+    assert "ep_simple_recipe_open_saas2_db(recipe_db_path, &store)" in running_page
+    assert "ep_simple_recipe_load_detail(store, state->recipe_id, &state->recipe_detail)" in running_page
     assert "lv_image_decoder_get_info(state->recipe_image_src, &header)" in running_page
     assert "running_page_recipe_bounds_t" in running_page
     assert "running_page_recipe_layout_t" in running_page
@@ -1452,6 +1484,49 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_START_X 114" in running_page
     assert "#define RUNNING_PAGE_START_Y (SETTINGS_PAGE_SCREEN_HEIGHT - 44 - RUNNING_PAGE_START_SIZE)" in running_page
     assert "#define RUNNING_PAGE_START_SIZE 60" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_TEMPERATURE \"temperature\"" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_PRE_SOAK \"pre_soak\"" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_DISCHARGE \"discharge\"" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_HOT_WATER \"hot_water\"" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_MILK_FOAM \"milk_foam_volume\"" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_MILK_QUANTITY \"milk_quantity\"" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_COFFEE_POWDER \"coffee_powder_quantity\"" in running_page
+    assert "RUNNING_PAGE_PARAM_KEY_COFFEE_TYPE \"coffee_type\"" in running_page
+    assert "#define RUNNING_PAGE_PARAM_GROUP_WIDTH 444" in running_page
+    assert "#define RUNNING_PAGE_PARAM_GROUP_HEIGHT 74" in running_page
+    assert "#define RUNNING_PAGE_PARAM_SINGLE_AREA_Y ((SETTINGS_PAGE_SCREEN_HEIGHT - RUNNING_PAGE_PARAM_GROUP_HEIGHT) / 2)" in running_page
+    assert "#define RUNNING_PAGE_PARAM_VALUE_Y RUNNING_PAGE_PARAM_TITLE_Y" in running_page
+    assert "#define RUNNING_PAGE_PARAM_VALUE_HEIGHT 32" in running_page
+    assert "#define RUNNING_PAGE_PARAM_MAX_LABEL_X 366" in running_page
+    assert "#define RUNNING_PAGE_PARAM_MAX_LABEL_Y 34" in running_page
+    assert "running_page_param_spec_t" in running_page
+    assert "running_page_find_param" in running_page
+    assert "running_page_param_is_adjustable" in running_page
+    assert "running_page_has_adjustable_strength" in running_page
+    assert "running_page_apply_recipe_strength(state)" in running_page
+    assert "RUNNING_PAGE_STRENGTH_LIGHT + (strength_value - 1)" in running_page
+    assert "if (!running_page_parse_i32(param->min_val, &min) || !running_page_parse_i32(param->max_val, &max))" in running_page
+    assert "running_page_create_param_row" in running_page
+    assert "running_page_create_dynamic_params" in running_page
+    assert "running_page_count_dynamic_params" in running_page
+    assert "running_page_param_row_y_for_count" in running_page
+    assert "total_row_count == 1u ? RUNNING_PAGE_PARAM_SINGLE_AREA_Y" in running_page
+    assert "running_page_create_progress_segment" in running_page
+    assert "running_page_param_event" in running_page
+    assert "lv_indev_get_point(lv_indev_active(), &point)" in running_page
+    assert "lv_obj_set_width(row->fill, progress_width)" in running_page
+    assert "lv_obj_set_x(row->knob, running_page_param_knob_x_for_value(row, row->value))" in running_page
+    assert "lv_label_set_text_fmt(row->value_label, \"%d%s\", row->value, row->spec->unit)" in running_page
+    assert "lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_DETAILS_MENU_VALUE), LV_PART_MAIN)" in running_page
+    assert "lv_obj_set_style_text_font(row->value_label, ui_style_font(UI_STYLE_FONT_HOME_SIDE), LV_PART_MAIN)" in running_page
+    assert "lv_obj_set_style_text_font(max_label, ui_style_font(UI_STYLE_FONT_DETAILS_MENU_VALUE), LV_PART_MAIN)" in running_page
+    assert "{RUNNING_PAGE_PARAM_KEY_HOT_WATER, \"热水容量\", \"ml\", RUNNING_PAGE_PARAM_ICON_HOT_WATER_NAME}" in running_page
+    assert "{RUNNING_PAGE_PARAM_KEY_MILK_FOAM, \"制作时间\", \"s\", RUNNING_PAGE_PARAM_ICON_MILK_NAME}" in running_page
+    assert "running_param_temperature.png" in running_page
+    assert "running_param_pre_soak.png" in running_page
+    assert "running_param_coffee_volume.png" in running_page
+    assert "running_param_hot_water.png" in running_page
+    assert "running_param_milk.png" in running_page
     for icon_name in [
         "running_start.png",
         "running_minus.png",
@@ -1460,12 +1535,20 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
         "running_ring_light.png",
         "running_ring_medium.png",
         "running_ring_strong.png",
+        "running_param_temperature.png",
+        "running_param_pre_soak.png",
+        "running_param_coffee_volume.png",
+        "running_param_hot_water.png",
+        "running_param_milk.png",
     ]:
         assert icon_name in running_page
         assert (REPO_ROOT / "resources/host/images" / icon_name).exists()
     for text in ["清淡", "适中", "浓郁"]:
         assert text in running_page
     assert "lv_obj_t *strength_control" in running_page
+    assert "running_page_create_recipe_title(state)" in running_page
+    assert "lv_label_set_text(title, state->recipe_name)" in running_page
+    assert "lv_obj_set_style_text_font(title, ui_style_font(UI_STYLE_FONT_HOME_USER), LV_PART_MAIN)" in running_page
     assert "running_page_create_strength_controls(state)" in running_page
     assert "state->strength_control = lv_obj_create(state->screen)" in running_page
     assert "lv_obj_set_pos(state->strength_control, RUNNING_PAGE_STRENGTH_CONTROL_X, RUNNING_PAGE_STRENGTH_CONTROL_Y)" in running_page
@@ -1486,6 +1569,7 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "running_page_create_start_button(state)" in running_page
     assert "lv_obj_add_event_cb(button, running_page_start_clicked, LV_EVENT_CLICKED, state)" in running_page
     assert "running_page_create_strength_ring(state)" in running_page
+    assert "if (running_page_has_adjustable_strength(state)) {" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_light_src)" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_medium_src)" in running_page
     assert "lv_image_set_src(state->strength_overlay, state->strength_ring_strong_src)" in running_page
