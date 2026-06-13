@@ -1402,7 +1402,7 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "ep_platform_lvgl_image_src(RUNNING_PAGE_BG_IMAGE_NAME" in running_page
     assert "lv_obj_move_background(bg)" in running_page
     assert "#define RUNNING_PAGE_RECIPE_IMAGE_X 54" in running_page
-    assert "#define RUNNING_PAGE_RECIPE_IMAGE_Y 168" in running_page
+    assert "#define RUNNING_PAGE_RECIPE_IMAGE_Y 139" in running_page
     assert "#define RUNNING_PAGE_RECIPE_IMAGE_SIZE 180" in running_page
     assert "char recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
     assert "static char running_page_pending_recipe_image_src[RUNNING_PAGE_SRC_BUFFER_SIZE]" in running_page
@@ -1421,7 +1421,7 @@ def test_home_recipe_opens_minimal_running_page_with_back_button():
     assert "#define RUNNING_PAGE_STRENGTH_MINUS_X 32" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_PLUS_X 296" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_X 70" in running_page
-    assert "#define RUNNING_PAGE_STRENGTH_RING_Y 300" in running_page
+    assert "#define RUNNING_PAGE_STRENGTH_RING_Y 271" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_X (RUNNING_PAGE_STRENGTH_RING_X + 26)" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_WIDTH 134" in running_page
     assert "#define RUNNING_PAGE_STRENGTH_RING_MEDIUM_HEIGHT 80" in running_page
